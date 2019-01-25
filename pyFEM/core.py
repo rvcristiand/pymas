@@ -27,8 +27,8 @@ class Nodes(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, x, y, z):
-        Collection.add(self, Node(len(self), x, y, z))
+    def add(self, label, x, y, z):
+        Collection.add(self, Node(label, x, y, z))
 
 
 class Trusses(Collection):
@@ -134,10 +134,10 @@ if __name__ == '__main__':
     structure.sections.add("section4", "material1", 150e-4)
 
     # add nodes
-    structure.nodes.add(0, 0, 0)
-    structure.nodes.add(8, 0, 0)
-    structure.nodes.add(4, 3, 0)
-    structure.nodes.add(4, 0, 0)
+    structure.nodes.add('0', 0, 0, 0)
+    structure.nodes.add('1', 8, 0, 0)
+    structure.nodes.add('2', 4, 3, 0)
+    structure.nodes.add('3', 4, 0, 0)
 
     # add trusses
     structure.trusses.add(0, 2, "section3")
