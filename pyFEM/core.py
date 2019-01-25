@@ -36,12 +36,12 @@ class Trusses(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, node_i, node_j, section):
+    def add(self, label, node_i, node_j, section):
         node_i = self.parent.nodes[node_i]
         node_j = self.parent.nodes[node_j]
         section = self.parent.sections[section]
 
-        Collection.add(self, Truss(self.parent, len(self), node_i, node_j, section))
+        Collection.add(self, Truss(self.parent, label, node_i, node_j, section))
 
 
 class Supports(Collection):
@@ -134,13 +134,13 @@ if __name__ == '__main__':
     structure.sections.add("section4", "material1", 150e-4)
 
     # add nodes
-    structure.nodes.add('0', 0, 0, 0)
-    structure.nodes.add('1', 8, 0, 0)
-    structure.nodes.add('2', 4, 3, 0)
-    structure.nodes.add('3', 4, 0, 0)
+    structure.nodes.add('1', 0, 0, 0)
+    structure.nodes.add('2', 8, 0, 0)
+    structure.nodes.add('3', 4, 3, 0)
+    structure.nodes.add('4', 4, 0, 0)
 
     # add trusses
-    structure.trusses.add(0, 2, "section3")
+    structure.trusses.add('1', '1', '3', "section3")
     structure.trusses.add(0, 3, "section2")
     structure.trusses.add(2, 1, "section4")
     structure.trusses.add(3, 1, "section2")
