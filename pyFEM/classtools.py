@@ -26,12 +26,13 @@ class Collection:
 
     def add(self, obj):
         already_added = [obj == o for o in self.collection]
-        if any(already_added):
-            index = already_added.index(True)
+        if not any(already_added):
+            # index = already_added.index(True)
 
-            obj.label = self.collection[index].label
-            self.collection[index] = obj
-        else:
+            # obj.label = self.collection[index].label
+            # self.collection[index] = obj
+            # pass
+            # else:
             self.collection.append(obj)
 
     def _labels(self):
