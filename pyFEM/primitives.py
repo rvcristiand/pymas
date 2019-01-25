@@ -135,7 +135,7 @@ class LoadPatter(AttrDisplay):
         self.label = label
         self.point_loads = Collection()
 
-    def add_point_load(self, load, node):
+    def add_point_load(self, node, load):
         node = self.parent.nodes[node]
         self.point_loads.add(PointLoad(node, load))
 
