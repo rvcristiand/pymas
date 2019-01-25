@@ -141,23 +141,23 @@ if __name__ == '__main__':
 
     # add trusses
     structure.trusses.add('1', '1', '3', "section3")
-    structure.trusses.add(0, 3, "section2")
-    structure.trusses.add(2, 1, "section4")
-    structure.trusses.add(3, 1, "section2")
-    structure.trusses.add(3, 2, "section1")
+    structure.trusses.add('2', '1', '4', "section2")
+    structure.trusses.add('3', '3', '2', "section4")
+    structure.trusses.add('4', '4', '2', "section2")
+    structure.trusses.add('5', '4', '3', "section1")
 
     # add support
-    structure.supports.add(0, np.array([True, True, True]))
-    structure.supports.add(1, np.array([False, True, True]))
-    structure.supports.add(2, np.array([False, False, True]))
-    structure.supports.add(3, np.array([False, False, True]))
+    structure.supports.add('1', np.array([True, True, True]))
+    structure.supports.add('2', np.array([False, True, True]))
+    structure.supports.add('3', np.array([False, False, True]))
+    structure.supports.add('4', np.array([False, False, True]))
 
     # add load pattern
     structure.load_patterns.add("point loads")
 
     # add point loads
-    structure.load_patterns["point loads"].add_point_load(np.array([0, -20, 0]), 3)
-    structure.load_patterns["point loads"].add_point_load(5 * np.array([0.8, 0.6, 0]), 2)
+    structure.load_patterns["point loads"].add_point_load('4', np.array([0, -20, 0]))
+    structure.load_patterns["point loads"].add_point_load('3', 5 * np.array([0.8, 0.6, 0]))
 
     # solve the problem
     structure.solve()
