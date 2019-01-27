@@ -25,7 +25,7 @@ class Collection:
         self.collection = []
 
     def add(self, obj):
-        already_added = [obj == o for o in self.collection]
+        already_added = [obj == item for item in self.collection]
         if not any(already_added):
             # index = already_added.index(True)
 
