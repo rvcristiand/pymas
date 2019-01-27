@@ -39,7 +39,7 @@ class Node(AttrDisplay):
         self.degrees_freedom = u
 
     def __eq__(self, other):
-        return np.all(self.position == other.position)
+        return self.label == other.label or np.all(self.position == other.position)
 
 
 class Truss(AttrDisplay):
