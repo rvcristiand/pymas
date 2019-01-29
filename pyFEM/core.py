@@ -10,7 +10,10 @@ class Materials(Collection):
         self.parent = parent
 
     def add(self, label, modulus):
-        Collection.add(self, Material(label, modulus))
+        material = Material(label, modulus)
+        Collection.add(self, material)
+
+        return material
 
 
 class Sections(Collection):
@@ -19,7 +22,10 @@ class Sections(Collection):
         self.parent = parent
 
     def add(self, label, material, area):
-        Collection.add(self, Section(label, self.parent.materials[material], area))
+        section = Section(label, self.parent.materials[material], area)
+        Collection.add(self, section)
+
+        return section
 
 
 class Nodes(Collection):
@@ -28,7 +34,10 @@ class Nodes(Collection):
         self.parent = parent
 
     def add(self, label, x, y, z):
-        Collection.add(self, Node(label, x, y, z))
+        node = Node(label, x, y, z)
+        Collection.add(self, node)
+
+        return node
 
 
 class Trusses(Collection):
@@ -37,11 +46,10 @@ class Trusses(Collection):
         self.parent = parent
 
     def add(self, label, node_i, node_j, section):
-        node_i = self.parent.nodes[node_i]
-        node_j = self.parent.nodes[node_j]
-        section = self.parent.sections[section]
+        truss = Truss(label, self.parent.nodes[node_i], self.parent.nodes[node_j], self.parent.sections[section])
+        Collection.add(self, truss)
 
-        Collection.add(self, Truss(self.parent, label, node_i, node_j, section))
+        return truss
 
 
 class Supports(Collection):
@@ -50,9 +58,10 @@ class Supports(Collection):
         self.parent = parent
 
     def add(self, node, ux, uy, uz):
-        node = self.parent.nodes[node]
+        support = Support(self.parent.nodes[node], ux, uy, uz)
+        Collection.add(self, support)
 
-        Collection.add(self, Support(node, [ux, uy, uz]))
+        return support
 
 
 class LoadPatterns(Collection):
@@ -61,11 +70,14 @@ class LoadPatterns(Collection):
         self.parent = parent
 
     def add(self, label):
-        Collection.add(self, LoadPatter(self.parent, label))
+        load_pattern = LoadPattern(self.parent, label)
+        Collection.add(self, load_pattern)
+
+        return load_pattern
 
 
 class Structure:
-    number_degrees_freedom = 3  # number degrees freedom per node
+    number_degrees_freedom_per_node = 3
 
     def __init__(self):
         self.materials = Materials(self)
@@ -79,11 +91,11 @@ class Structure:
 
     def set_degrees_freedom(self):
         for i, node in enumerate(self.nodes):
-            node.set_degrees_freedom(np.arange(self.number_degrees_freedom * i,
-                                               self.number_degrees_freedom * (i + 1)))
+            node.set_degrees_freedom(np.arange(self.number_degrees_freedom_per_node * i,
+                                               self.number_degrees_freedom_per_node * (i + 1)))
 
     def get_k(self):
-        k = np.zeros(2 * (self.number_degrees_freedom * len(self.nodes),))
+        k = np.zeros(2 * (self.number_degrees_freedom_per_node * len(self.nodes),))
 
         for truss in self.trusses:
             degrees_freedom = np.append(truss.node_i.degrees_freedom,
