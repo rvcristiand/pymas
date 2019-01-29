@@ -49,10 +49,10 @@ class Supports(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, node, restrains):
+    def add(self, node, ux, uy, uz):
         node = self.parent.nodes[node]
 
-        Collection.add(self, Support(node, restrains))
+        Collection.add(self, Support(node, [ux, uy, uz]))
 
 
 class LoadPatterns(Collection):
