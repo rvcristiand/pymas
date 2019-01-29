@@ -117,12 +117,11 @@ class Truss(AttrDisplay):
 
 class Support(AttrDisplay):
     def __init__(self, node, restrains):
-        self.label = node.label
         self.node = node
         self.restrains = restrains
 
     def __eq__(self, other):
-        return self.label == other.label
+        return self.node == other.node
 
 
 class PointLoad(AttrDisplay):
