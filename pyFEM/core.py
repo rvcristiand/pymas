@@ -1,5 +1,3 @@
-# import numpy as np
-
 from pyFEM.primitives import *
 from pyFEM.classtools import Collection
 
@@ -101,14 +99,14 @@ class Structure:
             degrees_freedom = np.append(truss.node_i.degrees_freedom,
                                         truss.node_j.degrees_freedom)
 
-            for i, row in enumerate(truss.get_k()):
+            for i, row in enumerate(truss.get_global_stiff_matrix()):
                 for j, item in enumerate(row):
                     k[degrees_freedom[i], degrees_freedom[j]] += item
 
         return k
 
     def solve(self):
-        self.set_degrees_freedom()
+        self.set_degrees_freedom()  # Cambiar !!!
 
         k = self.get_k()
 
@@ -159,24 +157,24 @@ if __name__ == '__main__':
     structure.trusses.add('5', '4', '3', "section1")
 
     # add support
-    structure.supports.add('1', np.array([True, True, True]))
-    structure.supports.add('2', np.array([False, True, True]))
-    structure.supports.add('3', np.array([False, False, True]))
-    structure.supports.add('4', np.array([False, False, True]))
+    structure.supports.add('1', True, True, True)
+    structure.supports.add('2', False, True, True)
+    structure.supports.add('3', False, False, True)
+    structure.supports.add('4', False, False, True)
 
     # add load pattern
     structure.load_patterns.add("point loads")
 
     # add point loads
-    structure.load_patterns["point loads"].add_point_load('4', np.array([0, -20, 0]))
-    structure.load_patterns["point loads"].add_point_load('3', 5 * np.array([0.8, 0.6, 0]))
+    structure.load_patterns["point loads"].add_point_load('4', 0, -20, 0)
+    structure.load_patterns["point loads"].add_point_load('3', 5 * 0.8, 5 * 0.6, 0)
 
     # solve the problem
     structure.solve()
 
     # print
-    # print("list of sections"), print(structure.sections, end='\n\n')
     # print("list of materials"), print(structure.materials, end='\n\n')
+    # print("list of sections"), print(structure.sections, end='\n\n')
     # print("list of nodes"), print(structure.nodes, end='\n\n')
     # print("list of trusses"), print(structure.trusses, end='\n\n')
     # print("list of supports"), print(structure.supports, end='\n\n')

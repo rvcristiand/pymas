@@ -53,7 +53,7 @@ class Truss(AttrDisplay):
         self.section = section
 
     def get_local_vector(self):
-        vector = self.node_j.position - self.node_i.position
+        vector = self.node_j.coordinate - self.node_i.coordinate
 
         return vector / linalg.norm(vector)
 
@@ -109,7 +109,7 @@ class Truss(AttrDisplay):
         return self.section.A
 
     def get_length(self):
-        return distance.euclidean(self.node_i.position, self.node_j.position)
+        return distance.euclidean(self.node_i.coordinate, self.node_j.coordinate)
 
     def __eq__(self, other):
         return self.label == other.label or (self.node_i == other.node_i and self.node_j == other.node_j)
@@ -138,7 +138,7 @@ class LoadPattern(AttrDisplay):
         return point_load
 
     def get_f(self):
-        f = np.zeros((self.parent.number_degrees_freedom * len(self.parent.nodes), 1))
+        f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
 
         for point_load in self.point_loads:
             degrees_freedom = point_load.node.degrees_freedom
