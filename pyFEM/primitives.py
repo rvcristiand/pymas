@@ -30,16 +30,16 @@ class Section(AttrDisplay):
 class Node(AttrDisplay):
     def __init__(self, label, x, y, z):
         self.label = label
-        self.position = np.array([x, y, z])
+        self.coordinate = np.array([x, y, z])
 
-        self.degrees_freedom = None
-        self.displacements = Displacements()
+        self.degrees_freedom = None  # Cambiar !!!
+        # self.displacements = Displacements()
 
     def set_degrees_freedom(self, u):
         self.degrees_freedom = u
 
     def __eq__(self, other):
-        return self.label == other.label or np.all(self.position == other.position)
+        return self.label == other.label or np.all(self.coordinate == other.coordinate)
 
 
 class Truss(AttrDisplay):
@@ -116,33 +116,26 @@ class Truss(AttrDisplay):
 
 
 class Support(AttrDisplay):
-    def __init__(self, node, restrains):
+    def __init__(self, node, ux, uy, uz):
         self.node = node
-        self.restrains = restrains
+        self.restrains = np.array([ux, uy, uz])
 
     def __eq__(self, other):
         return self.node == other.node
 
 
-class PointLoad(AttrDisplay):
-    def __init__(self, node, load):
-        self.node = node
-        self.load = load
-
-    def __eq__(self, other):
-        return False
-
-
-class LoadPatter(AttrDisplay):
+class LoadPattern(AttrDisplay):
     def __init__(self, parent, label):
         self.parent = parent
 
         self.label = label
         self.point_loads = Collection()
 
-    def add_point_load(self, node, load):
-        node = self.parent.nodes[node]
-        self.point_loads.add(PointLoad(node, load))
+    def add_point_load(self, node, fx, fy, fz):
+        point_load = PointLoad(self.parent.nodes[node], fx, fy, fz)
+        self.point_loads.add(point_load)
+
+        return point_load
 
     def get_f(self):
         f = np.zeros((self.parent.number_degrees_freedom * len(self.parent.nodes), 1))
@@ -154,6 +147,18 @@ class LoadPatter(AttrDisplay):
                 f[degrees_freedom[i], 0] += item
 
         return f
+
+    def __eq__(self, other):
+        return self.label == other.label
+
+
+class PointLoad(AttrDisplay):
+    def __init__(self, node, fx, fy, fz):
+        self.node = node
+        self.load = np.array([fx, fy, fz])
+
+    def __eq__(self, other):
+        return False
 
 
 class Displacement(AttrDisplay):
