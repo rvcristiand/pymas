@@ -27,12 +27,6 @@ class Collection:
     def add(self, obj):
         already_added = [obj == item for item in self.collection]
         if not any(already_added):
-            # index = already_added.index(True)
-
-            # obj.label = self.collection[index].label
-            # self.collection[index] = obj
-            # pass
-            # else:
             self.collection.append(obj)
 
     def _labels(self):
@@ -44,9 +38,6 @@ class Collection:
     def __iter__(self):
         for x in self.collection:
             yield x
-
-    # def __contains__(self, item):
-    #     return item in self._labels()
 
     def __len__(self):
         return len(self.collection)
