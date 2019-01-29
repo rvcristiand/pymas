@@ -22,6 +22,7 @@ class AttrDisplay:
 
 class Collection:
     def __init__(self):
+        # obligar a los elementos de la colección a tener un atributo llamado label
         self.collection = []
 
     def add(self, obj):
