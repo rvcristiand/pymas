@@ -33,7 +33,7 @@ class Node(AttrDisplay):
         self.coordinate = np.array([x, y, z])
 
         self.degrees_freedom = None  # Cambiar !!!
-        # self.displacements = Displacements()
+        self.displacements = Displacements()  # Cambiar !!!
 
     def set_degrees_freedom(self, u):
         self.degrees_freedom = u
@@ -117,6 +117,7 @@ class Truss(AttrDisplay):
 
 class Support(AttrDisplay):
     def __init__(self, node, ux, uy, uz):
+        self.label = node.label
         self.node = node
         self.restrains = np.array([ux, uy, uz])
 
@@ -124,18 +125,28 @@ class Support(AttrDisplay):
         return self.node == other.node
 
 
+class PointLoad(AttrDisplay):
+    def __init__(self, node, fx, fy, fz):
+        self.label = node.label
+        self.node = node
+        self.load = np.array([fx, fy, fz])
+
+    def __eq__(self, other):
+        return self.node == other.node
+
+
+class Displacement(AttrDisplay):
+    def __init__(self, load_pattern, ux, uy, uz):
+        self.label = load_pattern.label
+        # self.load_pattern = load_pattern
+        self.displacement = np.array([ux, uy, uz])
+
+
 class LoadPattern(AttrDisplay):
-    def __init__(self, parent, label):
-        self.parent = parent
-
+    def __init__(self, label, parent):
         self.label = label
-        self.point_loads = Collection()
-
-    def add_point_load(self, node, fx, fy, fz):
-        point_load = PointLoad(self.parent.nodes[node], fx, fy, fz)
-        self.point_loads.add(point_load)
-
-        return point_load
+        self.parent = parent
+        self.point_loads = PointLoads(self.parent)
 
     def get_f(self):
         f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
@@ -152,27 +163,27 @@ class LoadPattern(AttrDisplay):
         return self.label == other.label
 
 
-class PointLoad(AttrDisplay):
-    def __init__(self, node, fx, fy, fz):
-        self.node = node
-        self.load = np.array([fx, fy, fz])
+class PointLoads(Collection):
+    def __init__(self, parent):
+        Collection.__init__(self)
+        self.parent = parent
 
-    def __eq__(self, other):
-        return False
+    def add(self, node, fx, fy, fz):
+        point_load = PointLoad(self.parent.nodes[node], fx, fy, fz)
+        Collection.add(self, point_load)
 
-
-class Displacement(AttrDisplay):
-    def __init__(self, load_pattern, displacement):
-        self.load_patter = load_pattern
-        self.displacement = displacement
+        return point_load
 
 
 class Displacements(Collection):
     def __init__(self):
         Collection.__init__(self)
 
-    def add(self, load_pattern, displacement):
-        Collection.add(self, Displacement(load_pattern, displacement))
+    def add(self, load_pattern, ux, uy, uz):
+        displacement = Displacement(load_pattern, ux, uy, uz)
+        Collection.add(self, displacement)
+
+        return displacement
 
 
 if __name__ == "__main__":
