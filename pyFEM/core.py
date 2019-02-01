@@ -114,10 +114,10 @@ class Structure:
             k_load_pattern = k
             f = load_pattern.get_f()
 
-            for support in self.supports:
-                degrees_freedom = support.node.degrees_freedom
+            for _support in self.supports:
+                degrees_freedom = _support.node.degrees_freedom
 
-                for i, item in enumerate(support.restrains):
+                for i, item in enumerate(_support.restrains):
                     if item:
                         f[degrees_freedom[i], 0] = 0
                         k_load_pattern[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
@@ -126,10 +126,19 @@ class Structure:
 
             u = np.linalg.solve(k_load_pattern, f)
 
-            for node in self.nodes:
-                degrees_freedom = node.degrees_freedom
+            print("u", u, sep='\n')
 
-                node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
+            f = np.dot(k, u)
+
+            print("f", f, sep='\n')
+
+            for _node in self.nodes:
+                degrees_freedom = _node.degrees_freedom
+                _node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
+
+            for _support in self.supports:
+                degrees_freedom = _support.node.degrees_freedom
+                _support.reactions.add(load_pattern, *f[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
     def __repr__(self):
         return self.__class__.__name__
@@ -177,19 +186,22 @@ if __name__ == '__main__':
     # solve the problem
     structure.solve()
 
-    # for node in structure.nodes:
-    #     print("node {}".format(node.label))
-    #     for displacement in node.displacements:
-    #         print(displacement)
+    for node in structure.nodes:
+        print("node {}".format(node.label))
+        for displacement in node.displacements:
+            print(displacement)
 
-    # for support in structure.supports:
-    #     print("support {}".format(support.label))
-    #     for
+    print()
 
-    print(structure.materials, end='\n\n')
-    print(structure.sections, end='\n\n')
-    print(structure.nodes, end='\n\n')
-    print(structure.trusses, end='\n\n')
-    print(structure.supports, end='\n\n')
-    print(structure.load_patterns, end='\n\n')
+    for support in structure.supports:
+        print("support {}".format(support.label))
+        for reaction in support.reactions:
+            print(reaction)
+
+    # print(structure.materials, end='\n\n')
+    # print(structure.sections, end='\n\n')
+    # print(structure.nodes, end='\n\n')
+    # print(structure.trusses, end='\n\n')
+    # print(structure.supports, end='\n\n')
+    # print(structure.load_patterns, end='\n\n')
 
