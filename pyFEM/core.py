@@ -68,7 +68,7 @@ class LoadPatterns(Collection):
         self.parent = parent
 
     def add(self, label):
-        load_pattern = LoadPattern(self.parent, label)
+        load_pattern = LoadPattern(label, self.parent)
         Collection.add(self, load_pattern)
 
         return load_pattern
@@ -124,7 +124,12 @@ class Structure:
                         k_load_pattern[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
                         k_load_pattern[degrees_freedom[i], degrees_freedom[i]] = 1
 
-            print(np.linalg.solve(k_load_pattern, f))
+            u = np.linalg.solve(k_load_pattern, f)
+
+            for node in self.nodes:
+                degrees_freedom = node.degrees_freedom
+
+                node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
     def __repr__(self):
         return self.__class__.__name__
@@ -166,16 +171,25 @@ if __name__ == '__main__':
     structure.load_patterns.add("point loads")
 
     # add point loads
-    structure.load_patterns["point loads"].add_point_load('4', 0, -20, 0)
-    structure.load_patterns["point loads"].add_point_load('3', 5 * 0.8, 5 * 0.6, 0)
+    structure.load_patterns["point loads"].point_loads.add('4', 0, -20, 0)
+    structure.load_patterns["point loads"].point_loads.add('3', 5 * 0.8, 5 * 0.6, 0)
 
     # solve the problem
     structure.solve()
 
-    # print
-    # print("list of materials"), print(structure.materials, end='\n\n')
-    # print("list of sections"), print(structure.sections, end='\n\n')
-    # print("list of nodes"), print(structure.nodes, end='\n\n')
-    # print("list of trusses"), print(structure.trusses, end='\n\n')
-    # print("list of supports"), print(structure.supports, end='\n\n')
-    # print("list of load patterns"), print(structure.load_patterns, end='\n\n')
+    # for node in structure.nodes:
+    #     print("node {}".format(node.label))
+    #     for displacement in node.displacements:
+    #         print(displacement)
+
+    # for support in structure.supports:
+    #     print("support {}".format(support.label))
+    #     for
+
+    print(structure.materials, end='\n\n')
+    print(structure.sections, end='\n\n')
+    print(structure.nodes, end='\n\n')
+    print(structure.trusses, end='\n\n')
+    print(structure.supports, end='\n\n')
+    print(structure.load_patterns, end='\n\n')
+
