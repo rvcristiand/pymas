@@ -121,6 +121,8 @@ class Support(AttrDisplay):
         self.node = node
         self.restrains = np.array([ux, uy, uz])
 
+        self.reactions = Reactions()
+
     def __eq__(self, other):
         return self.node == other.node
 
@@ -140,6 +142,13 @@ class Displacement(AttrDisplay):
         self.label = load_pattern.label
         # self.load_pattern = load_pattern
         self.displacement = np.array([ux, uy, uz])
+
+
+class Reaction(AttrDisplay):
+    def __init__(self, load_pattern, fx, fy, fz):
+        self.label = load_pattern.label
+        # self.load_pattern = load_pattern
+        self.reaction = np.array([fx, fy, fz])
 
 
 class LoadPattern(AttrDisplay):
@@ -184,6 +193,17 @@ class Displacements(Collection):
         Collection.add(self, displacement)
 
         return displacement
+
+
+class Reactions(Collection):
+    def __init__(self):
+        Collection.__init__(self)
+
+    def add(self, load_pattern, fx, fy, fz):
+        reaction = Reaction(load_pattern, fx, fy, fz)
+        Collection.add(self, reaction)
+
+        return reaction
 
 
 if __name__ == "__main__":
