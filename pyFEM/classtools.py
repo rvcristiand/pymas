@@ -13,9 +13,7 @@ class AttrDisplay:
     def gather_attrs(self):
         attrs = []
         for key in sorted(self.__dict__):
-            if key == 'parent':
-                attrs.append('[%s]' % key)
-            else:
+            if key != 'parent':
                 attrs.append('%s=%s' % (key, getattr(self, key)))
         return ', '.join(attrs)
 
