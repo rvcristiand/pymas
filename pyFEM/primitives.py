@@ -145,10 +145,10 @@ class Displacement(AttrDisplay):
 
 
 class Reaction(AttrDisplay):
-    def __init__(self, load_pattern, fx, fy, fz):
+    def __init__(self, load_pattern, reactions):
         self.label = load_pattern.label
         # self.load_pattern = load_pattern
-        self.reaction = np.array([fx, fy, fz])
+        self.reaction = np.array(reactions)
 
 
 class LoadPattern(AttrDisplay):
@@ -199,8 +199,8 @@ class Reactions(Collection):
     def __init__(self):
         Collection.__init__(self)
 
-    def add(self, load_pattern, fx, fy, fz):
-        reaction = Reaction(load_pattern, fx, fy, fz)
+    def add(self, load_pattern, reactions):
+        reaction = Reaction(load_pattern, reactions)
         Collection.add(self, reaction)
 
         return reaction
