@@ -109,15 +109,16 @@ class Structure:
         self.set_degrees_freedom()  # Cambiar !!!
 
         k = self.get_k()
+        k_support = np.copy(k)
 
         for _support in self.supports:
             degrees_freedom = _support.node.degrees_freedom
 
             for i, item in enumerate(_support.restrains):
                 if item:
-                    k[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                    k[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                    k[degrees_freedom[i], degrees_freedom[i]] = 1
+                    k_support[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                    k_support[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                    k_support[degrees_freedom[i], degrees_freedom[i]] = 1
 
         for load_pattern in self.load_patterns:
             f = load_pattern.get_f()
@@ -129,21 +130,17 @@ class Structure:
                     if item:
                         f[degrees_freedom[i], 0] = 0
 
-            u = np.linalg.solve(k, f)
-
-            print("u", u, sep='\n')
-
+            u = np.linalg.solve(k_support, f)
             f = np.dot(k, u)
-
-            print("f", f, sep='\n')
 
             for _node in self.nodes:
                 degrees_freedom = _node.degrees_freedom
                 _node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
             for _support in self.supports:
-                degrees_freedom = _support.node.degrees_freedom
-                _support.reactions.add(load_pattern, *f[[degree_freedom for degree_freedom in degrees_freedom], 0])
+                degrees_freedom = [degree_freedom for i, degree_freedom in enumerate(_support.node.degrees_freedom)
+                                   if _support.restrains[i]]
+                _support.reactions.add(load_pattern, f[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
     def __repr__(self):
         return self.__class__.__name__
