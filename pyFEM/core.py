@@ -114,9 +114,10 @@ class Structure:
             degrees_freedom = _support.node.degrees_freedom
 
             for i, item in enumerate(_support.restrains):
-                k[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                k[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                k[degrees_freedom[i], degrees_freedom[i]] = 1
+                if item:
+                    k[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                    k[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                    k[degrees_freedom[i], degrees_freedom[i]] = 1
 
         for load_pattern in self.load_patterns:
             f = load_pattern.get_f()
