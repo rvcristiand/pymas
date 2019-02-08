@@ -147,63 +147,140 @@ class Structure:
 
 
 if __name__ == '__main__':
-    # structure
-    structure = Structure()
+    def example_1():
+        """Solution to problem 7.1 from 'Microcomputadores en Ingeniería Estructural'"""
+        # structure
+        structure = Structure()
 
-    # add material
-    structure.materials.add("material1", 2040e4)
+        # add material
+        structure.materials.add("material1", 2040e4)
 
-    # add sections
-    structure.sections.add("section1", "material1", 30e-4)
-    structure.sections.add("section2", "material1", 40e-4)
-    structure.sections.add("section3", "material1", 100e-4)
-    structure.sections.add("section4", "material1", 150e-4)
+        # add sections
+        structure.sections.add("section1", "material1", 30e-4)
+        structure.sections.add("section2", "material1", 40e-4)
+        structure.sections.add("section3", "material1", 100e-4)
+        structure.sections.add("section4", "material1", 150e-4)
 
-    # add nodes
-    structure.nodes.add('1', 0, 0, 0)
-    structure.nodes.add('2', 8, 0, 0)
-    structure.nodes.add('3', 4, 3, 0)
-    structure.nodes.add('4', 4, 0, 0)
+        # add nodes
+        structure.nodes.add('1', 0, 0, 0)
+        structure.nodes.add('2', 8, 0, 0)
+        structure.nodes.add('3', 4, 3, 0)
+        structure.nodes.add('4', 4, 0, 0)
 
-    # add trusses
-    structure.trusses.add('1', '1', '3', "section3")
-    structure.trusses.add('2', '1', '4', "section2")
-    structure.trusses.add('3', '3', '2', "section4")
-    structure.trusses.add('4', '4', '2', "section2")
-    structure.trusses.add('5', '4', '3', "section1")
+        # add trusses
+        structure.trusses.add('1', '1', '3', "section3")
+        structure.trusses.add('2', '1', '4', "section2")
+        structure.trusses.add('3', '3', '2', "section4")
+        structure.trusses.add('4', '4', '2', "section2")
+        structure.trusses.add('5', '4', '3', "section1")
 
-    # add support
-    structure.supports.add('1', True, True, True)
-    structure.supports.add('2', False, True, True)
-    structure.supports.add('3', False, False, True)
-    structure.supports.add('4', False, False, True)
+        # add support
+        structure.supports.add('1', True, True, True)
+        structure.supports.add('2', False, True, True)
+        structure.supports.add('3', False, False, True)
+        structure.supports.add('4', False, False, True)
 
-    # add load pattern
-    structure.load_patterns.add("point loads")
+        # add load pattern
+        structure.load_patterns.add("point loads")
 
-    # add point loads
-    structure.load_patterns["point loads"].point_loads.add('4', 0, -20, 0)
-    structure.load_patterns["point loads"].point_loads.add('3', 5 * 0.8, 5 * 0.6, 0)
+        # add point loads
+        structure.load_patterns["point loads"].point_loads.add('4', 0, -20, 0)
+        structure.load_patterns["point loads"].point_loads.add('3', 5 * 0.8, 5 * 0.6, 0)
 
-    # solve the problem
-    structure.solve()
+        # solve the problem
+        structure.solve()
 
-    for node in structure.nodes:
-        print("node {}".format(node.label))
-        for displacement in node.displacements:
-            print(displacement)
+        for node in structure.nodes:
+            print("node {}".format(node.label))
+            for displacement in node.displacements:
+                print(displacement)
 
-    print()
+        print()
 
-    for support in structure.supports:
-        print("support {}".format(support.label))
-        for reaction in support.reactions:
-            print(reaction)
+        for support in structure.supports:
+            print("support {}".format(support.label))
+            for reaction in support.reactions:
+                print(reaction)
 
-    # print(structure.materials, end='\n\n')
-    # print(structure.sections, end='\n\n')
-    # print(structure.nodes, end='\n\n')
-    # print(structure.trusses, end='\n\n')
-    # print(structure.supports, end='\n\n')
-    # print(structure.load_patterns, end='\n\n')
+        print()
 
+        for truss in structure.trusses:
+            print("truss {}".format(truss.label))
+            for load_pattern in structure.load_patterns:
+                print("load pattern: {}".format(load_pattern.label))
+                print(truss.get_forces(load_pattern.label))
+
+    def example_2():
+        """Solution to problem 7.2 from 'Micromputadores en Ingeniería Estructural'"""
+        # structure
+        structure = Structure()
+
+        # add material
+        structure.materials.add("2100 t/cm2", 2100e4)
+
+        # add sections
+        structure.sections.add("10 cm2", "2100 t/cm2", 10e-4)
+        structure.sections.add("20 cm2", "2100 t/cm2", 20e-4)
+        structure.sections.add("40 cm2", "2100 t/cm2", 40e-4)
+        structure.sections.add("50 cm2", "2100 t/cm2", 50e-4)
+
+        # add nodes
+        structure.nodes.add('1', 2.25, 6, 4.8)
+        structure.nodes.add('2', 3.75, 6, 2.4)
+        structure.nodes.add('3', 5.25, 6, 4.8)
+        structure.nodes.add('4', 0.00, 0, 6.0)
+        structure.nodes.add('5', 3.75, 0, 0.0)
+        structure.nodes.add('6', 7.50, 0, 6.0)
+
+        # add trusses
+        structure.trusses.add('1-2', '1', '2', '20 cm2')
+        structure.trusses.add('1-3', '1', '3', '20 cm2')
+        structure.trusses.add('1-4', '1', '4', '40 cm2')
+        structure.trusses.add('1-6', '1', '6', '50 cm2')
+        structure.trusses.add('2-3', '2', '3', '20 cm2')
+        structure.trusses.add('2-4', '2', '4', '50 cm2')
+        structure.trusses.add('2-5', '2', '5', '40 cm2')
+        structure.trusses.add('3-5', '3', '5', '50 cm2')
+        structure.trusses.add('3-6', '3', '6', '40 cm2')
+        structure.trusses.add('4-5', '4', '5', '10 cm2')
+        structure.trusses.add('4-6', '4', '6', '10 cm2')
+        structure.trusses.add('5-6', '5', '6', '10 cm2')
+
+        # add supports
+        structure.supports.add('4', True, True, True)
+        structure.supports.add('5', True, True, True)
+        structure.supports.add('6', True, True, True)
+
+        # add load pattern
+        structure.load_patterns.add("point loads")
+
+        # add point loads
+        structure.load_patterns["point loads"].point_loads.add('1', 10, 15, -12)
+        structure.load_patterns["point loads"].point_loads.add('2',  5, -3, -10)
+        structure.load_patterns["point loads"].point_loads.add('3', -4, -2,  -6)
+
+        # solve
+        structure.solve()
+
+        for node in structure.nodes:
+            print("node {}".format(node.label))
+            for displacement in node.displacements:
+                print(displacement)
+
+        print()
+
+        for support in structure.supports:
+            print("support {}".format(support.label))
+            for reaction in support.reactions:
+                print(reaction)
+
+        print()
+
+        for truss in structure.trusses:
+            print("truss {}".format(truss.label))
+            for load_pattern in structure.load_patterns:
+                print("load pattern: {}".format(load_pattern.label))
+                print(truss.get_forces(load_pattern.label))
+
+    # example_1()
+    # example_2()
