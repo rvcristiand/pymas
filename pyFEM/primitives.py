@@ -111,6 +111,12 @@ class Truss(AttrDisplay):
     def get_length(self):
         return distance.euclidean(self.node_i.coordinate, self.node_j.coordinate)
 
+    def get_forces(self, load_pattern):
+        displacements = np.append(self.node_i.displacements[load_pattern].displacement,
+                                  self.node_j.displacements[load_pattern].displacement).reshape(-1, 1)
+        return -np.dot(np.linalg.inv(self.get_matrix_transformation()), np.dot(self.get_global_stiff_matrix(),
+                                                                               displacements))[0, 0]
+
     def __eq__(self, other):
         return self.label == other.label or (self.node_i == other.node_i and self.node_j == other.node_j)
 
