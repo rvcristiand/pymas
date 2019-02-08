@@ -110,8 +110,15 @@ class Structure:
 
         k = self.get_k()
 
+        for _support in self.supports:
+            degrees_freedom = _support.node.degrees_freedom
+
+            for i, item in enumerate(_support.restrains):
+                k[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                k[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
+                k[degrees_freedom[i], degrees_freedom[i]] = 1
+
         for load_pattern in self.load_patterns:
-            k_load_pattern = k
             f = load_pattern.get_f()
 
             for _support in self.supports:
@@ -120,11 +127,8 @@ class Structure:
                 for i, item in enumerate(_support.restrains):
                     if item:
                         f[degrees_freedom[i], 0] = 0
-                        k_load_pattern[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                        k_load_pattern[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
-                        k_load_pattern[degrees_freedom[i], degrees_freedom[i]] = 1
 
-            u = np.linalg.solve(k_load_pattern, f)
+            u = np.linalg.solve(k, f)
 
             print("u", u, sep='\n')
 
