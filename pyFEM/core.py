@@ -168,11 +168,11 @@ if __name__ == '__main__':
         structure.nodes.add('4', 4, 0, 0)
 
         # add trusses
-        structure.trusses.add('1', '1', '3', "section3")
-        structure.trusses.add('2', '1', '4', "section2")
-        structure.trusses.add('3', '3', '2', "section4")
-        structure.trusses.add('4', '4', '2', "section2")
-        structure.trusses.add('5', '4', '3', "section1")
+        structure.trusses.add('1-3', '1', '3', "section3")
+        structure.trusses.add('1-4', '1', '4', "section2")
+        structure.trusses.add('3-2', '3', '2', "section4")
+        structure.trusses.add('4-2', '4', '2', "section2")
+        structure.trusses.add('4-3', '4', '3', "section1")
 
         # add support
         structure.supports.add('1', True, True, True)
