@@ -8,10 +8,10 @@ class Materials(Collection):
         self.parent = parent
 
     def add(self, label, modulus):
-        _material = Material(label, modulus)
-        Collection.add(self, _material)
+        material = Material(label, modulus)
+        Collection.add(self, material)
 
-        return _material
+        return material
 
 
 class Sections(Collection):
@@ -20,10 +20,10 @@ class Sections(Collection):
         self.parent = parent
 
     def add(self, label, material, area):
-        _section = Section(label, self.parent.materials[material], area)
-        Collection.add(self, _section)
+        section = Section(label, self.parent.materials[material], area)
+        Collection.add(self, section)
 
-        return _section
+        return section
 
 
 class Nodes(Collection):
@@ -32,10 +32,10 @@ class Nodes(Collection):
         self.parent = parent
 
     def add(self, label, x, y, z):
-        _node = Node(label, x, y, z)
-        Collection.add(self, _node)
+        node = Node(label, x, y, z)
+        Collection.add(self, node)
 
-        return _node
+        return node
 
 
 class Trusses(Collection):
@@ -44,10 +44,10 @@ class Trusses(Collection):
         self.parent = parent
 
     def add(self, label, node_i, node_j, section):
-        _truss = Truss(label, self.parent.nodes[node_i], self.parent.nodes[node_j], self.parent.sections[section])
-        Collection.add(self, _truss)
+        truss = Truss(label, self.parent.nodes[node_i], self.parent.nodes[node_j], self.parent.sections[section])
+        Collection.add(self, truss)
 
-        return _truss
+        return truss
 
 
 class Supports(Collection):
@@ -56,10 +56,10 @@ class Supports(Collection):
         self.parent = parent
 
     def add(self, node, ux, uy, uz):
-        _support = Support(self.parent.nodes[node], ux, uy, uz)
-        Collection.add(self, _support)
+        support = Support(self.parent.nodes[node], ux, uy, uz)
+        Collection.add(self, support)
 
-        return _support
+        return support
 
 
 class LoadPatterns(Collection):
@@ -68,10 +68,10 @@ class LoadPatterns(Collection):
         self.parent = parent
 
     def add(self, label):
-        _load_pattern = LoadPattern(label, self.parent)
-        Collection.add(self, _load_pattern)
+        load_pattern = LoadPattern(label, self.parent)
+        Collection.add(self, load_pattern)
 
-        return _load_pattern
+        return load_pattern
 
 
 class Structure:
