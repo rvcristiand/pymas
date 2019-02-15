@@ -9,19 +9,23 @@ from pyFEM.classtools import AttrDisplay, Collection
 
 
 class Material(AttrDisplay):
-    def __init__(self, label, modulus):
+    def __init__(self, label, modulus_elasticity, modulus_elasticity_shear):
         self.label = label
-        self.E = modulus
+        self.E = modulus_elasticity
+        self.G = modulus_elasticity_shear
 
     def __eq__(self, other):
         return self.label == other.label
 
 
 class Section(AttrDisplay):
-    def __init__(self, label, material, area):
+    def __init__(self, label, material, area, moment_inertia_y, moment_inertia_z, torsion_constant):
         self.label = label
         self.material = material
         self.A = area
+        self.Iy = moment_inertia_y
+        self.Iz = moment_inertia_z
+        self.J = torsion_constant
 
     def __eq__(self, other):
         return self.label == other.label
@@ -43,6 +47,7 @@ class Node(AttrDisplay):
 
 
 class Truss(AttrDisplay):
+    number_dimensions = 3
     number_nodes = 2
     number_degrees_freedom_per_node = 3
 
@@ -75,12 +80,12 @@ class Truss(AttrDisplay):
             return Rotation.from_quat([x * np.sin(theta/2) for x in w] + [np.cos(theta/2)])
 
     def get_matrix_transformation(self):
-        _t = self.get_orientation().as_dcm()
+        t0 = self.get_orientation().as_dcm()
         t = np.zeros(2 * (self.number_nodes * self.number_degrees_freedom_per_node,))
 
-        for i in range(self.number_nodes):
-            t[i*self.number_degrees_freedom_per_node:(i + 1) * self.number_degrees_freedom_per_node,
-              i*self.number_degrees_freedom_per_node:(i + 1) * self.number_degrees_freedom_per_node] = _t
+        for i in range(int(self.number_degrees_freedom_per_node * self.number_nodes / self.number_dimensions)):
+            t[i * self.number_dimensions:(i + 1) * self.number_dimensions,
+              i * self.number_dimensions:(i + 1) * self.number_dimensions] = t0
 
         return t
 
@@ -119,6 +124,78 @@ class Truss(AttrDisplay):
 
     def __eq__(self, other):
         return self.label == other.label or (self.node_i == other.node_i and self.node_j == other.node_j)
+
+
+class Frame(Truss):
+    number_degrees_freedom_per_node = 6
+
+    def __init__(self, label, node_i, node_j, section):
+        Truss.__init__(self, label, node_i, node_j, section)
+
+    def get_matrix_transformation(self):
+        return Truss.get_matrix_transformation(self)
+
+    def get_local_stiff_matrix(self):
+        e = self.section.material.E
+        g = self.section.material.G
+
+        a = self.section.A
+        iy = self.section.Iy
+        iz = self.section.Iz
+        j = self.section.J
+
+        length = self.get_length()
+
+        el = e / length
+        el2 = e / length ** 2
+        el3 = e / length ** 3
+
+        gl = g / length
+
+        ael = a * el
+        gjl = j * gl
+
+        e_iy_l = iy * el
+        e_iz_l = iz * el
+
+        e_iy_l2 = 6 * iy * el2
+        e_iz_l2 = 6 * iz * el2
+
+        e_iy_l3 = 12 * iy * el3
+        e_iz_l3 = 12 * iz * el3
+
+        k = np.zeros(2 * (self.number_nodes * self.number_degrees_freedom_per_node, ))
+
+        # AE / L
+        k[0, 0] = k[6, 6] = ael
+        k[0, 6] = k[6, 0] = -ael
+
+        # GJ / L
+        k[3, 3] = k[9, 9] = gjl
+        k[3, 9] = k[9, 3] = -gjl
+
+        # 12EI / L^3
+        k[1, 1] = k[7, 7] = e_iy_l3
+        k[1, 7] = k[7, 1] = -e_iy_l3
+
+        k[2, 2] = k[8, 8] = e_iz_l3
+        k[2, 8] = k[8, 2] = -e_iz_l3
+
+        # 6EI / L^2
+        k[1, 5] = k[5, 1] = k[1, 11] = k[11, 1] = e_iy_l2
+        k[5, 7] = k[7, 5] = k[7, 11] = k[11, 7] = -e_iy_l2
+
+        k[2, 4] = k[4, 2] = k[2, 10] = k[10, 2] = -e_iz_l2
+        k[4, 8] = k[8, 4] = k[8, 10] = k[10, 8] = e_iy_l2
+
+        # 4EI / L
+        k[4, 4] = k[10, 10] = 4 * e_iz_l
+        k[5, 5] = k[11, 11] = 4 * e_iy_l
+
+        k[10, 4] = k[10, 4] = 2 * e_iz_l
+        k[11, 5] = k[5, 11] = 2 * e_iy_l
+
+        return k
 
 
 class Support(AttrDisplay):

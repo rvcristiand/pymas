@@ -7,8 +7,8 @@ class Materials(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, label, modulus):
-        material = Material(label, modulus)
+    def add(self, label, modulus_elasticity, modulus_elasticity_shear):
+        material = Material(label, modulus_elasticity, modulus_elasticity_shear)
         Collection.add(self, material)
 
         return material
@@ -19,8 +19,8 @@ class Sections(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, label, material, area):
-        section = Section(label, self.parent.materials[material], area)
+    def add(self, label, material, area, moment_inertia_y, moment_inertia_z, torsion_constant):
+        section = Section(label, self.parent.materials[material], moment_inertia_y, moment_inertia_z, torsion_constant)
         Collection.add(self, section)
 
         return section
@@ -76,6 +76,7 @@ class LoadPatterns(Collection):
 
 class Structure:
     number_degrees_freedom_per_node = 3
+    number_dimensions = 3
 
     def __init__(self):
         self.materials = Materials(self)
@@ -282,5 +283,22 @@ if __name__ == '__main__':
                 print("load pattern: {}".format(load_pattern.label))
                 print(truss.get_forces(load_pattern.label))
 
+    def example_3():
+        # material
+        material = Material("material1", 220e4, 85e4)
+
+        # section
+        section = Section("section1", material, 0.12, 1.6e-3, 9e-4, 1994e-3)
+
+        # nodes
+        node_1 = Node("1", 0, 3, 3)
+        node_2 = Node("2", 5, 3, 3)
+
+        # frame
+        frame = Frame("1-2", node_1, node_2, section)
+
+        print(frame.get_local_stiff_matrix())
+
     # example_1()
     # example_2()
+    example_3()
