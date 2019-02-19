@@ -129,12 +129,6 @@ class Truss(AttrDisplay):
 class Frame(Truss):
     number_degrees_freedom_per_node = 6
 
-    def __init__(self, label, node_i, node_j, section):
-        Truss.__init__(self, label, node_i, node_j, section)
-
-    def get_matrix_transformation(self):
-        return Truss.get_matrix_transformation(self)
-
     def get_local_stiff_matrix(self):
         e = self.section.material.E
         g = self.section.material.G
@@ -175,25 +169,25 @@ class Frame(Truss):
         k[3, 9] = k[9, 3] = -gjl
 
         # 12EI / L^3
-        k[1, 1] = k[7, 7] = e_iy_l3
-        k[1, 7] = k[7, 1] = -e_iy_l3
+        k[1, 1] = k[7, 7] = e_iz_l3
+        k[1, 7] = k[7, 1] = -e_iz_l3
 
-        k[2, 2] = k[8, 8] = e_iz_l3
-        k[2, 8] = k[8, 2] = -e_iz_l3
+        k[2, 2] = k[8, 8] = e_iy_l3
+        k[2, 8] = k[8, 2] = -e_iy_l3
 
         # 6EI / L^2
-        k[1, 5] = k[5, 1] = k[1, 11] = k[11, 1] = e_iy_l2
-        k[5, 7] = k[7, 5] = k[7, 11] = k[11, 7] = -e_iy_l2
+        k[1, 5] = k[5, 1] = k[1, 11] = k[11, 1] = e_iz_l2
+        k[5, 7] = k[7, 5] = k[7, 11] = k[11, 7] = -e_iz_l2
 
-        k[2, 4] = k[4, 2] = k[2, 10] = k[10, 2] = -e_iz_l2
+        k[2, 4] = k[4, 2] = k[2, 10] = k[10, 2] = -e_iy_l2
         k[4, 8] = k[8, 4] = k[8, 10] = k[10, 8] = e_iy_l2
 
         # 4EI / L
-        k[4, 4] = k[10, 10] = 4 * e_iz_l
-        k[5, 5] = k[11, 11] = 4 * e_iy_l
+        k[4, 4] = k[10, 10] = 4 * e_iy_l
+        k[5, 5] = k[11, 11] = 4 * e_iz_l
 
-        k[10, 4] = k[10, 4] = 2 * e_iz_l
-        k[11, 5] = k[5, 11] = 2 * e_iy_l
+        k[10, 4] = k[4, 10] = 2 * e_iy_l
+        k[11, 5] = k[5, 11] = 2 * e_iz_l
 
         return k
 

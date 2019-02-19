@@ -19,8 +19,8 @@ class Sections(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, label, material, area, moment_inertia_y, moment_inertia_z, torsion_constant):
-        section = Section(label, self.parent.materials[material], moment_inertia_y, moment_inertia_z, torsion_constant)
+    def add(self, label, material, area, inertia_y, inertia_z, torsion_constant):
+        section = Section(label, self.parent.materials[material], area, inertia_y, inertia_z, torsion_constant)
         Collection.add(self, section)
 
         return section
@@ -50,6 +50,18 @@ class Trusses(Collection):
         return truss
 
 
+class Frames(Trusses):
+    def __init__(self, parent):
+        Collection.__init__(self)
+        self.parent = parent
+
+    def add(self, label, node_i, node_j, section):
+        frame = Frame(label, self.parent.nodes[node_i], self.parent.nodes[node_j], self.parent.sections[section])
+        Collection.add(self, frame)
+
+        return frame
+
+
 class Supports(Collection):
     def __init__(self, parent):
         Collection.__init__(self)
@@ -75,7 +87,7 @@ class LoadPatterns(Collection):
 
 
 class Structure:
-    number_degrees_freedom_per_node = 3
+    number_degrees_freedom_per_node = 6
     number_dimensions = 3
 
     def __init__(self):
@@ -83,7 +95,10 @@ class Structure:
         self.sections = Sections(self)
 
         self.nodes = Nodes(self)
+
         self.trusses = Trusses(self)
+        self.frames = Frames(self)
+
         self.supports = Supports(self)
 
         self.load_patterns = LoadPatterns(self)
@@ -101,6 +116,14 @@ class Structure:
                                         truss.node_j.degrees_freedom)
 
             for i, row in enumerate(truss.get_global_stiff_matrix()):
+                for j, item in enumerate(row):
+                    k[degrees_freedom[i], degrees_freedom[j]] += item
+
+        for frame in self.frames:
+            degrees_freedom = np.append(frame.node_i.degrees_freedom,
+                                        frame.node_j.degrees_freedom)
+
+            for i, row in enumerate(frame.get_global_stiff_matrix()):
                 for j, item in enumerate(row):
                     k[degrees_freedom[i], degrees_freedom[j]] += item
 
@@ -284,20 +307,40 @@ if __name__ == '__main__':
                 print(truss.get_forces(load_pattern.label))
 
     def example_3():
-        # material
-        material = Material("material1", 220e4, 85e4)
+        """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
+        # structure
+        structure = Structure()
 
-        # section
-        section = Section("section1", material, 0.12, 1.6e-3, 9e-4, 1994e-3)
+        # add material
+        structure.materials.add('material1', 220e4, 85e4)
 
-        # nodes
-        node_1 = Node("1", 0, 3, 3)
-        node_2 = Node("2", 5, 3, 3)
+        # add sections
+        structure.sections.add('section1', 'material1', 0.12, 1.6e-3, 9e-4, 1.944e-3)
+        # structure.sections.add('section2', 'material1', 0.12, 1.6e-3, 9e-4, 1.944e-3)
+        structure.sections.add('section2', 'material1', 0.10, 5.208e-4, 1.333e-3, 1.2734e-3)
 
-        # frame
-        frame = Frame("1-2", node_1, node_2, section)
+        # add nodes
+        structure.nodes.add('1', 0, 3, 3)
+        structure.nodes.add('2', 5, 3, 3)
+        structure.nodes.add('3', 0, 0, 3)
+        structure.nodes.add('4', 0, 3, 0)
 
-        print(frame.get_local_stiff_matrix())
+        # add frames
+        structure.frames.add('1-2', '1', '2', 'section1')
+        structure.frames.add('3-1', '3', '1', 'section1')
+        structure.frames.add('4-1', '4', '1', 'section2')
+
+        for frame in structure.frames:
+            print(frame.label, 'simetrica: {}'.format(np.allclose(frame.get_global_stiff_matrix(),
+                                                                  np.transpose(frame.get_global_stiff_matrix()),
+                                                                  atol=1e-8)))
+            print(frame.get_global_stiff_matrix())
+            print()
+
+        # structure.set_degrees_freedom()
+        # print(structure.get_k())
+
+
 
     # example_1()
     # example_2()
