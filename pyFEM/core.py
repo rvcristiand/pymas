@@ -1,3 +1,4 @@
+#!/usr/bin/oython3.6
 from pyFEM.primitives import *
 from pyFEM.classtools import Collection
 
@@ -315,9 +316,8 @@ if __name__ == '__main__':
         structure.materials.add('material1', 220e4, 85e4)
 
         # add sections
-        structure.sections.add('section1', 'material1', 0.12, 1.6e-3, 9e-4, 1.944e-3)
-        # structure.sections.add('section2', 'material1', 0.12, 1.6e-3, 9e-4, 1.944e-3)
-        structure.sections.add('section2', 'material1', 0.10, 5.208e-4, 1.333e-3, 1.2734e-3)
+        structure.sections.add('section1', 'material1', 0.12, 9e-4, 1.6e-3, 1.944e-3)
+        structure.sections.add('section2', 'material1', 0.10, 1.333e-3, 5.208e-4, 1.2734e-3)
 
         # add nodes
         structure.nodes.add('1', 0, 3, 3)
@@ -330,15 +330,17 @@ if __name__ == '__main__':
         structure.frames.add('3-1', '3', '1', 'section1')
         structure.frames.add('4-1', '4', '1', 'section2')
 
-        for frame in structure.frames:
-            print(frame.label, 'simetrica: {}'.format(np.allclose(frame.get_global_stiff_matrix(),
-                                                                  np.transpose(frame.get_global_stiff_matrix()),
-                                                                  atol=1e-8)))
-            print(frame.get_global_stiff_matrix())
-            print()
+        # for frame in structure.frames:
+        #     print(frame.label, 'simetrica: {}'.format(np.allclose(frame.get_global_stiff_matrix(),
+        #                                                           np.transpose(frame.get_global_stiff_matrix()),
+        #                                                           atol=1e-8)))
+        #     print(frame.get_global_stiff_matrix())
+        #     print()
 
-        # structure.set_degrees_freedom()
-        # print(structure.get_k())
+        structure.set_degrees_freedom()
+        print('simetrica: {}'.format(np.allclose(structure.get_k(), np.transpose(structure.get_k()), atol=1e-8)))
+        print(structure.get_k())
+
 
 
 
