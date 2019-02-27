@@ -68,8 +68,8 @@ class Supports(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, node, ux, uy, uz):
-        support = Support(self.parent.nodes[node], ux, uy, uz)
+    def add(self, node, ux, uy, uz, rx, ry, rz):
+        support = Support(self.parent.nodes[node], ux, uy, uz, rx, ry, rz)
         Collection.add(self, support)
 
         return support
@@ -136,10 +136,10 @@ class Structure:
         k = self.get_k()
         k_support = np.copy(k)
 
-        for _support in self.supports:
-            degrees_freedom = _support.node.degrees_freedom
+        for support in self.supports:
+            degrees_freedom = support.node.degrees_freedom
 
-            for i, item in enumerate(_support.restrains):
+            for i, item in enumerate(support.restrains):
                 if item:
                     k_support[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
                     k_support[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
@@ -148,24 +148,24 @@ class Structure:
         for load_pattern in self.load_patterns:
             f = load_pattern.get_f()
 
-            for _support in self.supports:
-                degrees_freedom = _support.node.degrees_freedom
+            for support in self.supports:
+                degrees_freedom = support.node.degrees_freedom
 
-                for i, item in enumerate(_support.restrains):
+                for i, item in enumerate(support.restrains):
                     if item:
                         f[degrees_freedom[i], 0] = 0
 
             u = np.linalg.solve(k_support, f)
-            f = np.dot(k, u)
+            f = np.dot(k, u) - f
 
-            for _node in self.nodes:
-                degrees_freedom = _node.degrees_freedom
-                _node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
+            for node in self.nodes:
+                degrees_freedom = node.degrees_freedom
+                node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
-            for _support in self.supports:
-                degrees_freedom = [degree_freedom for i, degree_freedom in enumerate(_support.node.degrees_freedom)
-                                   if _support.restrains[i]]
-                _support.reactions.add(load_pattern, f[[degree_freedom for degree_freedom in degrees_freedom], 0])
+            for support in self.supports:
+                degrees_freedom = [degree_freedom for i, degree_freedom in enumerate(support.node.degrees_freedom)
+                                   if support.restrains[i]]
+                support.reactions.add(load_pattern, f[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
     def __repr__(self):
         return self.__class__.__name__
@@ -330,18 +330,34 @@ if __name__ == '__main__':
         structure.frames.add('3-1', '3', '1', 'section1')
         structure.frames.add('4-1', '4', '1', 'section2')
 
-        # for frame in structure.frames:
-        #     print(frame.label, 'simetrica: {}'.format(np.allclose(frame.get_global_stiff_matrix(),
-        #                                                           np.transpose(frame.get_global_stiff_matrix()),
-        #                                                           atol=1e-8)))
-        #     print(frame.get_global_stiff_matrix())
-        #     print()
+        # add supports
+        structure.supports.add('2', *6 * (True,))
+        structure.supports.add('3', *6 * (True,))
+        structure.supports.add('4', *6 * (True,))
 
-        structure.set_degrees_freedom()
-        print('simetrica: {}'.format(np.allclose(structure.get_k(), np.transpose(structure.get_k()), atol=1e-8)))
-        print(structure.get_k())
+        # add load pattern
+        structure.load_patterns.add("distributed loads")
 
+        # add distributed loads
+        structure.load_patterns["distributed loads"].distributed_loads.add('1-2', 0, -2.4, 0)
+        structure.load_patterns["distributed loads"].distributed_loads.add('4-1', 0, -3.5, 0)
 
+        # solve
+        structure.solve()
+
+        for node in structure.nodes:
+            print("node {}".format(node.label))
+            for displacement in node.displacements:
+                print(displacement)
+
+        print()
+
+        for support in structure.supports:
+            print("support {}".format(support.label))
+            for reacttion in support.reactions:
+                print(reacttion)
+
+        print()
 
 
     # example_1()
