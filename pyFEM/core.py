@@ -156,7 +156,7 @@ class Structure:
                         f[degrees_freedom[i], 0] = 0
 
             u = np.linalg.solve(k_support, f)
-            f = np.dot(k, u) - f
+            f = np.dot(k, u) + load_pattern.get_f_fixed()
 
             for node in self.nodes:
                 degrees_freedom = node.degrees_freedom
@@ -345,21 +345,26 @@ if __name__ == '__main__':
         # solve
         structure.solve()
 
-        np.set_printoptions(precision=3)
+        np.set_printoptions(precision=3, suppress=True)
+        # displacements
+        print("displacement", end='\n\n')
         for node in structure.nodes:
-            print(node.label, node.displacements["distributed loads"].displacement)
-            # print("node {}".format(node.label))
-            # for displacement in node.displacements:
-            #     print(displacement)
+            print("node:", node.label)
 
-        # print()
-        #
-        # for support in structure.supports:
-        #     print("support {}".format(support.label))
-        #     for reacttion in support.reactions:
-        #         print(reacttion)
-        #
-        # print()
+            for displacement in node.displacements:
+                print("--> {}".format(displacement.label))
+                print("\t", displacement.displacement)
+
+        print()
+
+        # supports
+        print("support", end='\n\n')
+        for support in structure.supports:
+            print("support: ", support.label)
+
+            for reaction in support.reactions:
+                print("--> {}".format(reaction.label))
+                print("\t", reaction.reaction)
 
 
     # example_1()
