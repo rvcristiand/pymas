@@ -1,3 +1,4 @@
+#!/usr/bin/oython3.6
 from pyFEM.primitives import *
 from pyFEM.classtools import Collection
 
@@ -7,8 +8,8 @@ class Materials(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, label, modulus):
-        material = Material(label, modulus)
+    def add(self, label, modulus_elasticity, modulus_elasticity_shear):
+        material = Material(label, modulus_elasticity, modulus_elasticity_shear)
         Collection.add(self, material)
 
         return material
@@ -19,8 +20,8 @@ class Sections(Collection):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, label, material, area):
-        section = Section(label, self.parent.materials[material], area)
+    def add(self, label, material, area, inertia_y, inertia_z, torsion_constant):
+        section = Section(label, self.parent.materials[material], area, inertia_y, inertia_z, torsion_constant)
         Collection.add(self, section)
 
         return section
@@ -50,13 +51,25 @@ class Trusses(Collection):
         return truss
 
 
+class Frames(Trusses):
+    def __init__(self, parent):
+        Collection.__init__(self)
+        self.parent = parent
+
+    def add(self, label, node_i, node_j, section):
+        frame = Frame(label, self.parent.nodes[node_i], self.parent.nodes[node_j], self.parent.sections[section])
+        Collection.add(self, frame)
+
+        return frame
+
+
 class Supports(Collection):
     def __init__(self, parent):
         Collection.__init__(self)
         self.parent = parent
 
-    def add(self, node, ux, uy, uz):
-        support = Support(self.parent.nodes[node], ux, uy, uz)
+    def add(self, node, ux, uy, uz, rx, ry, rz):
+        support = Support(self.parent.nodes[node], ux, uy, uz, rx, ry, rz)
         Collection.add(self, support)
 
         return support
@@ -75,14 +88,18 @@ class LoadPatterns(Collection):
 
 
 class Structure:
-    number_degrees_freedom_per_node = 3
+    number_degrees_freedom_per_node = 6
+    number_dimensions = 3
 
     def __init__(self):
         self.materials = Materials(self)
         self.sections = Sections(self)
 
         self.nodes = Nodes(self)
+
         self.trusses = Trusses(self)
+        self.frames = Frames(self)
+
         self.supports = Supports(self)
 
         self.load_patterns = LoadPatterns(self)
@@ -103,6 +120,14 @@ class Structure:
                 for j, item in enumerate(row):
                     k[degrees_freedom[i], degrees_freedom[j]] += item
 
+        for frame in self.frames:
+            degrees_freedom = np.append(frame.node_i.degrees_freedom,
+                                        frame.node_j.degrees_freedom)
+
+            for i, row in enumerate(frame.get_global_stiff_matrix()):
+                for j, item in enumerate(row):
+                    k[degrees_freedom[i], degrees_freedom[j]] += item
+
         return k
 
     def solve(self):
@@ -111,10 +136,10 @@ class Structure:
         k = self.get_k()
         k_support = np.copy(k)
 
-        for _support in self.supports:
-            degrees_freedom = _support.node.degrees_freedom
+        for support in self.supports:
+            degrees_freedom = support.node.degrees_freedom
 
-            for i, item in enumerate(_support.restrains):
+            for i, item in enumerate(support.restrains):
                 if item:
                     k_support[degrees_freedom[i]] = np.zeros(np.shape(k)[0])
                     k_support[:, degrees_freedom[i]] = np.zeros(np.shape(k)[0])
@@ -123,24 +148,24 @@ class Structure:
         for load_pattern in self.load_patterns:
             f = load_pattern.get_f()
 
-            for _support in self.supports:
-                degrees_freedom = _support.node.degrees_freedom
+            for support in self.supports:
+                degrees_freedom = support.node.degrees_freedom
 
-                for i, item in enumerate(_support.restrains):
+                for i, item in enumerate(support.restrains):
                     if item:
                         f[degrees_freedom[i], 0] = 0
 
             u = np.linalg.solve(k_support, f)
-            f = np.dot(k, u)
+            f = np.dot(k, u) + load_pattern.get_f_fixed()
 
-            for _node in self.nodes:
-                degrees_freedom = _node.degrees_freedom
-                _node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
+            for node in self.nodes:
+                degrees_freedom = node.degrees_freedom
+                node.displacements.add(load_pattern, *u[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
-            for _support in self.supports:
-                degrees_freedom = [degree_freedom for i, degree_freedom in enumerate(_support.node.degrees_freedom)
-                                   if _support.restrains[i]]
-                _support.reactions.add(load_pattern, f[[degree_freedom for degree_freedom in degrees_freedom], 0])
+            for support in self.supports:
+                degrees_freedom = [degree_freedom for i, degree_freedom in enumerate(support.node.degrees_freedom)
+                                   if support.restrains[i]]
+                support.reactions.add(load_pattern, f[[degree_freedom for degree_freedom in degrees_freedom], 0])
 
     def __repr__(self):
         return self.__class__.__name__
@@ -282,5 +307,66 @@ if __name__ == '__main__':
                 print("load pattern: {}".format(load_pattern.label))
                 print(truss.get_forces(load_pattern.label))
 
+    def example_3():
+        """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
+        # structure
+        structure = Structure()
+
+        # add material
+        structure.materials.add('material1', 220e4, 85e4)
+
+        # add sections
+        structure.sections.add('section1', 'material1', 0.12, 9e-4, 1.6e-3, 1.944e-3)
+        structure.sections.add('section2', 'material1', 0.10, 1.333e-3, 5.208e-4, 1.2734e-3)
+
+        # add nodes
+        structure.nodes.add('1', 0, 3, 3)
+        structure.nodes.add('2', 5, 3, 3)
+        structure.nodes.add('3', 0, 0, 3)
+        structure.nodes.add('4', 0, 3, 0)
+
+        # add frames
+        structure.frames.add('1-2', '1', '2', 'section1')
+        structure.frames.add('3-1', '3', '1', 'section1')
+        structure.frames.add('4-1', '4', '1', 'section2')
+
+        # add supports
+        structure.supports.add('2', *6 * (True,))
+        structure.supports.add('3', *6 * (True,))
+        structure.supports.add('4', *6 * (True,))
+
+        # add load pattern
+        structure.load_patterns.add("distributed loads")
+
+        # add distributed loads
+        structure.load_patterns["distributed loads"].distributed_loads.add('1-2', 0, -2.4, 0)
+        structure.load_patterns["distributed loads"].distributed_loads.add('4-1', 0, -3.5, 0)
+
+        # solve
+        structure.solve()
+
+        np.set_printoptions(precision=3, suppress=True)
+        # displacements
+        print("displacement", end='\n\n')
+        for node in structure.nodes:
+            print("node:", node.label)
+
+            for displacement in node.displacements:
+                print("--> {}".format(displacement.label))
+                print("\t", displacement.displacement)
+
+        print()
+
+        # supports
+        print("support", end='\n\n')
+        for support in structure.supports:
+            print("support: ", support.label)
+
+            for reaction in support.reactions:
+                print("--> {}".format(reaction.label))
+                print("\t", reaction.reaction)
+
+
     # example_1()
     # example_2()
+    example_3()
