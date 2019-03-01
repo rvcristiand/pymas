@@ -245,19 +245,12 @@ class LoadPattern(AttrDisplay):
         self.point_loads = PointLoads(self.parent)
         self.distributed_loads = DistributedLoads(self.parent)
 
-    def get_f(self):
+    def get_f_fixed(self):
         f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
-
-        for point_load in self.point_loads:
-            degrees_freedom = point_load.node.degrees_freedom
-
-            for i, item in enumerate(point_load.load):
-                f[degrees_freedom[i], 0] += item
 
         for distributed_load in self.distributed_loads:
             degrees_freedom = np.concatenate((distributed_load.frame.node_i.degrees_freedom,
                                               distributed_load.frame.node_j.degrees_freedom))
-
             length = distributed_load.frame.get_length()
 
             # fx = distributed_load.load[0]
@@ -270,9 +263,20 @@ class LoadPattern(AttrDisplay):
             f_global = np.dot(distributed_load.frame.get_matrix_transformation(), f_local)
 
             for i, item in enumerate(f_global):
-                f[degrees_freedom[i], 0] -= item
+                f[degrees_freedom[i], 0] += item
 
         return f
+
+    def get_f(self):
+        f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
+
+        for point_load in self.point_loads:
+            degrees_freedom = point_load.node.degrees_freedom
+
+            for i, item in enumerate(point_load.load):
+                f[degrees_freedom[i], 0] += item
+
+        return f - self.get_f_fixed()
 
     def __eq__(self, other):
         return self.label == other.label
