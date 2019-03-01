@@ -345,19 +345,21 @@ if __name__ == '__main__':
         # solve
         structure.solve()
 
+        np.set_printoptions(precision=3)
         for node in structure.nodes:
-            print("node {}".format(node.label))
-            for displacement in node.displacements:
-                print(displacement)
+            print(node.label, node.displacements["distributed loads"].displacement)
+            # print("node {}".format(node.label))
+            # for displacement in node.displacements:
+            #     print(displacement)
 
-        print()
-
-        for support in structure.supports:
-            print("support {}".format(support.label))
-            for reacttion in support.reactions:
-                print(reacttion)
-
-        print()
+        # print()
+        #
+        # for support in structure.supports:
+        #     print("support {}".format(support.label))
+        #     for reacttion in support.reactions:
+        #         print(reacttion)
+        #
+        # print()
 
 
     # example_1()
