@@ -19,9 +19,8 @@ class Material(AttrDisplay):
 
 
 class Section(AttrDisplay):
-    def __init__(self, label, material, area, moment_inertia_y, moment_inertia_z, torsion_constant):
+    def __init__(self, label, area, moment_inertia_y, moment_inertia_z, torsion_constant):
         self.label = label
-        self.material = material
         self.A = area
         self.Iy = moment_inertia_y
         self.Iz = moment_inertia_z
