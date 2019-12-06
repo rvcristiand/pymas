@@ -5,65 +5,185 @@ from numpy import linalg
 from scipy.spatial import distance
 from scipy.spatial.transform import Rotation
 
-from pyFEM.classtools import AttrDisplay, Collection
+from scipy.sparse import bsr_matrix, coo_matrix
+
+from pyFEM.classtools import AttrDisplay, UniqueInstances
 
 
 class Material(AttrDisplay):
-    def __init__(self, label, modulus_elasticity, modulus_elasticity_shear):
-        self.label = label
-        self.E = modulus_elasticity
-        self.G = modulus_elasticity_shear
+    """
+    Linear elastic  material
 
-    def __eq__(self, other):
-        return self.label == other.label
+    Attributes
+    ----------
+    E : float
+        asd
+    G : float
+        asd
+    """
+    __slots__ = ('E', 'G')
+
+    def __init__(self, modulus_elasticity=0, shearing_modulus_elasticity=0):
+        """
+        Instantiate a Material object
+
+        Parameters
+        ----------
+        modulus_elasticity : float
+            asd
+        shearing_modulus_elasticity : float
+            asd
+        """
+        self.E = modulus_elasticity
+        self.G = shearing_modulus_elasticity
 
 
 class Section(AttrDisplay):
-    def __init__(self, label, area, moment_inertia_y, moment_inertia_z, torsion_constant):
-        self.label = label
+    """
+    Cross-sectional area
+
+    Attributes
+    ----------
+    A : float
+        asd
+    Ix : float
+        asd
+    Iy : float
+        asd
+    Iz : float
+        asd
+    """
+    __slots__ = ('A', 'Iy', 'Iz', 'Ix')
+
+    def __init__(self, area=0, torsion_constant=0, moment_inertia_y=0, moment_inertia_z=0):
+        """
+        Instantiate a Section object
+
+        Parameters
+        ----------
+        area : float
+            asd
+        torsion_constant : float
+            asd
+        moment_inertia_y : float
+            asd
+        moment_inertia_z : float
+            asd
+        """
         self.A = area
+        self.Ix = torsion_constant
         self.Iy = moment_inertia_y
         self.Iz = moment_inertia_z
-        self.J = torsion_constant
-
-    def __eq__(self, other):
-        return self.label == other.label
 
 
-class Node(AttrDisplay):
-    def __init__(self, label, x, y, z):
-        self.label = label
-        self.coordinate = np.array([x, y, z])
+class Joint(AttrDisplay, metaclass=UniqueInstances):
+    """
+    End of members
 
-        self.degrees_freedom = None  # Cambiar !!!
-        self.displacements = Displacements()  # Cambiar !!!
+    Attributes
+    ----------
+    x : float
+        asd
+    y : float
+        asd
+    z : float
+        asd
 
-    def set_degrees_freedom(self, u):
-        self.degrees_freedom = u
+    Methods
+    -------
+    get_coordinate()
+        asd
+    """
+    __slots__ = ('x', 'y', 'z')
 
-    def __eq__(self, other):
-        return self.label == other.label or np.all(self.coordinate == other.coordinate)
+    def __init__(self, x=0, y=0, z=0):
+        """
+        Instantiate a Joint object
+
+        Parameters
+        ----------
+        x : float
+            asd
+        y : float
+            asd
+        z : float
+            asd
+        """
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def get_coordinate(self):
+        """Get coordinates"""
+        return np.array([self.x, self.y, self.z])
 
 
-class Truss(AttrDisplay):
-    number_dimensions = 3
-    number_nodes = 2
-    number_degrees_freedom_per_node = 3
+class Frame(AttrDisplay, metaclass=UniqueInstances):
+    """
+    Long elements in comparison to their cross-sectional dimensions
 
-    def __init__(self, label, node_i, node_j, section):
-        self.label = label
-        self.node_i = node_i
-        self.node_j = node_j
+    Attributes
+    ----------
+    joint_j : Joint
+        asd
+    joint_k : Joint
+        asd
+    material : Material
+        asd
+    section : Section
+        asd
+
+    Methods
+    -------
+    get_length()
+        asd
+    get_direction_cosines()
+        asd
+    get_rotation()
+        asd
+    get_rotation_matrix(active_joint_displacements)
+        asd
+    get_local_stiffness_matrix(active_joint_displacements)
+        asd
+    get_global_stiffness_matrix(active_joint_displacements)
+        asd
+    """
+    __slots__ = ("joint_j", "joint_k", "material", "section")
+
+    def __init__(self, joint_j=None, joint_k=None, material=None, section=None):
+        """
+        Instantiate a Frame object
+
+        Parameters
+        ----------
+        joint_j : Joint
+            asd
+        joint_k : Joint
+            asd
+        material : Material
+            asd
+        section : Section
+            asd
+        """
+        self.joint_j = joint_j
+        self.joint_k = joint_k
+        self.material = material
         self.section = section
 
-    def get_local_vector(self):
-        vector = self.node_j.coordinate - self.node_i.coordinate
+    def get_length(self):
+        """Get length"""
+        return distance.euclidean(self.joint_j.get_coordinate(), self.joint_k.get_coordinate())
+
+    def get_direction_cosines(self):
+        """Get direction cosines"""
+        vector = self.joint_k.get_coordinate() - self.joint_j.get_coordinate()
 
         return vector / linalg.norm(vector)
 
-    def get_orientation(self):
+    def get_rotation(self):
+        """Get rotation"""
         v_from = np.array([1, 0, 0])
-        v_to = self.get_local_vector()
+        v_to = self.get_direction_cosines()
 
         if np.all(v_from == v_to):
             return Rotation.from_quat([0, 0, 0, 1])
@@ -78,75 +198,54 @@ class Truss(AttrDisplay):
 
             return Rotation.from_quat([x * np.sin(theta/2) for x in w] + [np.cos(theta/2)])
 
-    def get_matrix_transformation(self):
-        t0 = self.get_orientation().as_dcm()
-        t = np.zeros(2 * (self.number_nodes * self.number_degrees_freedom_per_node,))
+    def get_rotation_matrix(self, flag_active_joint_displacements):
+        """
+        Get rotation matrix
 
-        for i in range(int(self.number_degrees_freedom_per_node * self.number_nodes / self.number_dimensions)):
-            t[i * self.number_dimensions:(i + 1) * self.number_dimensions,
-              i * self.number_dimensions:(i + 1) * self.number_dimensions] = t0
+        Parameters
+        ----------
+        flag_active_joint_displacements : array
+            asd
+        """
+        # rotation as direction cosine matrix
+        indptr = np.array([0, 1, 2])
+        indices = np.array([0, 1])
+        data = np.tile(self.get_rotation().as_dcm(), (2, 1, 1))
 
-        return t
+        # matrix rotation for a joint
+        t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).tolil()
 
-    def get_local_stiff_matrix(self):
-        k = self.get_modulus() * self.get_area() / self.get_length()
-        k = k * np.array([[1, 0, 0, -1, 0, 0],
-                          [0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0],
-                          [-1, 0, 0, 1, 0, 0],
-                          [0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0]
-                          ])
+        flag_active_joint_displacements = np.nonzero(flag_active_joint_displacements)[0]
+        n = 2 * np.size(flag_active_joint_displacements)
 
-        return k
+        t1 = t1[flag_active_joint_displacements[:, None], flag_active_joint_displacements].toarray()
+        data = np.tile(t1, (2, 1, 1))
 
-    def get_global_stiff_matrix(self):
-        k = self.get_local_stiff_matrix()
-        t = self.get_matrix_transformation()
+        return bsr_matrix((data, indices, indptr), shape=(n, n)).toarray()
 
-        return np.dot(np.dot(t, k), np.transpose(t))
-
-    def get_modulus(self):
-        return self.section.material.E
-
-    def get_area(self):
-        return self.section.A
-
-    def get_length(self):
-        return distance.euclidean(self.node_i.coordinate, self.node_j.coordinate)
-
-    def get_forces(self, load_pattern):
-        displacements = np.append(self.node_i.displacements[load_pattern].displacement,
-                                  self.node_j.displacements[load_pattern].displacement).reshape(-1, 1)
-        return -np.dot(np.linalg.inv(self.get_matrix_transformation()), np.dot(self.get_global_stiff_matrix(),
-                                                                               displacements))[0, 0]
-
-    def __eq__(self, other):
-        return self.label == other.label or (self.node_i == other.node_i and self.node_j == other.node_j)
+    def get_local_stiffness_matrix(self, active_joint_displacements):
+        """
+        Get local stiffness matrix
 
 
-class Frame(Truss):
-    number_degrees_freedom_per_node = 6
+        Parameters
+        ----------
+        active_joint_displacements : array
+            asd
+        """
+        length = self.get_length()
 
-    def get_local_stiff_matrix(self):
-        e = self.section.material.E
-        g = self.section.material.G
+        e = self.material.E
 
-        a = self.section.A
         iy = self.section.Iy
         iz = self.section.Iz
-        j = self.section.J
-
-        length = self.get_length()
 
         el = e / length
         el2 = e / length ** 2
         el3 = e / length ** 3
 
-        gl = g / length
-
-        ael = a * el
-        gjl = j * gl
+        ael = self.section.A * el
+        gjl = self.section.Ix * self.material.G / length
 
         e_iy_l = iy * el
         e_iz_l = iz * el
@@ -157,174 +256,527 @@ class Frame(Truss):
         e_iy_l3 = 12 * iy * el3
         e_iz_l3 = 12 * iz * el3
 
-        k = np.zeros(2 * (self.number_nodes * self.number_degrees_freedom_per_node, ))
+        rows = np.empty(40, dtype=int)
+        cols = np.empty(40, dtype=int)
+        data = np.empty(40)
 
         # AE / L
-        k[0, 0] = k[6, 6] = ael
-        k[0, 6] = k[6, 0] = -ael
+        rows[:4] = np.array([0, 6, 0, 6])
+        cols[:4] = np.array([0, 6, 6, 0])
+        data[:4] = np.array([ael, ael, -ael, -ael])
 
         # GJ / L
-        k[3, 3] = k[9, 9] = gjl
-        k[3, 9] = k[9, 3] = -gjl
+        rows[4:8] = np.array([3, 9, 3, 9])
+        cols[4:8] = np.array([3, 9, 9, 3])
+        data[4:8] = np.array([gjl, gjl, -gjl, -gjl])
 
         # 12EI / L^3
-        k[1, 1] = k[7, 7] = e_iz_l3
-        k[1, 7] = k[7, 1] = -e_iz_l3
+        rows[8:12] = np.array([1, 7, 1, 7])
+        cols[8:12] = np.array([1, 7, 7, 1])
+        data[8:12] = np.array([e_iz_l3, e_iz_l3, -e_iz_l3, -e_iz_l3])
 
-        k[2, 2] = k[8, 8] = e_iy_l3
-        k[2, 8] = k[8, 2] = -e_iy_l3
+        rows[12:16] = np.array([2, 8, 2, 8])
+        cols[12:16] = np.array([2, 8, 8, 2])
+        data[12:16] = np.array([e_iy_l3, e_iy_l3, -e_iy_l3, -e_iy_l3])
 
         # 6EI / L^2
-        k[1, 5] = k[5, 1] = k[1, 11] = k[11, 1] = e_iz_l2
-        k[5, 7] = k[7, 5] = k[7, 11] = k[11, 7] = -e_iz_l2
+        rows[16:20] = np.array([1, 5, 1, 11])
+        cols[16:20] = np.array([5, 1, 11, 1])
+        data[16:20] = np.array([e_iz_l2, e_iz_l2, e_iz_l2, e_iz_l2])
 
-        k[2, 4] = k[4, 2] = k[2, 10] = k[10, 2] = -e_iy_l2
-        k[4, 8] = k[8, 4] = k[8, 10] = k[10, 8] = e_iy_l2
+        rows[20:24] = np.array([5, 7, 7, 11])
+        cols[20:24] = np.array([7, 5, 11, 7])
+        data[20:24] = np.array([-e_iz_l2, -e_iz_l2, -e_iz_l2, -e_iz_l2])
+
+        rows[24:28] = np.array([2, 4, 2, 10])
+        cols[24:28] = np.array([4, 2, 10, 2])
+        data[24:28] = np.array([-e_iy_l2, -e_iy_l2, -e_iy_l2, -e_iy_l2])
+
+        rows[28:32] = np.array([4, 8, 8, 10])
+        cols[28:32] = np.array([8, 4, 10, 8])
+        data[28:32] = np.array([e_iy_l2, e_iy_l2, e_iy_l2, e_iy_l2])
 
         # 4EI / L
-        k[4, 4] = k[10, 10] = 4 * e_iy_l
-        k[5, 5] = k[11, 11] = 4 * e_iz_l
+        rows[32:36] = np.array([4, 10, 5, 11])
+        cols[32:36] = np.array([4, 10, 5, 11])
+        data[32:36] = np.array([4 * e_iy_l, 4 * e_iy_l, 4 * e_iz_l, 4 * e_iz_l])
 
-        k[10, 4] = k[4, 10] = 2 * e_iy_l
-        k[11, 5] = k[5, 11] = 2 * e_iz_l
+        rows[36:] = np.array([10, 4, 11, 5])
+        cols[36:] = np.array([4, 10, 5, 11])
+        data[36:] = np.array([2 * e_iy_l, 2 * e_iy_l, 2 * e_iz_l, 2 * e_iz_l])
 
-        return k
+        k = coo_matrix((data, (rows, cols)), shape=(12, 12)).tolil()
+
+        active_frame_displacement = np.nonzero(np.tile(active_joint_displacements, 2))[0]
+
+        return k[active_frame_displacement[:, None], active_frame_displacement].toarray()
+
+    def get_global_stiffness_matrix(self, active_joint_displacements):
+        """
+        Get the global stiffness matrix
+
+        Parameters
+        ----------
+        active_joint_displacements : array
+            asd
+        """
+        k = self.get_local_stiffness_matrix(active_joint_displacements)
+        t = self.get_rotation_matrix(active_joint_displacements)
+
+        return np.dot(np.dot(t, k), np.transpose(t))
+
+# class Truss(metaclass=UniqueInstances):
+#     def get_forces(self, load_pattern):
+#         displacements = np.append(self.node_i.displacements[load_pattern].displacement,
+#                                   self.node_j.displacements[load_pattern].displacement).reshape(-1, 1)
+#         return -np.dot(np.linalg.inv(self.get_matrix_transformation()), np.dot(self.get_global_stiff_matrix(),
+#                                                                                displacements))[0, 0]
 
 
 class Support(AttrDisplay):
-    def __init__(self, node, ux, uy, uz, rx, ry, rz):
-        self.label = node.label
-        self.node = node
-        self.restrains = np.array([ux, uy, uz, rx, ry, rz])
+    """
+    Point of support
 
-        self.reactions = Reactions()
+    Attributes
+    ----------
+    ux : bool
+        asd
+    uy : bool
+        asd
+    uz : bool
+        asd
+    rx : bool
+        asd
+    ry : bool
+        asd
+    rz : bool
+        asd
 
-    def __eq__(self, other):
-        return self.node == other.node
+    Methods
+    -------
+    get_restrains()
+        asd
+    """
+    __slots__ = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
 
+    def __init__(self, ux=False, uy=False, uz=False, rx=False, ry=False, rz=False):
+        """
+        Instantiate a Support object
 
-class PointLoad(AttrDisplay):
-    def __init__(self, node, fx, fy, fz):
-        self.label = node.label
-        self.node = node
-        self.load = np.array([fx, fy, fz])
+        Parameters
+        ----------
+        ux : bool
+            asd
+        uy : bool
+            asd
+        uz : bool
+            asd
+        rx : bool
+            asd
+        ry : bool
+            asd
+        rz : bool
+            asd
+        """
+        self.ux = ux
+        self.uy = uy
+        self.uz = uz
+        self.rx = rx
+        self.ry = ry
+        self.rz = rz
 
-    def __eq__(self, other):
-        return self.node == other.node
+    def get_restrains(self, flag_joint_displacements):
+        """
+        Get restrains
 
-
-class DistributedLoad(AttrDisplay):
-    def __init__(self, frame, fx, fy, fz):
-        self.label = frame.label
-        self.frame = frame
-        self.load = np.array([fx, fy, fz])
-
-    def __eq__(self, other):
-        return self.frame == other.frame
-
-
-class Displacement(AttrDisplay):
-    def __init__(self, load_pattern, ux, uy, uz, rx, ry, rz):
-        self.label = load_pattern.label
-        # self.load_pattern = load_pattern
-        self.displacement = np.array([ux, uy, uz, rx, ry, rz])
-
-
-class Reaction(AttrDisplay):
-    def __init__(self, load_pattern, reactions):
-        self.label = load_pattern.label
-        # self.load_pattern = load_pattern
-        self.reaction = np.array(reactions)
+        Attributes
+        ----------
+        flag_joint_displacements : array
+            asd
+        """
+        return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
 
 
 class LoadPattern(AttrDisplay):
-    def __init__(self, label, parent):
-        self.label = label
-        self.parent = parent
-        self.point_loads = PointLoads(self.parent)
-        self.distributed_loads = DistributedLoads(self.parent)
+    """
+    Load pattern
 
-    def get_f_fixed(self):
-        f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
+    Attributes
+    ----------
+    loads_at_joints : dict
+        asd
+    distributed_loads : dict
+        asd
 
-        for distributed_load in self.distributed_loads:
-            degrees_freedom = np.concatenate((distributed_load.frame.node_i.degrees_freedom,
-                                              distributed_load.frame.node_j.degrees_freedom))
-            length = distributed_load.frame.get_length()
+    Methods
+    -------
+    add_load_at_joint
+        asd
+    add_distributed_load
+        asd
+    get_number_loads_at_joints
+        asd
+    get_load_vector
+        asd
+    """
+    __slots__ = ("loads_at_joints", "distributed_loads")
 
-            # fx = distributed_load.load[0]
-            fy = distributed_load.load[1]
-            fz = distributed_load.load[2]
-
-            f_local = [0, -fy * length / 2, -fz * length / 2, 0, fz * length ** 2 / 12, -fy * length ** 2 / 12]
-            f_local += [0, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12, fy * length ** 2 / 12]
-
-            f_global = np.dot(distributed_load.frame.get_matrix_transformation(), f_local)
-
-            for i, item in enumerate(f_global):
-                f[degrees_freedom[i], 0] += item
-
-        return f
-
-    def get_f(self):
-        f = np.zeros((self.parent.number_degrees_freedom_per_node * len(self.parent.nodes), 1))
-
-        for point_load in self.point_loads:
-            degrees_freedom = point_load.node.degrees_freedom
-
-            for i, item in enumerate(point_load.load):
-                f[degrees_freedom[i], 0] += item
-
-        return f - self.get_f_fixed()
-
-    def __eq__(self, other):
-        return self.label == other.label
-
-
-class PointLoads(Collection):
-    def __init__(self, parent):
-        Collection.__init__(self)
-        self.parent = parent
-
-    def add(self, node, fx, fy, fz):
-        point_load = PointLoad(self.parent.nodes[node], fx, fy, fz)
-        Collection.add(self, point_load)
-
-        return point_load
-
-
-class DistributedLoads(Collection):
-    def __init__(self, parent):
-        Collection.__init__(self)
-        self.parent = parent
-
-    def add(self, frame, fx, fy, fz):
-        distributed_load = DistributedLoad(self.parent.frames[frame], fx, fy, fz)
-        Collection.add(self, distributed_load)
-
-        return distributed_load
-
-
-class Displacements(Collection):
     def __init__(self):
-        Collection.__init__(self)
+        """Instantiate a LoadPatter object"""
+        self.loads_at_joints = {}
+        # self.point_loads_at_frames = {}
+        self.distributed_loads = {}
 
-    def add(self, load_pattern, ux, uy, uz, rx, ry, rz):
-        displacement = Displacement(load_pattern, ux, uy, uz, rx, ry, rz)
-        Collection.add(self, displacement)
+    def add_point_load_at_joint(self, joint, *args, **kwargs):
+        """
+        Add a point load at joint
 
-        return displacement
+        Parameters
+        ----------
+        joint : Joint
+            asd
+        args : list
+            asd
+        kwargs : dict
+            asd
+        """
+        self.loads_at_joints[joint] = PointLoad(*args, **kwargs)
+
+    def add_distributed_load(self, frame, *args, **kwargs):
+        """
+        Add a distributed load at frame
+
+        Parameters
+        ----------
+        frame : Joint
+            asd
+        args : list
+            asd
+        kwargs : dict
+            asd
+        """
+        self.distributed_loads[frame] = DistributedLoad(*args, **kwargs)
+
+    def get_number_point_loads_at_joints(self):
+        """Get number loads at joints"""
+        return len(self.loads_at_joints)
+
+    def get_number_distributed_loads(self):
+        """Get number distributed loads"""
+        return len(self.distributed_loads)
+
+    def get_f(self, flag_displacements, indexes):
+        """
+        Get the load vector
+
+        Attributes
+        ----------
+        flag_displacements : array
+            asd
+        indexes : dict
+            asd
+        """
+        no = np.count_nonzero(flag_displacements)
+
+        n = self.get_number_point_loads_at_joints()
+
+        rows = np.empty(n * no, dtype=int)
+        cols = np.zeros(n * no, dtype=int)
+        data = np.empty(n * no)
+
+        for i, (joint, point_load) in enumerate(self.loads_at_joints.items()):
+            rows[i * no:(i + 1) * no] = indexes[joint]
+            data[i * no:(i + 1) * no] = point_load.get_load(flag_displacements)
+
+        return coo_matrix((data, (rows, cols)), (no * len(indexes), 1)) - self.get_f_fixed(flag_displacements, indexes)
+
+    def get_f_fixed(self, flag_joint_displacements, indexes):
+        """
+        Get the f fixed.
+
+        Attributes
+        ----------
+        flag_joint_displacements : array
+            asd
+        indexes : dict
+            asd
+        """
+        no = np.count_nonzero(flag_joint_displacements)
+
+        n = self.get_number_distributed_loads()
+
+        rows = np.empty(2 * n * no, dtype=int)
+        cols = np.zeros(2 * n * no, dtype=int)
+        data = np.empty(2 * n * no)
+
+        for i, (frame, distributed_load) in enumerate(self.distributed_loads.items()):
+            joint_j = frame.joint_j
+            joint_k = frame.joint_k
+
+            rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
+            data[i * 2 * no:(i + 1) * 2 * no] = distributed_load.get_f_fixed(flag_joint_displacements, frame)
+
+        return coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
 
 
-class Reactions(Collection):
-    def __init__(self):
-        Collection.__init__(self)
+class PointLoad(AttrDisplay):
+    """
+    Point load
 
-    def add(self, load_pattern, reactions):
-        reaction = Reaction(load_pattern, reactions)
-        Collection.add(self, reaction)
+    Attributes
+    ----------
+    fx : float
+        asd
+    fy : float
+        asd
+    fz : float
+        asd
+    mx : float
+        asd
+    my : float
+        asd
+    mz : float
+        asd
 
-        return reaction
+    Methods
+    -------
+    get_load
+        asd
+    """
+    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+
+    def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
+        """
+        Instantiate a PointLoad object
+
+        Parameters
+        ----------
+        fx : float
+            asd
+        fy : float
+            asd
+        fz : float
+            asd
+        mx : float
+            asd
+        my : float
+            asd
+        mz : float
+            asd
+        """
+        self.fx = fx
+        self.fy = fy
+        self.fz = fz
+
+        self.mx = mx
+        self.my = my
+        self.mz = mz
+
+    def get_load(self, flag_joint_displacements):
+        """
+        Get load
+
+        Parameters
+        ----------
+        flag_joint_displacements : array
+            asd
+        """
+
+        return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
+
+
+class DistributedLoad(AttrDisplay):
+    """
+    Distributed load
+
+    Attributes
+    ----------
+    fx : float
+        asd
+    fy : float
+        asd
+    fz : float
+        asd
+    mx : float
+        asd
+    my : float
+        asd
+    mz : float
+        asd
+
+    Methods
+    -------
+    get_load
+        asd
+    """
+    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+
+    def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
+        """
+        Instantiate a PointLoad object
+
+        Parameters
+        ----------
+        fx : float
+            asd
+        fy : float
+            asd
+        fz : float
+            asd
+        mx : float
+            asd
+        my : float
+            asd
+        mz : float
+            asd
+        """
+        self.fx = fx
+        self.fy = fy
+        self.fz = fz
+
+        self.mx = mx
+        self.my = my
+        self.mz = mz
+
+    def get_f_fixed(self, flag_joint_displacements, frame):
+        """
+        Get f fixed.
+
+        Parameters
+        ----------
+        flag_joint_displacements : array
+            asd
+        frame : Frame
+            asd
+        """
+        length = frame.get_length()
+
+        # fx = self.fx
+        fy = self.fy
+        fz = self.fz
+        # rx = self.rx
+        # ry = self.ry
+        # rz = self.rz
+
+        f_local = [0, -fy * length / 2, -fz * length / 2, 0, fz * length ** 2 / 12, -fy * length ** 2 / 12]
+        f_local += [0, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12, fy * length ** 2 / 12]
+
+        return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local)
+
+
+class Displacement(AttrDisplay):
+    """
+    Displacement
+
+    Attributes
+    ----------
+    ux : float
+        asd
+    uy : float
+        asd
+    uz : float
+        asd
+    rx : float
+        asd
+    ry : float
+        asd
+    rz : float
+        asd
+
+    Methods
+    -------
+    get_displacements
+        asd
+    """
+    __slots__ = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
+
+    def __init__(self, ux=0, uy=0, uz=0, rx=0, ry=0, rz=0):
+        """
+        Instantiate a Displacement
+
+        Parameters
+        ----------
+        ux : float
+            asd
+        uy : float
+            asd
+        uz : float
+            asd
+        rx : float
+            asd
+        ry : float
+            asd
+        rz : float
+            asd
+        """
+        self.ux = ux
+        self.uy = uy
+        self.uz = uz
+
+        self.rx = rx
+        self.ry = ry
+        self.rz = rz
+
+    def get_displacement(self, flag_joint_displacements):
+        """Get displacements"""
+        return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
+
+
+class Reaction(AttrDisplay):
+    """
+    Reaction
+
+    Attributes
+    ----------
+    fx : float
+        asd
+    fy : float
+        asd
+    fz : float
+        asd
+    mx : float
+        asd
+    my : float
+        asd
+    mz : float
+        asd
+
+    Methods
+    -------
+    get_reactions
+        asd
+    """
+    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+
+    def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
+        """
+        Instantiate a Reaction
+
+        Parameters
+        ----------
+        fx : float
+            asd
+        fy : float
+            asd
+        fz : float
+            asd
+        mx : float
+            asd
+        my : float
+            asd
+        mz : float
+            asd
+        """
+        self.fx = fx
+        self.fy = fy
+        self.fz = fz
+        self.mx = mx
+        self.my = my
+        self.mz = mz
+
+    def get_reactions(self, flag_joint_displacements):
+        """Get reactions"""
+        return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
 
 
 if __name__ == "__main__":
