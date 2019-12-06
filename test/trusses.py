@@ -33,33 +33,33 @@ def pratt(a_input, h_input):
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.nodes.add(label + '0', i * a, 0, 0)
+                structure.joints.add(label + '0', i * a, 0, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.nodes.add(label + '1', (i + 1) * a, h, 0)
+                structure.joints.add(label + '1', (i + 1) * a, h, 0)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusses.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusses.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
             # vertical
             for label in letters[1:-1]:
-                structure.trusses.add(label + '2', label + '0', label + '1', 'sec')
+                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
             # left to right
             for i in range(1, 3):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
             # right to left
             for i in range(3, 5):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
             # border
-            structure.trusses.add('ab', 'a0', 'b1', 'sec')
-            structure.trusses.add('fg', 'f1', 'g0', 'sec')
+            structure.trusse.add('ab', 'a0', 'b1', 'sec')
+            structure.trusse.add('fg', 'f1', 'g0', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.nodes]:
+            for label in [node.label for node in structure.joints]:
                 if label == 'a0':
                     structure.supports.add(label, True, True, True)
                 elif label == 'g0':
@@ -79,14 +79,14 @@ def pratt(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") > max_tension:
                     label_max_tension = truss.label
                     max_tension = truss.get_forces("point load")
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") < max_compression:
                     label_max_compression = truss.label
                     max_compression = truss.get_forces("point load")
@@ -153,33 +153,33 @@ def howe(a_input, h_input):
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.nodes.add(label + '0', i * a, 0, 0)
+                structure.joints.add(label + '0', i * a, 0, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.nodes.add(label + '1', (i + 1) * a, h, 0)
+                structure.joints.add(label + '1', (i + 1) * a, h, 0)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusses.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusses.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
             # vertical
             for label in letters[1:-1]:
-                structure.trusses.add(label + '2', label + '0', label + '1', 'sec')
+                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
             # left to right
             for i in range(1, 3):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
             # right to left
             for i in range(3, 5):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
             # border
-            structure.trusses.add('ab', 'a0', 'b1', 'sec')
-            structure.trusses.add('fg', 'f1', 'g0', 'sec')
+            structure.trusse.add('ab', 'a0', 'b1', 'sec')
+            structure.trusse.add('fg', 'f1', 'g0', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.nodes]:
+            for label in [node.label for node in structure.joints]:
                 if label == 'a0':
                     structure.supports.add(label, True, True, True)
                 elif label == 'g0':
@@ -199,14 +199,14 @@ def howe(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") > max_tension:
                     label_max_tension = truss.label
                     max_tension = truss.get_forces("point load")
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") < max_compression:
                     label_max_compression = truss.label
                     max_compression = truss.get_forces("point load")
@@ -274,36 +274,36 @@ def warren(a_input, h_input):
             # lower cord
             for i, label in enumerate(letters):
                 if i % 2 == 0:
-                    structure.nodes.add(label + '0', i * a, 0, 0)
+                    structure.joints.add(label + '0', i * a, 0, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
                 if i % 2 == 0:
-                    structure.nodes.add(label + '1', (i + 1) * a, h, 0)
+                    structure.joints.add(label + '1', (i + 1) * a, h, 0)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
                 if i % 2 == 0:
-                    structure.trusses.add(label + '0', letters[i] + '0', letters[i + 2] + '0', 'sec')
+                    structure.trusse.add(label + '0', letters[i] + '0', letters[i + 2] + '0', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
                 if i % 2 == 0:
-                    structure.trusses.add(label + '1', letters[i + 1] + '1', letters[i + 3] + '1', 'sec')
+                    structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 3] + '1', 'sec')
             # vertical
             # for label in letters[1:-1]:
             #     structure.trusses.add(label + '2', label + '0', label + '1', 'sec')
             # left to right
             for i in range(1, 5, 2):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
             # right to left
             for i in range(2, 6, 2):
-                structure.trusses.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
             # border
-            structure.trusses.add('ab', 'a0', 'b1', 'sec')
-            structure.trusses.add('fg', 'f1', 'g0', 'sec')
+            structure.trusse.add('ab', 'a0', 'b1', 'sec')
+            structure.trusse.add('fg', 'f1', 'g0', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.nodes]:
+            for label in [node.label for node in structure.joints]:
                 if label == 'a0':
                     structure.supports.add(label, True, True, True)
                 elif label == 'g0':
@@ -323,14 +323,14 @@ def warren(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") > max_tension:
                     label_max_tension = truss.label
                     max_tension = truss.get_forces("point load")
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") < max_compression:
                     label_max_compression = truss.label
                     max_compression = truss.get_forces("point load")
@@ -397,45 +397,45 @@ def k(a_input, h_input):
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.nodes.add(label + '0', i * a, 0, 0)
+                structure.joints.add(label + '0', i * a, 0, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.nodes.add(label + '1', (i + 1) * a, h, 0)
+                structure.joints.add(label + '1', (i + 1) * a, h, 0)
             # middle
             for i, label in enumerate(letters[1:3]):
-                structure.nodes.add(label + '2', (i + 1) * a, h / 2, 0)
+                structure.joints.add(label + '2', (i + 1) * a, h / 2, 0)
             for i, label in enumerate(letters[4:6]):
-                structure.nodes.add(label + '2', (i + 4) * a, h / 2, 0)
+                structure.joints.add(label + '2', (i + 4) * a, h / 2, 0)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusses.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusses.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
             # vertical
             for i in range(2):
                 for label in letters[1:3] + letters[4:6]:
-                    structure.trusses.add(label + '2' + str(i), label + str(2 * i), label + str(2 - i), 'sec')
+                    structure.trusse.add(label + '2' + str(i), label + str(2 * i), label + str(2 - i), 'sec')
 
-                structure.trusses.add('d2', 'd0', 'd1', 'sec')
+                structure.trusse.add('d2', 'd0', 'd1', 'sec')
             # diagonals
             for i in range(2):
                 # left
                 for j in range(2):
-                    structure.trusses.add(letters[j + 1] + letters[j + 2] + str(i), letters[j + 1] + '2',
-                                          letters[j + 2] + str(i), 'sec')
+                    structure.trusse.add(letters[j + 1] + letters[j + 2] + str(i), letters[j + 1] + '2',
+                                         letters[j + 2] + str(i), 'sec')
                 # right
                 for j in range(2):
-                    structure.trusses.add(letters[j + 3] + letters[j + 4] + str(i), letters[j + 3] + str(i),
-                                          letters[j + 4] + '2', 'sec')
+                    structure.trusse.add(letters[j + 3] + letters[j + 4] + str(i), letters[j + 3] + str(i),
+                                         letters[j + 4] + '2', 'sec')
             # border
-            structure.trusses.add('ab', 'a0', 'b1', 'sec')
-            structure.trusses.add('fg', 'f1', 'g0', 'sec')
+            structure.trusse.add('ab', 'a0', 'b1', 'sec')
+            structure.trusse.add('fg', 'f1', 'g0', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.nodes]:
+            for label in [node.label for node in structure.joints]:
                 if label == 'a0':
                     structure.supports.add(label, True, True, True)
                 elif label == 'g0':
@@ -455,14 +455,14 @@ def k(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") > max_tension:
                     label_max_tension = truss.label
                     max_tension = truss.get_forces("point load")
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") < max_compression:
                     label_max_compression = truss.label
                     max_compression = truss.get_forces("point load")
@@ -529,50 +529,50 @@ def baltimore(a_input, h_input):
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.nodes.add(label + '0', i * a / 2, 0, 0)
+                structure.joints.add(label + '0', i * a / 2, 0, 0)
             # top cord
             for i, label in enumerate(letters[2:-2:2]):
-                structure.nodes.add(label + '1', (2*i + 2) * a / 2, h, 0)
+                structure.joints.add(label + '1', (2 * i + 2) * a / 2, h, 0)
             # middle
             for i, label in enumerate(letters[1::2]):
-                structure.nodes.add(label + '2', (2 * i + 1) * a / 2, h / 2, 0)
+                structure.joints.add(label + '2', (2 * i + 1) * a / 2, h / 2, 0)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusses.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
             # top cord
             for i, label in enumerate(letters[2:-4:2]):
-                structure.trusses.add(label + '1', letters[2 * i + 2] + '1', letters[2 * i + 4] + '1', 'sec')
+                structure.trusse.add(label + '1', letters[2 * i + 2] + '1', letters[2 * i + 4] + '1', 'sec')
             # vertical
             # longest
             for label in letters[2:-2:2]:
-                structure.trusses.add(label + '2', label + '0', label + '1', 'sec')
+                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
             # shortest
             for label in letters[1:-1:2]:
-                structure.trusses.add(label + '2', label + '0', label + '2', 'sec')
+                structure.trusse.add(label + '2', label + '0', label + '2', 'sec')
             # left to right first level
             for i, label in enumerate(letters[:-1:2]):
-                structure.trusses.add(letters[2 * i] + letters[2 * i + 1] + '0',
-                                      letters[2 * i] + '0', letters[2 * i + 1] + '2', 'sec')
+                structure.trusse.add(letters[2 * i] + letters[2 * i + 1] + '0',
+                                     letters[2 * i] + '0', letters[2 * i + 1] + '2', 'sec')
             # right to left first level
             for i, label in enumerate(letters[1:-1:2]):
-                structure.trusses.add(letters[2 * i + 1] + letters[2 * i + 2] + '0',
-                                      letters[2 * i + 1] + '2', letters[2 * i + 2] + '0', 'sec')
+                structure.trusse.add(letters[2 * i + 1] + letters[2 * i + 2] + '0',
+                                     letters[2 * i + 1] + '2', letters[2 * i + 2] + '0', 'sec')
             # left to right second level
             for i, label in enumerate(letters[7:-2:2]):
-                structure.trusses.add(letters[2 * i + 7] + letters[2 * i + 8] + '1',
-                                      letters[2 * i + 7] + '2', letters[2 * i + 8] + '1', 'sec')
+                structure.trusse.add(letters[2 * i + 7] + letters[2 * i + 8] + '1',
+                                     letters[2 * i + 7] + '2', letters[2 * i + 8] + '1', 'sec')
             # right to left second level
             for i, label in enumerate(letters[2:6:2]):
-                structure.trusses.add(letters[2 * i + 2] + letters[2 * i + 3] + '1',
-                                      letters[2 * i + 2] + '1', letters[2 * i + 3] + '2', 'sec')
+                structure.trusse.add(letters[2 * i + 2] + letters[2 * i + 3] + '1',
+                                     letters[2 * i + 2] + '1', letters[2 * i + 3] + '2', 'sec')
             # border
-            structure.trusses.add('bc1', 'b2', 'c1', 'sec')
-            structure.trusses.add('kl1', 'k1', 'l2', 'sec')
+            structure.trusse.add('bc1', 'b2', 'c1', 'sec')
+            structure.trusse.add('kl1', 'k1', 'l2', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.nodes]:
+            for label in [node.label for node in structure.joints]:
                 if label == 'a0':
                     structure.supports.add(label, True, True, True)
                 elif label == 'm0':
@@ -592,14 +592,14 @@ def baltimore(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") > max_tension:
                     label_max_tension = truss.label
                     max_tension = truss.get_forces("point load")
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusses:
+            for truss in structure.trusse:
                 if truss.get_forces("point load") < max_compression:
                     label_max_compression = truss.label
                     max_compression = truss.get_forces("point load")
