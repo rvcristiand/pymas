@@ -1,6 +1,7 @@
 from pyFEM.primitives import *
 
 import numpy as np
+import json
 
 
 class Structure:
@@ -75,6 +76,8 @@ class Structure:
         Set load pattern reactions...
     solve()
         Solve structure...
+    export()
+        Export the model.
     """
     def __init__(self, ux=False, uy=False, uz=False, rx=False, ry=False, rz=False):
         """
@@ -408,6 +411,31 @@ class Structure:
             u, f = self.solve_load_pattern(load_pattern, indexes, k, k_support)
             self.set_load_pattern_displacements(load_pattern, indexes, u)
             self.set_load_pattern_reactions(load_pattern, indexes, f)
+    
+    def export(self, filename):
+        """
+        Save the structure to a file in json format.
+
+        Parameters
+        ----------
+        filename : string
+            Filename
+        """
+        data = {'joints': {}, 'frames': {}}
+
+        # save the joints
+        for key, joint in self.joints.items():
+            data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
+
+        # save the frames
+        key_list = list(self.joints.keys())
+        val_list = list(self.joints.values())
+        for key, frame in self.frames.items():
+            data['frames'][key] = {'joint_j': key_list[val_list.index(frame.joint_j)],
+                                   'joint_k': key_list[val_list.index(frame.joint_k)]}
+
+        with open(filename, 'w') as outfile:
+            json.dump(data, outfile, indent=4)
 
     def __str__(self):
         report = "Flag joint displacements\n" \
@@ -543,6 +571,9 @@ if __name__ == '__main__':
         model.solve()
 
         print(model)
+
+        # export the model
+        model.export('mydata.json')
 
     def example_2():
         """Solution to problem 7.2 from 'Microcomputadores en Ingeniería Estructural'"""
