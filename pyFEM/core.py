@@ -469,8 +469,8 @@ class Structure:
         key_list = list(self.joints.keys())
         val_list = list(self.joints.values())
         for key, frame in self.frames.items():
-            data['frames'][key] = {'joint_j': key_list[val_list.index(frame.joint_j)],
-                                   'joint_k': key_list[val_list.index(frame.joint_k)]}
+            data['frames'][key] = {'j': key_list[val_list.index(frame.joint_j)],
+                                   'k': key_list[val_list.index(frame.joint_k)]}
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
