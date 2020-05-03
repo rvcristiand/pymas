@@ -723,7 +723,7 @@ if __name__ == '__main__':
 
         print(model)
 
-        model.export("exampple_3.json")
+        model.export("example_3.json")
 
     example_1()
     # example_2()
