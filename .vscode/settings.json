@@ -1,0 +1,13 @@
+{
+    "python.pythonPath": "/home/rvcristiand/anaconda3/bin/python",
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/pyFEM",
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/pyFEM",
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/pyFEM",
+    },
+    "python.envFile": "${workspaceFolder}/.vscode/.env"
+}
