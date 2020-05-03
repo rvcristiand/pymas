@@ -21,6 +21,12 @@
             "z": 0
         }
     },
+    "materials": {
+        "material1": {
+            "E": 2200000.0,
+            "G": 850000.0
+        }
+    },
     "sections": {},
     "rectangularSections": {
         "section1": {

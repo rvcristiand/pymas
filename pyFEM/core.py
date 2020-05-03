@@ -437,6 +437,7 @@ class Structure:
         """
         data = {
             'joints': {}, 
+            'materials': {},
             'sections': {},
             'rectangularSections': {},
             'frames': {}
@@ -445,6 +446,10 @@ class Structure:
         # save the joints
         for key, joint in self.joints.items():
             data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
+
+        # save the materials
+        for key, material in self.materials.items():
+            data['materials'][key] = {'E': material.E, 'G': material.G}
 
         # save sections
         for key, section in self.sections.items():
