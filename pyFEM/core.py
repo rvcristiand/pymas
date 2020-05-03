@@ -1,5 +1,8 @@
 from pyFEM.primitives import *
 
+import sys
+
+
 import numpy as np
 import json
 
@@ -147,6 +150,17 @@ class Structure:
             asd
         """
         self.sections[key] = Section(*args, **kwargs)
+
+    def add_rectangular_section(self, key, *args, **kwargs):
+        """
+        Add a section
+
+        Parameters
+        ----------
+        key : inmutable
+            asd
+        """
+        self.sections[key] = RectangularSection(*args, **kwargs)
 
     def add_joint(self, key, *args, **kwargs):
         """
@@ -421,11 +435,35 @@ class Structure:
         filename : string
             Filename
         """
-        data = {'joints': {}, 'frames': {}}
+        data = {
+            'joints': {}, 
+            'sections': {},
+            'rectangularSections': {},
+            'frames': {}
+        }
 
         # save the joints
         for key, joint in self.joints.items():
             data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
+
+        # save sections
+        for key, section in self.sections.items():
+            if section.__class__.__name__ == "RectangularSection":
+                data['rectangularSections'][key] = {
+                    'width': section.width,
+                    'height': section.height,
+                    'area': section.A,
+                    'Ix': section.Ix,
+                    'Iy': section.Iy,
+                    'Iz': section.Iz
+                }
+            elif section.__class__.__name__ == "Section":
+                data['sections'][key] = {
+                    'area': section.A,
+                    'Ix': section.Ix,
+                    'Iy': section.Iy,
+                    'Iz': section.Iz
+                }
 
         # save the frames
         key_list = list(self.joints.keys())
@@ -456,10 +494,26 @@ class Structure:
 
         report += "Sections\n" \
                   "--------\n"
-        report += '\t'.join(("label", "A", "\tIx", "Iy", "Iz")) + '\n'
+        # really ugly, see Learning Python 5th ed. by Mark Lutz, pag 1015
+        report_sections = ''
+        report_rectangular_sections = ''
         for label, section in self.sections.items():
-            report += "{}\t\t{}\n".format(label,
-                                          ',\t'.join([str(getattr(section, name)) for name in section.__slots__]))
+            if section.__class__.__name__ == "Section":
+                report_sections += "{}\t\t{}\n".format(label,
+                                                ',\t'.join([str(getattr(section, name)) for name in (x for x in dir(section) if not x.startswith('__'))]))
+            elif section.__class__.__name__ == "RectangularSection":
+                report_rectangular_sections += "{}\t\t{}\n".format(label,
+                                                ',\t'.join([str(getattr(section, name)) for name in (x for x in dir(section) if not x.startswith('__'))]))
+
+
+        if report_sections != '':
+            report += '\t'.join(("label", "A", "\tIx", "Iy", "Iz")) + '\n'
+            report += report_sections
+
+        if report_rectangular_sections != '':
+            report += '\t'.join(("label", "A", "\tIx", "Iy", "Iz", "height", "width")) + '\n'
+            report += report_rectangular_sections
+        
         report += "\n"
         sections = {v: k for k, v in self.sections.items()}
 
@@ -573,7 +627,7 @@ if __name__ == '__main__':
         print(model)
 
         # export the model
-        model.export('mydata.json')
+        model.export('example_1.json')
 
     def example_2():
         """Solution to problem 7.2 from 'Microcomputadores en Ingeniería Estructural'"""
@@ -637,9 +691,9 @@ if __name__ == '__main__':
         # add material
         model.add_material('material1', 220e4, 85e4)
 
-        # add sections
-        model.add_section('section1', 0.12, 1.944e-3, 9e-4, 1.6e-3)
-        model.add_section('section2', 0.10, 1.2734e-3, 1.333e-3, 5.208e-4)
+        # add rectangular sections
+        model.add_rectangular_section('section1', 0.3, 0.4)
+        model.add_rectangular_section('section2', 0.25, 0.4)
 
         # add joints
         model.add_joint('1', 0, 3, 3)
@@ -669,6 +723,8 @@ if __name__ == '__main__':
 
         print(model)
 
+        model.export("exampple_3.json")
+
     example_1()
-    example_2()
+    # example_2()
     example_3()

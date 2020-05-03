@@ -76,6 +76,52 @@ class Section(AttrDisplay):
         self.Iz = moment_inertia_z
 
 
+class RectangularSection(Section):
+    """
+    Rectangular cross-section
+
+    Attributes
+    ----------
+    width : float
+        asd
+    height : float
+        asd
+    A : float
+        asd
+    Ix : float
+        asd
+    Iy : float
+        asd
+    Iz : float
+        asd
+    """
+    __slots__ = ('width', 'height')
+
+    def __init__(self, width, height):
+        """
+        Instantiate a rectangular section object
+
+        Parameters
+        ----------
+        width : float
+            asd
+        height : float
+            asd
+        """
+        self.width = width
+        self.height = height
+
+        a = min(width, height)
+        b = max(width, height)
+
+        area = width * height
+        torsion_constant = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
+        moment_inertia_y = (1 / 12) * width * height ** 3
+        moment_inertia_z = (1 / 12) * height * width ** 3
+
+        super().__init__(area, torsion_constant, moment_inertia_y, moment_inertia_z)
+
+
 class Joint(AttrDisplay, metaclass=UniqueInstances):
     """
     End of members
