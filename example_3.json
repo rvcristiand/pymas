@@ -50,15 +50,21 @@
     "frames": {
         "1-2": {
             "j": "1",
-            "k": "2"
+            "k": "2",
+            "material": "material1",
+            "section": "section1"
         },
         "4-1": {
             "j": "4",
-            "k": "1"
+            "k": "1",
+            "material": "material1",
+            "section": "section2"
         },
         "3-1": {
             "j": "3",
-            "k": "1"
+            "k": "1",
+            "material": "material1",
+            "section": "section1"
         }
     }
 }

@@ -465,11 +465,20 @@ class Structure:
                 data['sections'][key]['height'] = section.height
 
         # save the frames
-        key_list = list(self.joints.keys())
-        val_list = list(self.joints.values())
+        joint_key_list = list(self.joints.keys())
+        joint_val_list = list(self.joints.values())
+
+        material_key_list = list(self.materials.keys())
+        material_val_list = list(self.materials.values())
+
+        section_key_list = list(self.sections.keys())
+        section_val_list = list(self.sections.values())
+
         for key, frame in self.frames.items():
-            data['frames'][key] = {'j': key_list[val_list.index(frame.joint_j)],
-                                   'k': key_list[val_list.index(frame.joint_k)]}
+            data['frames'][key] = {'j': joint_key_list[joint_val_list.index(frame.joint_j)],
+                                   'k': joint_key_list[joint_val_list.index(frame.joint_k)],
+                                   'material': material_key_list[material_val_list.index(frame.material)],
+                                   'section': section_key_list[section_val_list.index(frame.section)]}
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
