@@ -439,7 +439,6 @@ class Structure:
             'joints': {}, 
             'materials': {},
             'sections': {},
-            'rectangularSections': {},
             'frames': {}
         }
 
@@ -453,22 +452,17 @@ class Structure:
 
         # save sections
         for key, section in self.sections.items():
+            data['sections'][key] = {
+                'area': section.A,
+                'Ix': section.Ix,
+                'Iy': section.Iy,
+                'Iz': section.Iz,
+                'type': section.__class__.__name__
+                }
+            
             if section.__class__.__name__ == "RectangularSection":
-                data['rectangularSections'][key] = {
-                    'width': section.width,
-                    'height': section.height,
-                    'area': section.A,
-                    'Ix': section.Ix,
-                    'Iy': section.Iy,
-                    'Iz': section.Iz
-                }
-            elif section.__class__.__name__ == "Section":
-                data['sections'][key] = {
-                    'area': section.A,
-                    'Ix': section.Ix,
-                    'Iy': section.Iy,
-                    'Iz': section.Iz
-                }
+                data['sections'][key]['width'] = section.width
+                data['sections'][key]['height'] = section.height
 
         # save the frames
         key_list = list(self.joints.keys())
