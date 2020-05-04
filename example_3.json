@@ -27,23 +27,24 @@
             "G": 850000.0
         }
     },
-    "sections": {},
-    "rectangularSections": {
+    "sections": {
         "section1": {
-            "width": 0.3,
-            "height": 0.4,
             "area": 0.12,
             "Ix": 0.0019438505859375,
             "Iy": 0.0016000000000000003,
-            "Iz": 0.0008999999999999999
+            "Iz": 0.0008999999999999999,
+            "type": "RectangularSection",
+            "width": 0.3,
+            "height": 0.4
         },
         "section2": {
-            "width": 0.25,
-            "height": 0.4,
             "area": 0.1,
             "Ix": 0.0012734516461690266,
             "Iy": 0.0013333333333333335,
-            "Iz": 0.0005208333333333333
+            "Iz": 0.0005208333333333333,
+            "type": "RectangularSection",
+            "width": 0.25,
+            "height": 0.4
         }
     },
     "frames": {
