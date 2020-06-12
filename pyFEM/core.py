@@ -439,7 +439,8 @@ class Structure:
             'joints': {}, 
             'materials': {},
             'sections': {},
-            'frames': {}
+            'frames': {},
+            'supports': {}
         }
 
         # save the joints
@@ -452,13 +453,7 @@ class Structure:
 
         # save sections
         for key, section in self.sections.items():
-            data['sections'][key] = {
-                'area': section.A,
-                'Ix': section.Ix,
-                'Iy': section.Iy,
-                'Iz': section.Iz,
-                'type': section.__class__.__name__
-                }
+            data['sections'][key] = {'area': section.A, 'Ix': section.Ix, 'Iy': section.Iy, 'Iz': section.Iz, 'type': section.__class__.__name__}
             
             if section.__class__.__name__ == "RectangularSection":
                 data['sections'][key]['width'] = section.width
@@ -479,6 +474,10 @@ class Structure:
                                    'k': joint_key_list[joint_val_list.index(frame.joint_k)],
                                    'material': material_key_list[material_val_list.index(frame.material)],
                                    'section': section_key_list[section_val_list.index(frame.section)]}
+
+        # save the supports
+        for key, support in self.supports.items():
+            data['supports'][joint_key_list[joint_val_list.index(key)]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
@@ -691,6 +690,8 @@ if __name__ == '__main__':
 
         print(model)
 
+        model.export("example_2.json")
+
     def example_3():
         """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
         # create the model
@@ -700,7 +701,7 @@ if __name__ == '__main__':
         model.add_material('material1', 220e4, 85e4)
 
         # add rectangular sections
-        model.add_rectangular_section('section1', 0.3, 0.4)
+        model.add_rectangular_section('section1', 0.4, 0.3)
         model.add_rectangular_section('section2', 0.25, 0.4)
 
         # add joints
@@ -734,5 +735,5 @@ if __name__ == '__main__':
         model.export("example_3.json")
 
     example_1()
-    # example_2()
+    example_2()
     example_3()
