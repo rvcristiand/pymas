@@ -31,11 +31,11 @@
         "section1": {
             "area": 0.12,
             "Ix": 0.0019438505859375,
-            "Iy": 0.0016000000000000003,
-            "Iz": 0.0008999999999999999,
+            "Iy": 0.0008999999999999999,
+            "Iz": 0.0016000000000000003,
             "type": "RectangularSection",
-            "width": 0.3,
-            "height": 0.4
+            "width": 0.4,
+            "height": 0.3
         },
         "section2": {
             "area": 0.1,
@@ -65,6 +65,32 @@
             "k": "1",
             "material": "material1",
             "section": "section1"
+        }
+    },
+    "supports": {
+        "2": {
+            "ux": true,
+            "uy": true,
+            "uz": true,
+            "rx": true,
+            "ry": true,
+            "rz": true
+        },
+        "3": {
+            "ux": true,
+            "uy": true,
+            "uz": true,
+            "rx": true,
+            "ry": true,
+            "rz": true
+        },
+        "4": {
+            "ux": true,
+            "uy": true,
+            "uz": true,
+            "rx": true,
+            "ry": true,
+            "rz": true
         }
     }
 }

@@ -88,5 +88,23 @@
             "material": "1",
             "section": "1"
         }
+    },
+    "supports": {
+        "1": {
+            "ux": true,
+            "uy": true,
+            "uz": false,
+            "rx": false,
+            "ry": false,
+            "rz": false
+        },
+        "2": {
+            "ux": false,
+            "uy": true,
+            "uz": false,
+            "rx": false,
+            "ry": false,
+            "rz": false
+        }
     }
 }
