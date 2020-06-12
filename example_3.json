@@ -92,5 +92,8 @@
             "ry": true,
             "rz": true
         }
+    },
+    "load_patterns": {
+        "distributed loads": {}
     }
 }
