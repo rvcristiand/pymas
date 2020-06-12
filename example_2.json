@@ -166,5 +166,35 @@
             "ry": false,
             "rz": false
         }
+    },
+    "load_patterns": {
+        "point loads": {
+            "loads_at_joints": {
+                "1": {
+                    "fx": 10,
+                    "fy": 15,
+                    "fz": 15,
+                    "mx": 0,
+                    "my": 0,
+                    "mz": 0
+                },
+                "2": {
+                    "fx": 5,
+                    "fy": -3,
+                    "fz": -3,
+                    "mx": 0,
+                    "my": 0,
+                    "mz": 0
+                },
+                "3": {
+                    "fx": -4,
+                    "fy": -2,
+                    "fz": -2,
+                    "mx": 0,
+                    "my": 0,
+                    "mz": 0
+                }
+            }
+        }
     }
 }

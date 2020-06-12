@@ -106,5 +106,27 @@
             "ry": false,
             "rz": false
         }
+    },
+    "load_patterns": {
+        "point loads": {
+            "loads_at_joints": {
+                "3": {
+                    "fx": 4.0,
+                    "fy": 3.0,
+                    "fz": 3.0,
+                    "mx": 0,
+                    "my": 0,
+                    "mz": 0
+                },
+                "4": {
+                    "fx": 0,
+                    "fy": -20,
+                    "fz": -20,
+                    "mx": 0,
+                    "my": 0,
+                    "mz": 0
+                }
+            }
+        }
     }
 }
