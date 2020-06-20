@@ -1,5 +1,4 @@
 {
-    "python.pythonPath": "/home/rvcristiand/anaconda3/bin/python",
     "terminal.integrated.env.osx": {
         "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/pyFEM",
     },

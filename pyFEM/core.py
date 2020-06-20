@@ -480,18 +480,20 @@ class Structure:
         for key, support in self.supports.items():
             data['supports'][joint_key_list[joint_val_list.index(key)]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
 
+        # save the loads
         for key, load_pattern in self.load_patterns.items():
-            data['load_patterns'][key] = {}
             if load_pattern.loads_at_joints:
-                data['load_patterns'][key]['loads_at_joints'] = {}
+                data['load_patterns'][key] = {'joints': {}}  # , 'frames': {}
                 for joint, point_load in load_pattern.loads_at_joints.items():
-                    data['load_patterns'][key]['loads_at_joints'][joint_key_list[joint_val_list.index(joint)]] = {'fx': point_load.fx, 
-                                                                                                                  'fy': point_load.fy,
-                                                                                                                  'fz': point_load.fy,
-                                                                                                                  'mx': point_load.mx,
-                                                                                                                  'my': point_load.my,
-                                                                                                                  'mz': point_load.mz
-                                                                                                                  }
+                    data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]] = []
+                    data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]].append({
+                        'fx': point_load.fx, 
+                        'fy': point_load.fy,
+                        'fz': point_load.fy,
+                        'mx': point_load.mx,
+                        'my': point_load.my,
+                        'mz': point_load.mz
+                    })
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
