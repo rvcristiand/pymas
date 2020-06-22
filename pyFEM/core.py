@@ -435,65 +435,92 @@ class Structure:
         filename : string
             Filename
         """
-        data = {
-            'joints': {}, 
-            'materials': {},
-            'sections': {},
-            'frames': {},
-            'supports': {},
-            'load_patterns': {}
-        }
+        data = {}
 
         # save the materials
-        for key, material in self.materials.items():
-            data['materials'][key] = {'E': material.E, 'G': material.G}
+        if self.materials:
+            data['materials'] = {}
+            for key, material in self.materials.items():
+                data['materials'][key] = {'E': material.E, 'G': material.G}
 
         # save sections
-        for key, section in self.sections.items():
-            data['sections'][key] = {'area': section.A, 'Ix': section.Ix, 'Iy': section.Iy, 'Iz': section.Iz, 'type': section.__class__.__name__}
-            
-            if section.__class__.__name__ == "RectangularSection":
-                data['sections'][key]['width'] = section.width
-                data['sections'][key]['height'] = section.height
+        if self.sections:
+            data['sections'] = {}
+            for key, section in self.sections.items():
+                data['sections'][key] = {'area': section.A, 'Ix': section.Ix, 'Iy': section.Iy, 'Iz': section.Iz, 'type': section.__class__.__name__}
+                if section.__class__.__name__ == "RectangularSection":
+                    data['sections'][key]['width'] = section.width
+                    data['sections'][key]['height'] = section.height
 
         # save the joints
-        for key, joint in self.joints.items():
-            data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
+        if self.joints:
+            data['joints'] = {}
+            for key, joint in self.joints.items():
+                data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
 
         # save the frames
-        joint_key_list = list(self.joints.keys())
-        joint_val_list = list(self.joints.values())
-
-        material_key_list = list(self.materials.keys())
+        material_key_list = list(self.materials.keys())  # TODO: add key to material objects
         material_val_list = list(self.materials.values())
 
-        section_key_list = list(self.sections.keys())
+        section_key_list = list(self.sections.keys())  # TODO: add key to section objects
         section_val_list = list(self.sections.values())
 
-        for key, frame in self.frames.items():
-            data['frames'][key] = {'j': joint_key_list[joint_val_list.index(frame.joint_j)],
-                                   'k': joint_key_list[joint_val_list.index(frame.joint_k)],
-                                   'material': material_key_list[material_val_list.index(frame.material)],
-                                   'section': section_key_list[section_val_list.index(frame.section)]}
+        joint_key_list = list(self.joints.keys())  # TODO: add key to joint objects
+        joint_val_list = list(self.joints.values())
+
+        frame_key_list = list(self.frames.keys())  # TODO: add key to frame objects
+        frame_val_list = list(self.frames.values())
+
+        if self.frames:
+            data['frames'] = {}
+            for key, frame in self.frames.items():
+                data['frames'][key] = {'j': joint_key_list[joint_val_list.index(frame.joint_j)],
+                                       'k': joint_key_list[joint_val_list.index(frame.joint_k)],
+                                       'material': material_key_list[material_val_list.index(frame.material)],
+                                       'section': section_key_list[section_val_list.index(frame.section)]}
 
         # save the supports
-        for key, support in self.supports.items():
-            data['supports'][joint_key_list[joint_val_list.index(key)]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
+        if self.supports:
+            data['supports'] = {}
+            for key, support in self.supports.items():
+                data['supports'][joint_key_list[joint_val_list.index(key)]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
 
         # save the loads
-        for key, load_pattern in self.load_patterns.items():
-            if load_pattern.loads_at_joints:
-                data['load_patterns'][key] = {'joints': {}}  # , 'frames': {}
-                for joint, point_load in load_pattern.loads_at_joints.items():
-                    data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]] = []
-                    data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]].append({
-                        'fx': point_load.fx, 
-                        'fy': point_load.fy,
-                        'fz': point_load.fy,
-                        'mx': point_load.mx,
-                        'my': point_load.my,
-                        'mz': point_load.mz
-                    })
+        if self.load_patterns:
+            data['load_patterns'] = {}
+            for key, load_pattern in self.load_patterns.items():
+                data['load_patterns'][key] = {}
+
+                if load_pattern.loads_at_joints:
+                    data['load_patterns'][key]['joints'] = {}
+                    for joint, point_load in load_pattern.loads_at_joints.items():
+                        data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]] = []
+                        data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]].append({  # TODO: manage many 'point load' at the same joint for the same load pattern
+                            'fx': point_load.fx, 
+                            'fy': point_load.fy,
+                            'fz': point_load.fy,
+                            'mx': point_load.mx,
+                            'my': point_load.my,
+                            'mz': point_load.mz
+                        })
+                
+                if load_pattern.distributed_loads:
+                    data['load_patterns'][key]['frames'] = {}
+                    if load_pattern.distributed_loads:
+                        for frame, distributed_load in load_pattern.distributed_loads.items():
+                            # if data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]:
+                            #     data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = []
+                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = {'distributed': []}
+                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed'].append({  # TODO: manage many 'distributed load' at thje same frame for the same load pattern
+                                'fx': distributed_load.fx,
+                                'fy': distributed_load.fy,
+                                'fz': distributed_load.fz,
+                                'mx': distributed_load.mx,
+                                'my': distributed_load.my,
+                                'mz': distributed_load.mz,
+                            })
+
+        
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
