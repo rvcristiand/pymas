@@ -508,8 +508,6 @@ class Structure:
                     data['load_patterns'][key]['frames'] = {}
                     if load_pattern.distributed_loads:
                         for frame, distributed_load in load_pattern.distributed_loads.items():
-                            # if data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]:
-                            #     data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = []
                             data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = {'distributed': []}
                             data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed'].append({  # TODO: manage many 'distributed load' at thje same frame for the same load pattern
                                 'fx': distributed_load.fx,
@@ -519,8 +517,6 @@ class Structure:
                                 'my': distributed_load.my,
                                 'mz': distributed_load.mz,
                             })
-
-        
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
