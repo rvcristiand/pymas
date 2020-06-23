@@ -136,8 +136,7 @@ class AttrDisplay:
         str
             asd
         """
-        return "{}({})".format(self.__class__.__name__,
-                               ','.join(tuple(str(getattr(self, name)) for name in self.__slots__)))
+        return "{}({})".format(self.__class__.__name__,','.join([str(getattr(self, name)) for name in self.__slots__]))
 
 
 if __name__ == "__main__":
