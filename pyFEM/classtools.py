@@ -31,6 +31,7 @@ class UniqueInstances(type):
         if '__slots__' in dct:
             dct['instances_attrs'] = set()
             dct['__setattr__'] = UniqueInstances.setattr
+            dct['__del__'] = UniqueInstances.delete
 
             return type.__new__(mcs, name, bases, dct)
         else:
@@ -118,6 +119,9 @@ class UniqueInstances(type):
                 instances_attrs.add(_instance_attrs)
 
         self.__class__.__dict__[key].__set__(self, value)
+    
+    def delete(self):
+        getattr(self.__class__, 'instances_attrs').remove(tuple(getattr(self, name) for name in self.__slots__))
 
 
 class AttrDisplay:
@@ -157,7 +161,7 @@ if __name__ == "__main__":
     try:
         setattr(coordinate1, 'a', 1)
     except Exception as e:
-        print(e)  # 'Coordinate' object has no attribute 'a'
+        print(e.__class__.__name__, e)  # 'Coordinate' object has no attribute 'a'
 
     # view instances' attrs
     print(getattr(Coordinate, 'instances_attrs'))
@@ -179,7 +183,7 @@ if __name__ == "__main__":
     coordinate2 = Coordinate(0, 0, 0)
     coordinate3 = Coordinate(1, 0, 0)
     print(coordinate2)
-
+    
     # view instances' attrs
     print(getattr(Coordinate, 'instances_attrs'))  # {(1, 0, 0), (0, 0, 0)}
 
@@ -194,7 +198,7 @@ if __name__ == "__main__":
     print(coordinate3)
 
     # view instances' attrs
-    print(getattr(Coordinate, 'instancesAttrs'))
+    print(getattr(Coordinate, 'instances_attrs'))
 
     # change value attrs
     coordinate3.x = 0  # Warning: There is another instance...
