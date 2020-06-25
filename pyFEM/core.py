@@ -508,8 +508,16 @@ class Structure:
                     data['load_patterns'][key]['frames'] = {}
                     if load_pattern.distributed_loads:
                         for frame, distributed_load in load_pattern.distributed_loads.items():
-                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = {'distributed': []}
-                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed'].append({  # TODO: manage many 'distributed load' at thje same frame for the same load pattern
+                            if not frame_key_list[frame_val_list.index(frame)] in data['load_patterns'][key]['frames']:
+                                data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = {}
+
+                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed'] = {}
+
+                            if distributed_load.system == 'global':
+                                if not 'global' in data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']:
+                                    data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']['global'] = []
+                                
+                                data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']['global'].append({
                                 'fx': distributed_load.fx,
                                 'fy': distributed_load.fy,
                                 'fz': distributed_load.fz,
@@ -763,8 +771,8 @@ if __name__ == '__main__':
         model.add_load_pattern("distributed loads")
 
         # add distributed loads
-        model.add_distributed_load("distributed loads", '1-2', 0, -2.4, 0)
-        model.add_distributed_load("distributed loads", '4-1', 0, -3.5, 0)
+        model.add_distributed_load("distributed loads", '1-2', 'global', 0, -2.4, 0)
+        model.add_distributed_load("distributed loads", '4-1', 'global', 0, -3.5, 0)
 
         # solve
         model.solve()

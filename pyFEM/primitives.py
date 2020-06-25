@@ -655,14 +655,16 @@ class DistributedLoad(AttrDisplay):
     get_load
         asd
     """
-    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+    __slots__ = ('system', 'fx', 'fy', 'fz', 'mx', 'my', 'mz')
 
-    def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
+    def __init__(self, system='global', fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
         """
         Instantiate a PointLoad object
 
         Parameters
         ----------
+        system: str
+            asd
         fx : float
             asd
         fy : float
@@ -676,6 +678,8 @@ class DistributedLoad(AttrDisplay):
         mz : float
             asd
         """
+        self.system = system
+
         self.fx = fx
         self.fy = fy
         self.fz = fz
