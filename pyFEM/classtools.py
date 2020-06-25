@@ -65,7 +65,7 @@ class UniqueInstances(type):
             instance_attrs.append(kwargs.get(key, default[i]))
 
         # from list to tuple
-        instance_attrs = tuple(instance_attrs)
+        instance_attrs = tuple(instance_attrs)  # FIXME: i don't need necessary check all params
 
         # get obj's attrs and instances attrs class
         instances_attrs = getattr(cls, 'instances_attrs')
@@ -136,7 +136,7 @@ class AttrDisplay:
         str
             asd
         """
-        return "{}({})".format(self.__class__.__name__,','.join([str(getattr(self, name)) for name in self.__slots__]))
+        return "{}({})".format(self.__class__.__name__,', '.join([repr(getattr(self, name)) for name in self.__slots__]))
 
 
 if __name__ == "__main__":
