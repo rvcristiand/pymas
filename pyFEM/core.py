@@ -89,17 +89,17 @@ class Structure:
         Parameters
         ----------
         ux : bool
-            asd...
+            Flag translaction along 'x' axis activate.
         uy : bool
-            asd...
+            Flag translaction along 'y' axis activate.
         uz : bool
-            asd...
+            Flag translaction along 'z' axis activate.
         rx : bool
-            asd...
+            Flag rotation around 'x' axis activate.
         ry : bool
-            asd...
+            Flag rotation around 'y' axis activate.
         rz : bool
-            asd...
+            Flag rotation around 'z' axis activate.
         """
         # flag active joint displacements
         self.ux = ux
