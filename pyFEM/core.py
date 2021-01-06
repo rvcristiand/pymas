@@ -136,7 +136,7 @@ class Structure:
         Parameters
         ----------
         key : immutable
-            asd
+            Material's key.
         """
         self.materials[key] = Material(*args, **kwargs)
 
@@ -147,7 +147,7 @@ class Structure:
         Parameters
         ----------
         key : immutable
-            asd
+            Section's key.
         """
         self.sections[key] = Section(*args, **kwargs)
 
@@ -158,7 +158,7 @@ class Structure:
         Parameters
         ----------
         key : inmutable
-            asd
+            Rectangular section's key.
         """
         self.sections[key] = RectangularSection(*args, **kwargs)
 
@@ -169,7 +169,7 @@ class Structure:
         Parameters
         ----------
         key : immutable
-            asd
+            Joint's key.
         """
         self.joints[key] = Joint(*args, **kwargs)
 
