@@ -180,15 +180,15 @@ class Structure:
         Parameters
         ----------
         key : immutable
-            asd
+            Frame's key.
         key_joint_j : immutable
-            asd
+            Joint j's key.
         key_joint_k : immutable
-            asd
+            Joint k's key.
         key_material : immutable
-            asd
+            Material's key.
         key_section : immutable
-            asd
+            Section's key.
         """
         self.frames[key] = Frame(self.joints[key_joint_j], self.joints[key_joint_k],
                                  self.materials[key_material], self.sections[key_section])
