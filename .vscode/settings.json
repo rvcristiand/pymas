@@ -8,5 +8,6 @@
     "terminal.integrated.env.windows": {
         "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/pyFEM",
     },
-    "python.envFile": "${workspaceFolder}/.vscode/.env"
+    "python.envFile": "${workspaceFolder}/.vscode/.env",
+    "python.pythonPath": "/usr/bin/python3"
 }

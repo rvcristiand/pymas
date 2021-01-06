@@ -211,7 +211,7 @@ class Structure:
         Parameters
         ----------
         key : immutable
-            asd
+            Load pattern's key.
         """
         self.load_patterns[key] = LoadPattern()
 
@@ -679,6 +679,9 @@ if __name__ == '__main__':
         model.solve()
 
         print(model)
+        # indexes = model.set_indexes()
+        # print(np.array_str(model.load_patterns['point loads'].get_f(model.get_flag_active_joint_displacements(), indexes).toarray(), precision=2, suppress_small=True))
+        # print(np.array_str(model.get_stiffness_matrix_with_support(model.get_stiffness_matrix(indexes).tolil(), indexes).toarray(), precision=2, suppress_small=True))
 
         # export the model
         model.export('example_1.json')
@@ -783,4 +786,4 @@ if __name__ == '__main__':
 
     example_1()
     example_2()
-    example_3()
+    # example_3()
