@@ -200,7 +200,7 @@ class Structure:
         Parameters
         ----------
         key_joint : immutable
-            asd
+            Joint's key.
         """
         self.supports[self.joints[key_joint]] = Support(*args, **kwargs)
 
