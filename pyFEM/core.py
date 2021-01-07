@@ -222,9 +222,9 @@ class Structure:
         Parameters
         ----------
         key_load_pattern : immutable
-            asd
+            Load pattern's key.
         key_joint : immutable
-            asd
+            Joint's key,
         """
         self.load_patterns[key_load_pattern].add_point_load_at_joint(self.joints[key_joint], *args, **kwargs)
 
@@ -235,9 +235,9 @@ class Structure:
         Parameters
         ----------
         key_load_pattern : immutable
-            asd
+            Load pattern's key.
         key_frame : immutable
-            asd
+            Frame's key,
         """
         self.load_patterns[key_load_pattern].add_distributed_load(self.frames[key_frame], *args, **kwargs)
 
