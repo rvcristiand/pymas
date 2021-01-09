@@ -371,11 +371,11 @@ class Structure:
         Parameters
         ----------
         load_pattern : LoadPattern
-            asd
+            Load pattern.
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
         u : ndarray
-            ads
+            Displacements.
         """
         flag_joint_displacements = self.get_flag_active_joint_displacements()
 
@@ -396,11 +396,11 @@ class Structure:
         Parameters
         ----------
         load_pattern : LoadPattern
-            asd
+            Load pattern.
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
         f : ndarray
-            ads
+            Forces.
         """
         flag_joint_displacements = self.get_flag_active_joint_displacements()
 
