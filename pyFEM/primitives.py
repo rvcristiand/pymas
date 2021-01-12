@@ -12,7 +12,7 @@ from pyFEM.classtools import AttrDisplay, UniqueInstances
 
 class Material(AttrDisplay):
     """
-    Linear elastic  material
+    Linear elastic material
 
     Attributes
     ----------
@@ -45,13 +45,13 @@ class Section(AttrDisplay):
     Attributes
     ----------
     A : float
-        asd
+        Cross-sectional area.
     Ix : float
-        asd
+        Inertia around axis x-x.
     Iy : float
-        asd
+        Inertia around axis y-y.
     Iz : float
-        asd
+        Inertia around axis z-z.
     """
     __slots__ = ('A', 'Iy', 'Iz', 'Ix')
 
@@ -62,13 +62,13 @@ class Section(AttrDisplay):
         Parameters
         ----------
         area : float
-            asd
+            Cross-sectional area.
         torsion_constant : float
-            asd
+            Inertia around axis x-x.
         moment_inertia_y : float
-            asd
+            Inertia around axis y-y.
         moment_inertia_z : float
-            asd
+            Inertia around axis z-z.
         """
         self.A = area
         self.Ix = torsion_constant
