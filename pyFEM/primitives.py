@@ -17,9 +17,9 @@ class Material(AttrDisplay):
     Attributes
     ----------
     E : float
-        asd
+        Young's modulus.
     G : float
-        asd
+        Shear modulus.
     """
     __slots__ = ('E', 'G')
 
@@ -30,9 +30,9 @@ class Material(AttrDisplay):
         Parameters
         ----------
         modulus_elasticity : float
-            asd
+            Young's modulus.
         shearing_modulus_elasticity : float
-            asd
+            Shear modulus.
         """
         self.E = modulus_elasticity
         self.G = shearing_modulus_elasticity
