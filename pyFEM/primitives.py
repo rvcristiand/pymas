@@ -83,17 +83,17 @@ class RectangularSection(Section):
     Attributes
     ----------
     width : float
-        asd
+        Width rectangular cross section.
     height : float
-        asd
+        Height rectangular cross section.
     A : float
-        asd
+        Cross-sectional area.
     Ix : float
-        asd
+        Inertia around axis x-x.
     Iy : float
-        asd
+        Inertia around axis y-y.
     Iz : float
-        asd
+        Inertia around axis z-z.
     """
     __slots__ = ('width', 'height')
 
@@ -104,9 +104,9 @@ class RectangularSection(Section):
         Parameters
         ----------
         width : float
-            asd
+            Width rectangular cross section.
         height : float
-            asd
+            Height rectangular cross section.
         """
         self.width = width
         self.height = height
