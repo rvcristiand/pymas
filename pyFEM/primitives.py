@@ -124,21 +124,21 @@ class RectangularSection(Section):
 
 class Joint(AttrDisplay, metaclass=UniqueInstances):
     """
-    End of members
+    End of frames
 
     Attributes
     ----------
     x : float
-        asd
+        X coordinate.
     y : float
-        asd
+        Y coordinate.
     z : float
-        asd
+        Z coordinate.
 
     Methods
     -------
     get_coordinate()
-        asd
+        Return joint's coordinates.
     """
     __slots__ = ('x', 'y', 'z')
 
@@ -149,11 +149,11 @@ class Joint(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         x : float
-            asd
+            X coordinate.
         y : float
-            asd
+            Y coordinate.
         z : float
-            asd
+            Z coordinate.
         """
         self.x = x
         self.y = y
