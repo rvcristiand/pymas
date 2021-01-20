@@ -3,7 +3,7 @@ import numpy as np
 from numpy import linalg
 
 from scipy.spatial import distance
-from scipy.spatial.transform import Rotation
+from scipy.spatial.transform import Rotationk
 
 from scipy.sparse import bsr_matrix, coo_matrix
 
@@ -171,28 +171,28 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
     Attributes
     ----------
     joint_j : Joint
-        asd
+        Near Joint object.
     joint_k : Joint
-        asd
+        Far Joint object.
     material : Material
-        asd
+        Frame's Material object.
     section : Section
-        asd
+        Frame's Section object.
 
     Methods
     -------
     get_length()
-        asd
+        Get length.
     get_direction_cosines()
-        asd
+        Get direction cosines.
     get_rotation()
-        asd
+        Get Rotation object.
     get_rotation_matrix(active_joint_displacements)
-        asd
+        Get rotation matrix.
     get_local_stiffness_matrix(active_joint_displacements)
-        asd
+        Get local stiffness matrix.
     get_global_stiffness_matrix(active_joint_displacements)
-        asd
+        Get global stiffness matrix.
     """
     __slots__ = ("joint_j", "joint_k", "material", "section")
 
@@ -203,13 +203,13 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         joint_j : Joint
-            asd
+            Near Joint object.
         joint_k : Joint
-            asd
+            Far Joint object.
         material : Material
-            asd
+            Material object.
         section : Section
-            asd
+            Section object.
         """
         self.joint_j = joint_j
         self.joint_k = joint_k
