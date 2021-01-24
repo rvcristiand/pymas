@@ -259,12 +259,12 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         data = np.tile(self.get_rotation().as_dcm(), (2, 1, 1))
 
         # matrix rotation for a joint
-        t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).tolil()
+        t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).toarray()
 
         flag_active_joint_displacements = np.nonzero(flag_active_joint_displacements)[0]
         n = 2 * np.size(flag_active_joint_displacements)
-
-        t1 = t1[flag_active_joint_displacements[:, None], flag_active_joint_displacements].toarray()
+        
+        t1 = t1[flag_active_joint_displacements[:, None], flag_active_joint_displacements]
         data = np.tile(t1, (2, 1, 1))
 
         return bsr_matrix((data, indices, indptr), shape=(n, n)).toarray()
