@@ -251,7 +251,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         flag_active_joint_displacements : array
-            asd
+            Flags active joint's displacements
         """
         # rotation as direction cosine matrix
         indptr = np.array([0, 1, 2])
