@@ -3,7 +3,7 @@ import numpy as np
 from numpy import linalg
 
 from scipy.spatial import distance
-from scipy.spatial.transform import Rotationk
+from scipy.spatial.transform import Rotation
 
 from scipy.sparse import bsr_matrix, coo_matrix
 
