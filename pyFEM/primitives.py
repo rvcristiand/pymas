@@ -277,7 +277,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         active_joint_displacements : array
-            asd
+            Flags active joint's displacements
         """
         length = self.get_length()
 
