@@ -351,11 +351,11 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         cols[36:] = np.array([4, 10, 5, 11])
         data[36:] = np.array([2 * e_iy_l, 2 * e_iy_l, 2 * e_iz_l, 2 * e_iz_l])
 
-        k = coo_matrix((data, (rows, cols)), shape=(12, 12)).tolil()
+        k = coo_matrix((data, (rows, cols)), shape=(12, 12)).toarray()
 
         active_frame_displacement = np.nonzero(np.tile(active_joint_displacements, 2))[0]
 
-        return k[active_frame_displacement[:, None], active_frame_displacement].toarray()
+        return k[active_frame_displacement[:, None], active_frame_displacement]
 
     def get_global_stiffness_matrix(self, active_joint_displacements):
         """
