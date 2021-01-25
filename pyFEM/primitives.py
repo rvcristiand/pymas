@@ -364,7 +364,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         active_joint_displacements : array
-            asd
+            Flags active joint's displacements
         """
         k = self.get_local_stiffness_matrix(active_joint_displacements)
         t = self.get_rotation_matrix(active_joint_displacements)
