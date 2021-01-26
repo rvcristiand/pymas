@@ -386,22 +386,22 @@ class Support(AttrDisplay):
     Attributes
     ----------
     ux : bool
-        asd
+        Flag restrain x-axis translation.
     uy : bool
-        asd
+        Flag restrain y-axis translation.
     uz : bool
-        asd
+        Flag restrain z-axis translation.
     rx : bool
-        asd
+        Flag restrain x-axis rotation.
     ry : bool
-        asd
+        Flag restrain y-axis rotation.
     rz : bool
-        asd
+        Flag restrain z-axis rotation.
 
     Methods
     -------
     get_restrains()
-        asd
+        Get flag restrains.
     """
     __slots__ = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
 
@@ -412,17 +412,17 @@ class Support(AttrDisplay):
         Parameters
         ----------
         ux : bool
-            asd
+            Flag restrain x-axis translation.
         uy : bool
-            asd
+            Flag restrain y-axis translation.
         uz : bool
-            asd
+            Flag restrain z-axis translation.
         rx : bool
-            asd
+            Flag restrain x-axis rotation.
         ry : bool
-            asd
+            Flag restrain y-axis rotation.
         rz : bool
-            asd
+            Flag restrain z-axis rotation.
         """
         self.ux = ux
         self.uy = uy
@@ -438,7 +438,7 @@ class Support(AttrDisplay):
         Attributes
         ----------
         flag_joint_displacements : array
-            asd
+            Flag active joint displacements.
         """
         return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
 
