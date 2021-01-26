@@ -13,11 +13,11 @@ class Structure:
     Attributes
     ----------
     ux : bool
-        Flag active x-axis displacement.
+        Flag active x-axis translation.
     uy : bool
-        Flag active y-axis displacement.
+        Flag active y-axis translation.
     uz : bool
-        Flag active z-axis displacement.
+        Flag active z-axis translation.
     rx : bool
         Flag active x-axis rotation.
     ry : bool
