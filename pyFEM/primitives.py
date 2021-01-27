@@ -450,20 +450,24 @@ class LoadPattern(AttrDisplay):
     Attributes
     ----------
     loads_at_joints : dict
-        asd
+        Loads at joints.
     distributed_loads : dict
-        asd
+        Distributed loads at frames.
 
     Methods
     -------
-    add_load_at_joint
-        asd
+    add_point_load_at_joint
+        Add a load at joint.
     add_distributed_load
-        asd
-    get_number_loads_at_joints
-        asd
-    get_load_vector
-        asd
+        Add a distributed load at frame.
+    get_number_point_loads_at_joints
+        Get number joint with loads.
+    get_number_distributed_loads
+        Get number frames with distributed load.
+    get_f
+        Get the load vector.
+    get_f_fixed
+        Get the modified load vector.
     """
     __slots__ = ("loads_at_joints", "distributed_loads")
 
