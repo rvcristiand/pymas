@@ -251,7 +251,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         flag_active_joint_displacements : array
-            Flags active joint's displacements
+            Flags active joint's displacements.
         """
         # rotation as direction cosine matrix
         indptr = np.array([0, 1, 2])
@@ -273,11 +273,10 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         """
         Get local stiffness matrix
 
-
         Parameters
         ----------
         active_joint_displacements : array
-            Flags active joint's displacements
+            Flags active joint's displacements.
         """
         length = self.get_length()
 
@@ -364,7 +363,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         Parameters
         ----------
         active_joint_displacements : array
-            Flags active joint's displacements
+            Flags active joint's displacements.
         """
         k = self.get_local_stiffness_matrix(active_joint_displacements)
         t = self.get_rotation_matrix(active_joint_displacements)
@@ -484,11 +483,7 @@ class LoadPattern(AttrDisplay):
         Parameters
         ----------
         joint : Joint
-            asd
-        args : list
-            asd
-        kwargs : dict
-            asd
+            Joint.
         """
         self.loads_at_joints[joint] = PointLoad(*args, **kwargs)
 
@@ -499,11 +494,7 @@ class LoadPattern(AttrDisplay):
         Parameters
         ----------
         frame : Joint
-            asd
-        args : list
-            asd
-        kwargs : dict
-            asd
+            Frame.
         """
         self.distributed_loads[frame] = DistributedLoad(*args, **kwargs)
 
@@ -522,9 +513,9 @@ class LoadPattern(AttrDisplay):
         Attributes
         ----------
         flag_displacements : array
-            asd
+            Flags active joint's displacements.
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
         """
         no = np.count_nonzero(flag_displacements)
 
@@ -547,9 +538,9 @@ class LoadPattern(AttrDisplay):
         Attributes
         ----------
         flag_joint_displacements : array
-            asd
+            Flags active joint's displacements.
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
         """
         no = np.count_nonzero(flag_joint_displacements)
 
@@ -576,22 +567,22 @@ class PointLoad(AttrDisplay):
     Attributes
     ----------
     fx : float
-        asd
+        Force along 'x' axis.
     fy : float
-        asd
+        Force along 'y' axis.
     fz : float
-        asd
+        Force along 'z'axis.
     mx : float
-        asd
+        Force around 'x' axis.
     my : float
-        asd
+        Force around 'y' axis.
     mz : float
-        asd
+        Force around 'z' axis.
 
     Methods
     -------
-    get_load
-        asd
+     get_load(flag_joint_displacements)
+        Get the load vector.
     """
     __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
 
@@ -602,17 +593,17 @@ class PointLoad(AttrDisplay):
         Parameters
         ----------
         fx : float
-            asd
+            Force along 'x' axis.
         fy : float
-            asd
+            Force along 'y' axis.
         fz : float
-            asd
+            Force along 'z' axis.
         mx : float
-            asd
+            Force around 'x' axis.
         my : float
-            asd
+            Force around 'y' axis.
         mz : float
-            asd
+            Force around 'z' axis.
         """
         self.fx = fx
         self.fy = fy
@@ -629,7 +620,7 @@ class PointLoad(AttrDisplay):
         Parameters
         ----------
         flag_joint_displacements : array
-            asd
+            Flags active joint's displacements.
         """
 
         return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
