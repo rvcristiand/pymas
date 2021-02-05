@@ -632,56 +632,40 @@ class DistributedLoad(AttrDisplay):
 
     Attributes
     ----------
+    system: str
+        Coordinate system ('local' by default).
     fx : float
-        asd
+        Distributed force along 'x' axis.
     fy : float
-        asd
+        Distributed force along 'y' axis.
     fz : float
-        asd
-    mx : float
-        asd
-    my : float
-        asd
-    mz : float
-        asd
+        Distributed force along 'z' axis.
 
     Methods
     -------
-    get_load
-        asd
+    get_load()
+        Get the load vector.
     """
-    __slots__ = ('system', 'fx', 'fy', 'fz', 'mx', 'my', 'mz')
+    __slots__ = ('system', 'fx', 'fy', 'fz')
 
-    def __init__(self, system='global', fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
+    def __init__(self, fx=0, fy=0, fz=0):
         """
-        Instantiate a PointLoad object
+        Instantiate a Distributed object
 
         Parameters
         ----------
-        system: str
-            asd
         fx : float
-            asd
+            Distributed force along 'x' axis.
         fy : float
-            asd
+            Distributed force along 'y' axis.
         fz : float
-            asd
-        mx : float
-            asd
-        my : float
-            asd
-        mz : float
-            asd
+            Distributed force along 'z' axis.
         """
-        self.system = system
+        self.system = 'local'
 
         self.fx = fx
         self.fy = fy
         self.fz = fz
-
-        self.mx = mx
-        self.my = my
-        self.mz = mz
 
     def get_f_fixed(self, flag_joint_displacements, frame):
         """
@@ -690,21 +674,18 @@ class DistributedLoad(AttrDisplay):
         Parameters
         ----------
         flag_joint_displacements : array
-            asd
+            Flags active joint's displacements.
         frame : Frame
-            asd
+            Frame.
         """
         length = frame.get_length()
 
-        # fx = self.fx
+        fx = self.fx
         fy = self.fy
         fz = self.fz
-        # rx = self.rx
-        # ry = self.ry
-        # rz = self.rz
 
-        f_local = [0, -fy * length / 2, -fz * length / 2, 0, fz * length ** 2 / 12, -fy * length ** 2 / 12]
-        f_local += [0, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12, fy * length ** 2 / 12]
+        f_local = [-fx * length / 2, -fy * length / 2, -fz * length / 2, 0, fz * length ** 2 / 12, -fy * length ** 2 / 12]
+        f_local += [fx * length / 2, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12, fy * length ** 2 / 12]
 
         return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local)
 
