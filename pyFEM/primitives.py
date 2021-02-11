@@ -697,22 +697,22 @@ class Displacement(AttrDisplay):
     Attributes
     ----------
     ux : float
-        asd
+        Translation along 'x' axis.
     uy : float
-        asd
+        Translation along 'y' axis.
     uz : float
-        asd
+        Translation along 'z' axis.
     rx : float
-        asd
+        Rotation around 'x' axis.
     ry : float
-        asd
+        Rotation around 'y' axis.
     rz : float
-        asd
+        Rotation around 'z' axis.
 
     Methods
     -------
-    get_displacements
-        asd
+    get_displacements()
+        Get the displacement vector.
     """
     __slots__ = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
 
@@ -723,17 +723,17 @@ class Displacement(AttrDisplay):
         Parameters
         ----------
         ux : float
-            asd
+            Translation along 'x' axis.
         uy : float
-            asd
+            Translation along 'y' axis.
         uz : float
-            asd
+            Translation along 'z' axis.
         rx : float
-            asd
+            Rotation around 'x' axis.
         ry : float
-            asd
+            Rotation around 'y' axis.
         rz : float
-            asd
+            Rotation around 'z' axis.
         """
         self.ux = ux
         self.uy = uy
@@ -755,22 +755,22 @@ class Reaction(AttrDisplay):
     Attributes
     ----------
     fx : float
-        asd
+        Force along 'x' axis.
     fy : float
-        asd
+        Force along 'y' axis.
     fz : float
-        asd
+        Force along 'z' axis.
     mx : float
-        asd
+        Moment around 'x' axis.
     my : float
-        asd
+        Moment around 'y' axis.
     mz : float
-        asd
+        Moment around 'z' axis.
 
     Methods
     -------
-    get_reactions
-        asd
+    get_reactions()
+        Get the load vector.
     """
     __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
 
@@ -781,17 +781,17 @@ class Reaction(AttrDisplay):
         Parameters
         ----------
         fx : float
-            asd
+            Force along 'x' axis.
         fy : float
-            asd
+            Force along 'y' axis.
         fz : float
-            asd
+            Force along 'z' axis.
         mx : float
-            asd
+            Moment around 'x' axis.
         my : float
-            asd
+            Moment around 'y' axis.
         mz : float
-            asd
+            Moment around 'z' axis.
         """
         self.fx = fx
         self.fy = fy
