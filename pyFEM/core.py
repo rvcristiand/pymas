@@ -2,7 +2,6 @@ from pyFEM.primitives import *
 
 import sys
 
-
 import numpy as np
 import json
 
@@ -47,6 +46,8 @@ class Structure:
         Add a material.
     add_section(key, *args, **kwargs)
         Add a section.
+    add_rectangular_section(key, *args, **kwargs)
+        Add a rectangular section.
     add_joint(key, *args, **kwargs)
         Add a joint.
     add_frame(key, key_joint_j, key_joint_k, key_material, key_section)
@@ -57,6 +58,8 @@ class Structure:
         Add a load pattern.
     add_load_at_joint(key_load_pattern, key_joint, *args, **kwargs)
         Add a point load.
+    add_distributed_load(key_load_pattern, key_frame, *args, **kwargs)
+        Add a distributed load.
     get_flag_active_joint_displacements()
         Get flag active joint displacements.
     get_number_active_joint_displacements()
@@ -67,19 +70,19 @@ class Structure:
         Get number frames.
     set_indexes()
         Set joint's indexes.
-    get_stiffness_matrix()
-        Get stiffness matrix.
-    get_stiffness_matrix_with_supports(indexes)...
-        Get stiffness matrix modified by boundaries...
+    get_stiffness_matrix(indexes)
+        Get the stiffness matrix of the structure.
+    get_stiffness_matrix_with_support(stiffness_matrix, indexes)
+        Get the stiffness matrix of the structure with supports.
     solve_load_pattern(load_pattern, indexes, k, k_support)
-        Solve frame structure for load pattern...
+        Solve load pattern.
     set_load_pattern_displacements(load_pattern, indexes, u)
-        Set load pattern displacements...
+        Set load pattern displacement.
     set_load_pattern_reactions(load_pattern, indexes, f)
-        Set load pattern reactions...
+        Set load pattern reactions.
     solve()
-        Solve structure...
-    export()
+        Solve structure.
+    export(filename)
         Export the model.
     """
     def __init__(self, ux=False, uy=False, uz=False, rx=False, ry=False, rz=False):
@@ -153,7 +156,7 @@ class Structure:
 
     def add_rectangular_section(self, key, *args, **kwargs):
         """
-        Add a section
+        Add a rectangular section
 
         Parameters
         ----------
@@ -224,7 +227,7 @@ class Structure:
         key_load_pattern : immutable
             Load pattern's key.
         key_joint : immutable
-            Joint's key,
+            Joint's key.
         """
         self.load_patterns[key_load_pattern].add_point_load_at_joint(self.joints[key_joint], *args, **kwargs)
 
@@ -237,28 +240,60 @@ class Structure:
         key_load_pattern : immutable
             Load pattern's key.
         key_frame : immutable
-            Frame's key,
+            Frame's key.
         """
         self.load_patterns[key_load_pattern].add_distributed_load(self.frames[key_frame], *args, **kwargs)
 
     def get_flag_active_joint_displacements(self):
-        """Get active joint displacements"""
+        """
+        Get active joint displacements
+        
+        Returns
+        -------
+        array
+            Flags active joint displacements.
+        """
         return np.array([self.ux, self.uy, self.uz, self.rx, self.ry, self.rz])
 
     def get_number_active_joint_displacements(self):
-        """Get number of active joint displacements"""
+        """
+        Get number of active joint displacements
+        
+        Returns
+        -------
+        int
+            Number of active joint displacements.
+        """
         return np.count_nonzero(self.get_flag_active_joint_displacements())
 
     def get_number_joints(self):
-        """Get number of joints"""
+        """Get number of joints
+        
+        Returns
+        -------
+        int
+            Number of joints.
+        """
         return len(self.joints)
 
     def get_number_frames(self):
-        """Get number of frames"""
+        """Get number of frames
+        
+        Returns
+        -------
+        int
+            Number of frames.
+        """
         return len(self.frames)
 
-    def set_indexes(self):  # Alternative to save dof in joints
-        """Set the indexes"""
+    def set_indexes(self):
+        """Set the indexes
+        
+        Returns
+        -------
+        dict
+            Key value pairs joints and indexes.
+        """
         n = self.get_number_active_joint_displacements()
 
         return {joint: np.arange(n * i, n * (i + 1)) for i, joint in enumerate(self.joints.values())}
@@ -270,7 +305,12 @@ class Structure:
         Parameters
         ----------
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
+        
+        Returns
+        -------
+        k : coo_matrix
+            Stiffness matrix of the structure.
         """
         flag_joint_displacements = self.get_flag_active_joint_displacements()
         number_active_joint_displacements = np.count_nonzero(flag_joint_displacements)
@@ -299,32 +339,31 @@ class Structure:
 
     def get_stiffness_matrix_with_support(self, stiffness_matrix, indexes):
         """
-        Get stiffness matrix with support
+        Get the stiffness matrix of the structure with supports
 
         Parameters
         ----------
-        stiffness_matrix : array
-            asd
+        stiffness_matrix : ndarray
+            Stiffness matrix of the structure.
         indexes : dict
-            asd
+            Key value pairs joints and indexes.
 
         Returns
         -------
-        stiffness_matrix_with_supports : lil_matrix
-            asd
+        stiffness_matrix_with_supports : ndarray
+            Stiffness matrix of the structure modified by supports.
         """
         flag_joint_displacements = self.get_flag_active_joint_displacements()
         n = np.shape(stiffness_matrix)[0]
-
+        
         for joint, support in self.supports.items():
             joint_indexes = indexes[joint]
             restrains = support.get_restrains(flag_joint_displacements)
 
             for index in joint_indexes[restrains]:
-                stiffness_matrix[index] = np.zeros(n)
-                stiffness_matrix[:, index] = np.zeros((n, 1))
+                stiffness_matrix[index] = stiffness_matrix[:, index] = np.zeros(n)
                 stiffness_matrix[index, index] = 1
-
+        
         return stiffness_matrix
 
     def solve_load_pattern(self, load_pattern, indexes, k, k_support):
@@ -334,24 +373,24 @@ class Structure:
         Parameters
         ----------
         load_pattern : LoadPattern
-            asd
+            Load pattern object.
         indexes : dict
-            asd
-        k : coo_matrix
-            asd
-        k_support : lil_matrix
-            asd
+            Key value pairs joints and indexes.
+        k : ndarray
+            Stiffness matrix of the structure.
+        k_support : ndarray
+            Stiffness matrix of the structure modified by supports.
 
         Returns
         -------
         u : ndarray
-            asd
+            Displacements vector.
         f : ndarray
-            asd
+            Forces vector.
         """
         flag_joint_displacements = self.get_flag_active_joint_displacements()
 
-        f = load_pattern.get_f(flag_joint_displacements, indexes).tolil()
+        f = load_pattern.get_f(flag_joint_displacements, indexes).toarray()
 
         for joint, support in self.supports.items():
             joint_indexes = indexes[joint]
@@ -359,8 +398,8 @@ class Structure:
             for index in joint_indexes[restrains]:
                 f[index, 0] = 0
 
-        u = np.linalg.solve(k_support.toarray(), f.toarray())
-        f = np.dot(k.toarray(), u) + load_pattern.get_f_fixed(flag_joint_displacements, indexes).toarray()
+        u = np.linalg.solve(k_support, f)
+        f = np.dot(k, u) + load_pattern.get_f_fixed(flag_joint_displacements, indexes).toarray()
 
         return u, f
 
@@ -418,8 +457,8 @@ class Structure:
         """Solve the structure"""
         indexes = self.set_indexes()
 
-        k = self.get_stiffness_matrix(indexes)
-        k_support = self.get_stiffness_matrix_with_support(k.tolil(), indexes)
+        k = self.get_stiffness_matrix(indexes).toarray()
+        k_support = self.get_stiffness_matrix_with_support(k, indexes)
 
         for label, load_pattern in self.load_patterns.items():
             u, f = self.solve_load_pattern(load_pattern, indexes, k, k_support)
