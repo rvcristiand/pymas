@@ -445,7 +445,7 @@ class Structure:
 
         load_pattern_reactions = {}
 
-        for joint, support in self.supports.items():
+        for joint in self.supports.keys():
             joint_indexes = indexes[joint]
             reactions = flag_joint_displacements.astype(float)
             reactions[flag_joint_displacements] = f[joint_indexes, 0]
@@ -460,7 +460,7 @@ class Structure:
         k = self.get_stiffness_matrix(indexes).toarray()
         k_support = self.get_stiffness_matrix_with_support(k, indexes)
 
-        for label, load_pattern in self.load_patterns.items():
+        for load_pattern in self.load_patterns.values():
             u, f = self.solve_load_pattern(load_pattern, indexes, k, k_support)
             self.set_load_pattern_displacements(load_pattern, indexes, u)
             self.set_load_pattern_reactions(load_pattern, indexes, f)
@@ -559,10 +559,7 @@ class Structure:
                                 data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']['global'].append({
                                 'fx': distributed_load.fx,
                                 'fy': distributed_load.fy,
-                                'fz': distributed_load.fz,
-                                'mx': distributed_load.mx,
-                                'my': distributed_load.my,
-                                'mz': distributed_load.mz,
+                                'fz': distributed_load.fz
                             })
 
         with open(filename, 'w') as outfile:
