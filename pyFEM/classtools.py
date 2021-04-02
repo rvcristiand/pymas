@@ -22,11 +22,11 @@ class UniqueInstances(type):
         Parameters
         ----------
         name : str
-            asd
+            Class name.
         bases : tuple
-            asd
+            Parent classes.
         dct : dict
-            asd
+            Namespace's class.
         """
         if '__slots__' in dct:
             dct['instances_attrs'] = set()
@@ -93,9 +93,9 @@ class UniqueInstances(type):
         Parameters
         ----------
         key : string
-            asd
+            Key's attribute to modified.
         value : value
-            asd
+            Value to assign.
         """
         if hasattr(self, key):
             # get instances attrs and instance attrs
@@ -134,7 +134,7 @@ class AttrDisplay:
         Returns
         -------
         str
-            asd
+            Object representation.
         """
         return "{}({})".format(self.__class__.__name__,', '.join([repr(getattr(self, name)) for name in self.__slots__]))
 
