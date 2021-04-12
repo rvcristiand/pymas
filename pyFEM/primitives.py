@@ -351,9 +351,9 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         data[36:] = np.array([2 * e_iy_l, 2 * e_iy_l, 2 * e_iz_l, 2 * e_iz_l])
 
         k = coo_matrix((data, (rows, cols)), shape=(12, 12)).toarray()
-
+        
         active_frame_displacement = np.nonzero(np.tile(active_joint_displacements, 2))[0]
-
+        
         return k[active_frame_displacement[:, None], active_frame_displacement]
 
     def get_global_stiffness_matrix(self, active_joint_displacements):
@@ -544,20 +544,38 @@ class LoadPattern(AttrDisplay):
         """
         no = np.count_nonzero(flag_joint_displacements)
 
+        # point loads
+        # n = self.get_number_point_loads_at_frames()
+
+        # rows = np.empty(n * 2 * no, dtype=int)
+        # cols = np.zeros(n * 2 * no, dtype=int)
+        # data = np.empty(n * 2 * no)
+
+        # for i, (frame, point_load) in enumerate(self.point_loads_at_frames.items()):
+        #     joint_j = frame.joint_j
+        #     joint_k = frame.joint_k
+            
+        #     rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
+        #     data[i * 2 * no:(i + 1) * 2 * no] = point_load.f_fixed(flag_joint_displacements, frame).flatten()
+
+        # point_loads = coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
+        
         n = self.get_number_distributed_loads()
 
-        rows = np.empty(2 * n * no, dtype=int)
-        cols = np.zeros(2 * n * no, dtype=int)
-        data = np.empty(2 * n * no)
-
+        rows = np.empty(n * 2 * no, dtype=int)
+        cols = np.zeros(n * 2 * no, dtype=int)
+        data = np.empty(n * 2 * no)
+        
         for i, (frame, distributed_load) in enumerate(self.distributed_loads.items()):
             joint_j = frame.joint_j
             joint_k = frame.joint_k
 
             rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
-            data[i * 2 * no:(i + 1) * 2 * no] = distributed_load.get_f_fixed(flag_joint_displacements, frame)
+            data[i * 2 * no:(i + 1) * 2 * no] = distributed_load.get_f_fixed(flag_joint_displacements, frame).flatten()
 
-        return coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
+        distributed_loads = coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
+
+        return distributed_loads # point_loads + 
 
 
 class PointLoad(AttrDisplay):
@@ -684,10 +702,10 @@ class DistributedLoad(AttrDisplay):
         fy = self.fy
         fz = self.fz
 
-        f_local = [-fx * length / 2, -fy * length / 2, -fz * length / 2, 0, fz * length ** 2 / 12, -fy * length ** 2 / 12]
-        f_local += [fx * length / 2, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12, fy * length ** 2 / 12]
-
-        return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local)
+        f_local = np.array([[-fx * length / 2, -fy * length / 2, -fz * length / 2, 0,  fz * length ** 2 / 12, -fy * length ** 2 / 12, 
+                             -fx * length / 2, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12,  fy * length ** 2 / 12]]).T
+        
+        return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local[np.nonzero(np.tile(flag_joint_displacements, 2))[0]])
 
 
 class Displacement(AttrDisplay):
@@ -803,6 +821,97 @@ class Reaction(AttrDisplay):
     def get_reactions(self, flag_joint_displacements):
         """Get reactions"""
         return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
+
+
+class FrameEndActions(AttrDisplay):
+    """
+    Frame end actions.
+
+    Attributes
+    ----------
+    fx_j : float
+        Force along 'x' axis at joint_j.
+    fy_j : float
+        Force along 'y' axis at joint_j.
+    fz_j : float
+        Force along 'z' axis at joint_j.
+    rx_j : float
+        Moment around 'x' axis at joint_j.
+    ry_j : float
+        Moment around 'y' axis at joint_j.
+    rz_j : float
+        Moment around 'z' axis at joint_j.
+    fx_k : float
+        Force along 'x' axis at joint_k.
+    fy_k : float
+        Force along 'y' axis at joint_k.
+    fz_k : float
+        Force along 'z' axis at joint_k.
+    rx_k : float
+        Moment around 'x' axis at joint_k.
+    ry_k : float
+        Moment around 'y' axis at joint_k.
+    rz_k : float
+        Moment around 'z' axis at joint_k.
+
+    Methods
+    -------
+    get_end_actions()
+        Get the end actions vector.
+    """
+    __slots__ = ("fx_j", "fy_j", "fz_j", "rx_j", "ry_j", "rz_j",
+                 "fx_k", "fy_k", "fz_k", "rx_k", "ry_k", "rz_k")
+
+    def __init__(self, fx_j=0, fy_j=0, fz_j=0, rx_j=0, ry_j=0, rz_j=0,
+                       fx_k=0, fy_k=0, fz_k=0, rx_k=0, ry_k=0, rz_k=0):
+        """
+        Instantiate a FrameEndActions
+
+        Parameters
+        ----------
+        fx_j : float
+            Force along 'x' axis at joint_j.
+        fy_j : float
+            Force along 'y' axis at joint_j.
+        fz_j : float
+            Force along 'z' axis at joint_j.
+        rx_j : float
+            Moment around 'x' axis at joint_j.
+        ry_j : float
+            Moment around 'y' axis at joint_j.
+        rz_j : float
+            Moment around 'z' axis at joint_j.
+        fx_k : float
+            Force along 'x' axis at joint_k.
+        fy_k : float
+            Force along 'y' axis at joint_k.
+        fz_k : float
+            Force along 'z' axis at joint_k.
+        rx_k : float
+            Moment around 'x' axis at joint_k.
+        ry_k : float
+            Moment around 'y' axis at joint_k.
+        rz_k : float
+            Moment around 'z' axis at joint_k.
+        """
+        self.fx_j = fx_j
+        self.fy_j = fy_j
+        self.fz_j = fz_j
+        self.rx_j = rx_j
+        self.ry_j = ry_j
+        self.rz_j = rz_j
+
+        self.fx_k = fx_k
+        self.fy_k = fy_k
+        self.fz_k = fz_k
+        self.rx_k = rx_k
+        self.ry_k = ry_k
+        self.rz_k = rz_k
+
+    def get_end_actions(self, flag_joint_displacements):
+        """Get end actions"""
+        
+        return np.array([getattr(self, name) for name in self.__slots__])[np.tile(flag_joint_displacements, 2)].reshape((-1, 1))
 
 
 if __name__ == "__main__":
