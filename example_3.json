@@ -98,28 +98,22 @@
             "frames": {
                 "1-2": {
                     "distributed": {
-                        "global": [
+                        "local": [
                             {
                                 "fx": 0,
                                 "fy": -2.4,
-                                "fz": 0,
-                                "mx": 0,
-                                "my": 0,
-                                "mz": 0
+                                "fz": 0
                             }
                         ]
                     }
                 },
                 "4-1": {
                     "distributed": {
-                        "global": [
+                        "local": [
                             {
                                 "fx": 0,
                                 "fy": -3.5,
-                                "fz": 0,
-                                "mx": 0,
-                                "my": 0,
-                                "mz": 0
+                                "fz": 0
                             }
                         ]
                     }

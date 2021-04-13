@@ -58,6 +58,8 @@ class Structure:
         Add a load pattern.
     add_load_at_joint(key_load_pattern, key_joint, *args, **kwargs)
         Add a point load.
+    add_point_load_at_frame(key_load_pattern, key_frame, *args, **kwargs)
+        Add a point load at frame.
     add_distributed_load(key_load_pattern, key_frame, *args, **kwargs)
         Add a distributed load.
     get_flag_active_joint_displacements()
@@ -230,6 +232,19 @@ class Structure:
         """
         self.load_patterns[key_load_pattern].add_point_load_at_joint(self.joints[key_joint], *args, **kwargs)
 
+    def add_point_load_at_frame(self, key_load_pattern, key_frame, *args, **kwargs):
+        """
+        Add a point load at frame
+
+        Parameters
+        ----------
+        key_load_pattern : inmutable
+            Load pattern's key.
+        key_frame : inmutable
+            Frame's key.
+        """
+        self.load_patterns[key_load_pattern].add_point_load_at_frame(self.frames[key_frame], *args, **kwargs)
+        
     def add_distributed_load(self, key_load_pattern, key_frame, *args, **kwargs):
         """
         Add a distributed load
@@ -422,8 +437,8 @@ class Structure:
 
             f_fixed = np.zeros((n, 1))
 
-            # if (frame in load_pattern.point_loads_at_frames.keys()):
-            #     f_fixed += load_pattern.point_loads_at_frame[frame].get_f_fixed(flag_joint_displacements, frame)
+            if (frame in load_pattern.point_loads_at_frames.keys()):
+                f_fixed += load_pattern.point_loads_at_frame[frame].get_f_fixed(flag_joint_displacements, frame)
 
             if (frame in load_pattern.distributed_loads.keys()):
                 f_fixed += load_pattern.distributed_loads[frame].get_f_fixed(flag_joint_displacements, frame)
