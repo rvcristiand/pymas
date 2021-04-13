@@ -457,10 +457,14 @@ class LoadPattern(AttrDisplay):
     -------
     add_point_load_at_joint
         Add a load at joint.
+    add_point_load_at_frame
+        Add a point load at frame.
     add_distributed_load
         Add a distributed load at frame.
     get_number_point_loads_at_joints
         Get number joint with loads.
+    get_number_point_loads_at_frames
+        Get number loads at frames.
     get_number_distributed_loads
         Get number frames with distributed load.
     get_f
@@ -468,12 +472,12 @@ class LoadPattern(AttrDisplay):
     get_f_fixed
         Get the modified load vector.
     """
-    __slots__ = ("loads_at_joints", "distributed_loads")
+    __slots__ = ("loads_at_joints", "point_loads_at_frames", "distributed_loads")
 
     def __init__(self):
         """Instantiate a LoadPatter object"""
         self.loads_at_joints = {}
-        # self.point_loads_at_frames = {}
+        self.point_loads_at_frames = {}
         self.distributed_loads = {}
 
     def add_point_load_at_joint(self, joint, *args, **kwargs):
@@ -485,7 +489,18 @@ class LoadPattern(AttrDisplay):
         joint : Joint
             Joint.
         """
-        self.loads_at_joints[joint] = PointLoad(*args, **kwargs)
+        self.loads_at_joints[joint] = PointLoadAtJoint(*args, **kwargs)
+    
+    def add_point_load_at_frame(self, frame, *args, **kwargs):
+        """
+        Add a point load at frame
+
+        Parameters
+        ----------
+        frame : Frame
+            Frame
+        """
+        self.point_loads_at_frames[frame] = PointLoadAtFrame(*args, **kwargs)
 
     def add_distributed_load(self, frame, *args, **kwargs):
         """
@@ -501,6 +516,10 @@ class LoadPattern(AttrDisplay):
     def get_number_point_loads_at_joints(self):
         """Get number loads at joints"""
         return len(self.loads_at_joints)
+
+    def get_number_point_loads_at_frames(self):
+        """det number point loads at frames"""
+        return len(self.point_loads_at_frames)
 
     def get_number_distributed_loads(self):
         """Get number distributed loads"""
@@ -545,26 +564,26 @@ class LoadPattern(AttrDisplay):
         no = np.count_nonzero(flag_joint_displacements)
 
         # point loads
-        # n = self.get_number_point_loads_at_frames()
+        n = self.get_number_point_loads_at_frames()
 
-        # rows = np.empty(n * 2 * no, dtype=int)
-        # cols = np.zeros(n * 2 * no, dtype=int)
-        # data = np.empty(n * 2 * no)
+        rows = np.empty(n * 2 * no, dtype=int)
+        cols = np.zeros(n * 2 * no, dtype=int)
+        data = np.empty(n * 2 * no)
 
-        # for i, (frame, point_load) in enumerate(self.point_loads_at_frames.items()):
-        #     joint_j = frame.joint_j
-        #     joint_k = frame.joint_k
+        for i, (frame, point_load) in enumerate(self.point_loads_at_frames.items()):
+            joint_j = frame.joint_j
+            joint_k = frame.joint_k
             
-        #     rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
-        #     data[i * 2 * no:(i + 1) * 2 * no] = point_load.f_fixed(flag_joint_displacements, frame).flatten()
+            rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
+            data[i * 2 * no:(i + 1) * 2 * no] = point_load.get_f_fixed(flag_joint_displacements, frame).flatten()
 
-        # point_loads = coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
+        point_loads = coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
         
         n = self.get_number_distributed_loads()
 
         rows = np.empty(n * 2 * no, dtype=int)
         cols = np.zeros(n * 2 * no, dtype=int)
-        data = np.empty(n * 2 * no)
+        data = np.empty(n * 2 * no)        
         
         for i, (frame, distributed_load) in enumerate(self.distributed_loads.items()):
             joint_j = frame.joint_j
@@ -575,12 +594,12 @@ class LoadPattern(AttrDisplay):
 
         distributed_loads = coo_matrix((data, (rows, cols)), (no * len(indexes), 1))
 
-        return distributed_loads # point_loads + 
+        return point_loads + distributed_loads
 
 
-class PointLoad(AttrDisplay):
+class PointLoadAtJoint(AttrDisplay):
     """
-    Point load
+    Point load at joint
 
     Attributes
     ----------
@@ -606,7 +625,7 @@ class PointLoad(AttrDisplay):
 
     def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
         """
-        Instantiate a PointLoad object
+        Instantiate a PointLoadAtJoint object
 
         Parameters
         ----------
@@ -640,8 +659,135 @@ class PointLoad(AttrDisplay):
         flag_joint_displacements : array
             Flags active joint's displacements.
         """
-
         return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
+
+class PointLoadAtFrame(AttrDisplay):
+    """
+    Point load at frame
+
+    Attributes
+    ----------
+    fx : tuple
+        (value, position).
+    fy : tuple
+        (value, position).
+    fz : tuple
+        (value, position).
+    mx : tuple
+        (value, position).
+    my : tuple
+        (value, position).
+    mz : tuple
+        (value, position).
+
+    """
+    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+
+    def __init__(self, fx=None, fy=None, fz=None, mx=None, my=None, mz=None):
+        """
+        Instantiate a PointLoadAtFrame object
+
+        Parameters
+        ----------
+        fx : tuple
+            (value, position).
+        fy : tuple
+            (value, position).
+        fz : tuple
+            (value, position).
+        mx : tuple
+            (value, position).
+        my : tuple
+            (value, position).
+        mz : tuple
+            (value, position).
+        
+        """
+        self.fx = fx if fx is not None else (0, 0)
+        self.fy = fy if fy is not None else (0, 0)
+        self.fz = fz if fz is not None else (0, 0)
+        self.mx = mx if mx is not None else (0, 0)
+        self.my = my if my is not None else (0, 0)
+        self.mz = mz if mz is not None else (0, 0)
+
+    def get_f_fixed(self, flag_joint_displacements, frame):
+        """
+        Get f fixed.
+
+        Parameters
+        ----------
+        flag_joint_displacements : array
+            Flags active joint's displacements.
+        frame : Frame
+            Frame.
+        """
+        L = frame.get_length()
+
+        f_local = np.empty((2 * 6, 1))
+
+        # fx
+        P = self.fx[0]
+        a = self.fx[1] * L
+        b = L - a
+
+        f_local[0] = -P*b / L
+        f_local[6] = -P*a / L
+
+        # fy
+        P = -self.fy[0]
+        a = self.fy[1] * L
+        b = L - a
+
+        f_local[1] = P*b**2*(3*a+b) / L ** 3
+        f_local[7] = P*a**2*(a+3*b) / L ** 3
+
+        f_local[5] = P*a*b**2 / L**2
+        f_local[11] = -P*a**2*b / L**2
+
+        # fz
+        P = -self.fz[0]
+        a = self.fz[1] * L
+        b = L - a
+
+        f_local[2] = P*b**2*(3*a+b) / L ** 3
+        f_local[8] = P*a**2*(a+3*b) / L ** 3
+
+        f_local[4] = -P*a*b**2 / L**2
+        f_local[10] = P*a**2*b / L**2
+
+        # mx
+        T = self.mx[0]
+        a = self.mx[1] * L
+        b = L - b
+
+        f_local[3] = -T*b / L
+        f_local[9] = -T*a / L
+
+        # my
+        M = self.my[0]
+        a = self.my[1] * L
+        b = L - a
+
+        f_local[2] += -6*M*a*b / L ** 3
+        f_local[8] += 6*M*a*b / L **3
+
+        f_local[4] += M*b*(2*a-b) / L ** 2
+        f_local[10] += M*a*(2*b-a) / L ** 2
+
+        # mz
+        M = self.mz[0]
+        a = self.mz[1] * L
+        b = L - a
+
+        f_local[1] += 6*M*a*b / L ** 3
+        f_local[7] += -6*M*a*b / L ** 3
+
+        f_local[5] += M*b*(2*a-b) / L ** 2
+        f_local[11] += M*a*(2*b-a) / L ** 2
+
+        f_local = f_local[np.nonzero(np.tile(flag_joint_displacements, 2)[0])]
+
+        return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local)
 
 
 class DistributedLoad(AttrDisplay):
