@@ -256,7 +256,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         # rotation as direction cosine matrix
         indptr = np.array([0, 1, 2])
         indices = np.array([0, 1])
-        data = np.tile(self.get_rotation().as_dcm(), (2, 1, 1))
+        data = np.tile(self.get_rotation().as_matrix(), (2, 1, 1))
 
         # matrix rotation for a joint
         t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).toarray()
