@@ -5,22 +5,22 @@ import json
 
 
 class Structure:
-    """Model and analyse a framed structure
+    """Model and analyse framed structures.
 
     Attributes
     ----------
     ux : bool
-        Flag active x-axis translation.
+        Flag translation along x-axis active.
     uy : bool
-        Flag active y-axis translation.
+        Flag translation along y-axis active.
     uz : bool
-        Flag active z-axis translation.
+        Flag translation along z-axis active.
     rx : bool
-        Flag active x-axis rotation.
+        Flag rotation around x-axis active.
     ry : bool
-        Flag active y-axis rotation.
+        Flag rotation around y-axis active.
     rz : bool
-        Flag active z-axis rotation.
+        Flag rotation around z-axis active.
     materials : dict
         Materials.
     sections : dict
@@ -35,8 +35,8 @@ class Structure:
         Load patterns.
     displacements : dict
         Displacements.
-    frames_end_actions : dict
-        Frames end actions.
+    end_actions : dict
+        End actions.
     reactions : dict
         Reactions.
     
@@ -50,20 +50,20 @@ class Structure:
         Add a rectangular section.
     add_joint(key, *args, **kwargs)
         Add a joint.
-    add_frame(key, key_joint_j, key_joint_k, key_material, key_section)
+    add_frame(key, joint_j, joint_k, material, section)
         Add a frame.
-    add_support(key_joint, *args, **kwargs)
+    add_support(joint, *args, **kwargs)
         Add a support.
     add_load_pattern(key)
         Add a load pattern.
-    add_load_at_joint(key_load_pattern, key_joint, *args, **kwargs)
-        Add a point load.
-    add_point_load_at_frame(key_load_pattern, key_frame, *args, **kwargs)
+    add_load_at_joint(load_pattern, joint, *args, **kwargs)
+        Add a load at joint.
+    add_point_load_at_frame(load_pattern, frame, *args, **kwargs)
         Add a point load at frame.
-    add_distributed_load(key_load_pattern, key_frame, *args, **kwargs)
-        Add a distributed load.
-    get_flag_active_joint_displacements()
-        Get flag active joint displacements.
+    add_distributed_load(load_pattern, frame, *args, **kwargs)
+        Add a distributed load at frame.
+    get_flags_active_joint_displacements()
+        Get flags active joint displacements.
     get_number_active_joint_displacements()
         Get number active joint displacements.
     get_number_joints()
@@ -71,38 +71,38 @@ class Structure:
     get_number_frames()
         Get number frames.
     get_indexes()
-        Get joint's indexes.
+        Get joint indexes.
     get_stiffness_matrix(indexes)
         Get the stiffness matrix of the structure.
-    get_stiffness_matrix_with_support(indexes)
-        Get the stiffness matrix of the structure with supports.
+    get_stifffness_matrix_modified_by_supports(indexes)
+        Get the stiffness matrix of the structure modified by supports.
     solve_load_pattern(load_pattern, indexes, k_support)
-        Solve load pattern.
+        Solve a load pattern.
     solve()
-        Solve structure.
+        Solve the structure due to a load pattern.
     export(filename)
         Export the model.
     """
     def __init__(self, ux=False, uy=False, uz=False, rx=False, ry=False, rz=False):
         """
-        Instantiate a Structure object
+        Instantiate a Structure object.
 
         Parameters
         ----------
         ux : bool
-            Flag translaction along 'x' axis activate.
+            Flag translation along x-axis active.
         uy : bool
-            Flag translaction along 'y' axis activate.
+            Flag translation along y-axis active.
         uz : bool
-            Flag translaction along 'z' axis activate.
+            Flag translation along z-axis active.
         rx : bool
-            Flag rotation around 'x' axis activate.
+            Flag rotation around x-axis active.
         ry : bool
-            Flag rotation around 'y' axis activate.
+            Flag rotation around y-axis active.
         rz : bool
-            Flag rotation around 'z' axis activate.
+            Flag rotation around z-axis active.
         """
-        # flag active joint displacements
+        # flags active joint displacements
         self.ux = ux
         self.uy = uy
         self.uz = uz
@@ -118,24 +118,18 @@ class Structure:
         self.joints = {}
         self.frames = {}
 
-        # dict supports
+        # dict supports and load patterns
         self.supports = {}
-
-        # dict load patterns
         self.load_patterns = {}
 
-        # dict displacements
+        # dict displacements, end actions and reactions
         self.displacements = {}
-
-        # dict frames end actions
-        self.frames_end_actions = {}
-
-        # dict reactions
+        self.end_actions = {}
         self.reactions = {}
 
     def add_material(self, key, *args, **kwargs):
         """
-        Add a material
+        Add a material.
 
         Parameters
         ----------
@@ -146,7 +140,7 @@ class Structure:
 
     def add_section(self, key, *args, **kwargs):
         """
-        Add a section
+        Add a section.
 
         Parameters
         ----------
@@ -157,7 +151,7 @@ class Structure:
 
     def add_rectangular_section(self, key, *args, **kwargs):
         """
-        Add a rectangular section
+        Add a rectangular section.
 
         Parameters
         ----------
@@ -168,7 +162,7 @@ class Structure:
 
     def add_joint(self, key, *args, **kwargs):
         """
-        Add a joint
+        Add a joint.
 
         Parameters
         ----------
@@ -177,40 +171,44 @@ class Structure:
         """
         self.joints[key] = Joint(*args, **kwargs)
 
-    def add_frame(self, key, key_joint_j, key_joint_k, key_material, key_section):
+    def add_frame(self, key, joint_j, joint_k, material, section):
         """
-        Add a frame
+        Add a frame.
 
         Parameters
         ----------
         key : immutable
             Frame's key.
-        key_joint_j : immutable
+        joint_j : immutable
             Joint j's key.
-        key_joint_k : immutable
+        joint_k : immutable
             Joint k's key.
-        key_material : immutable
+        material : immutable
             Material's key.
-        key_section : immutable
+        section : immutable
             Section's key.
         """
-        self.frames[key] = Frame(self.joints[key_joint_j], self.joints[key_joint_k],
-                                 self.materials[key_material], self.sections[key_section])
+        joint_j = self.joints[joint_j]
+        joint_k = self.joints[joint_k]
+        material = self.materials[material]
+        section = self.sections[section]
+        
+        self.frames[key] = Frame(joint_j, joint_k, material, section)
 
-    def add_support(self, key_joint, *args, **kwargs):
+    def add_support(self, joint, *args, **kwargs):
         """
-        Add a support
+        Add a support.
 
         Parameters
         ----------
-        key_joint : immutable
+        joint : immutable
             Joint's key.
         """
-        self.supports[self.joints[key_joint]] = Support(*args, **kwargs)
+        self.supports[self.joints[joint]] = Support(*args, **kwargs)
 
     def add_load_pattern(self, key):
         """
-        Add a load pattern
+        Add a load pattern.
 
         Parameters
         ----------
@@ -219,48 +217,57 @@ class Structure:
         """
         self.load_patterns[key] = LoadPattern()
 
-    def add_load_at_joint(self, key_load_pattern, key_joint, *args, **kwargs):
+    def add_load_at_joint(self, load_pattern, joint, *args, **kwargs):
         """
-        Add a point load at joint
+        Add a point load at joint.
 
         Parameters
         ----------
-        key_load_pattern : immutable
+        load_pattern : immutable
             Load pattern's key.
-        key_joint : immutable
+        joint : immutable
             Joint's key.
         """
-        self.load_patterns[key_load_pattern].add_point_load_at_joint(self.joints[key_joint], *args, **kwargs)
+        load_pattern = self.load_patterns[load_pattern]
+        joint = self.joints[joint]
 
-    def add_point_load_at_frame(self, key_load_pattern, key_frame, *args, **kwargs):
+        load_pattern.add_point_load_at_joint(joint, *args, **kwargs)
+
+    def add_point_load_at_frame(self, load_pattern, frame, *args, **kwargs):
         """
-        Add a point load at frame
+        Add a point load at frame.
 
         Parameters
         ----------
-        key_load_pattern : inmutable
+        load_pattern : inmutable
             Load pattern's key.
-        key_frame : inmutable
+        frame : inmutable
             Frame's key.
         """
-        self.load_patterns[key_load_pattern].add_point_load_at_frame(self.frames[key_frame], *args, **kwargs)
+        load_pattern = self.load_patterns[load_pattern]
+        frame = self.frames[frame]
+
+        load_pattern.add_point_load_at_frame(frame, *args, **kwargs)
         
-    def add_distributed_load(self, key_load_pattern, key_frame, *args, **kwargs):
+    def add_distributed_load(self, load_pattern, frame, *args, **kwargs):
         """
-        Add a distributed load
+        Add a distributed load at frame.
 
         Parameters
         ----------
-        key_load_pattern : immutable
+        load_pattern : immutable
             Load pattern's key.
-        key_frame : immutable
+        frame : immutable
             Frame's key.
         """
-        self.load_patterns[key_load_pattern].add_distributed_load(self.frames[key_frame], *args, **kwargs)
+        loadPattern = self.load_patterns[load_pattern]
+        frame = self.frames[frame]
 
-    def get_flag_active_joint_displacements(self):
+        loadPattern.add_distributed_load(frame, *args, **kwargs)
+
+    def get_flags_active_joint_displacements(self):
         """
-        Get active joint displacements
+        Get flags active joint displacements.
         
         Returns
         -------
@@ -271,17 +278,17 @@ class Structure:
 
     def get_number_active_joint_displacements(self):
         """
-        Get number of active joint displacements
+        Get number active joint displacements.
         
         Returns
         -------
         int
             Number of active joint displacements.
         """
-        return np.count_nonzero(self.get_flag_active_joint_displacements())
+        return np.count_nonzero(self.get_flags_active_joint_displacements())
 
     def get_number_joints(self):
-        """Get number of joints
+        """Get number of joints.
         
         Returns
         -------
@@ -291,7 +298,7 @@ class Structure:
         return len(self.joints)
 
     def get_number_frames(self):
-        """Get number of frames
+        """Get number of frames.
         
         Returns
         -------
@@ -301,7 +308,7 @@ class Structure:
         return len(self.frames)
 
     def get_indexes(self):
-        """Get the indexes
+        """Get joint indexes.
         
         Returns
         -------
@@ -314,7 +321,7 @@ class Structure:
 
     def get_stiffness_matrix(self, indexes):
         """
-        Get the stiffness matrix of the structure
+        Get stiffness matrix of the structure.
 
         Parameters
         ----------
@@ -323,11 +330,11 @@ class Structure:
         
         Returns
         -------
-        k : coo_matrix
+        coo_matrix
             Stiffness matrix of the structure.
         """
-        flag_joint_displacements = self.get_flag_active_joint_displacements()
-        number_active_joint_displacements = np.count_nonzero(flag_joint_displacements)
+        flags_active_joint_displacements = self.get_flags_active_joint_displacements()
+        number_active_joint_displacements = np.count_nonzero(flags_active_joint_displacements)
 
         number_joints = self.get_number_joints()
         number_frames = self.get_number_frames()
@@ -340,7 +347,7 @@ class Structure:
         data = np.empty(number_frames * n_2)
 
         for i, frame in enumerate(self.frames.values()):
-            k_element = frame.get_global_stiffness_matrix(flag_joint_displacements)
+            k_element = frame.get_global_stiffness_matrix(flags_active_joint_displacements)
             indexes_element = np.concatenate((indexes[frame.joint_j], indexes[frame.joint_k]))
             indexes_element = np.broadcast_to(indexes_element, (n, n))
 
@@ -350,9 +357,9 @@ class Structure:
         
         return coo_matrix((data, (rows, cols)), 2 * (number_active_joint_displacements * number_joints,))
 
-    def get_stiffness_matrix_with_support(self, indexes):
+    def get_stifffness_matrix_modified_by_supports(self, indexes):
         """
-        Get the stiffness matrix of the structure with supports
+        Get stiffness matrix of the structure modified by supports.
 
         Parameters
         ----------
@@ -361,19 +368,19 @@ class Structure:
 
         Returns
         -------
-        stiffness_matrix_with_supports : ndarray
+        stiffness_matrix_with_supports : array
             Stiffness matrix of the structure modified by supports.
         """
-        flag_joint_displacements = self.get_flag_active_joint_displacements()
+        flags_active_joint_displacements = self.get_flags_active_joint_displacements()
 
         stiffness_matrix = self.get_stiffness_matrix(indexes).toarray()
         n = np.shape(stiffness_matrix)[0]
         
         for joint, support in self.supports.items():
             joint_indexes = indexes[joint]
-            restrains = support.get_restrains(flag_joint_displacements)
+            restraints = support.get_restraints(flags_active_joint_displacements)
 
-            for index in joint_indexes[restrains]:
+            for index in joint_indexes[restraints]:
                 stiffness_matrix[index] = stiffness_matrix[:, index] = np.zeros(n)
                 stiffness_matrix[index, index] = 1
         
@@ -381,7 +388,7 @@ class Structure:
 
     def solve_load_pattern(self, load_pattern, indexes, k_support):
         """
-        Solve load pattern
+        Solve the structure due to a load pattern.
 
         Parameters
         ----------
@@ -389,17 +396,17 @@ class Structure:
             Load pattern object.
         indexes : dict
             Key value pairs joints and indexes.
-        k_support : ndarray
+        k_support : array
             Stiffness matrix of the structure modified by supports.
         """
-        flag_joint_displacements = self.get_flag_active_joint_displacements()
+        flags_joint_displacements = self.get_flags_active_joint_displacements()
 
-        f = load_pattern.get_f(flag_joint_displacements, indexes).toarray()
+        f = load_pattern.get_f(flags_joint_displacements, indexes).toarray()
         f_support = np.copy(f)
 
         for joint, support in self.supports.items():
             joint_indexes = indexes[joint]
-            restrains = support.get_restrains(flag_joint_displacements)
+            restrains = support.get_restraints(flags_joint_displacements)
 
             for index in joint_indexes[restrains]:
                 f_support[index, 0] = 0
@@ -412,15 +419,15 @@ class Structure:
 
         for joint in self.joints.values():
             joint_indexes = indexes[joint]
-            displacements = flag_joint_displacements.astype(float)
-            displacements[flag_joint_displacements] = u[joint_indexes, 0]
+            displacements = flags_joint_displacements.astype(float)
+            displacements[flags_joint_displacements] = u[joint_indexes, 0]
             load_pattern_displacements[joint] = Displacement(*displacements)
 
         self.displacements[load_pattern] = load_pattern_displacements
 
         # store frame end actions
-        flag_frame_displacements = np.tile(flag_joint_displacements, 2)
-        n = np.count_nonzero(flag_frame_displacements)
+        flags_frame_displacements = np.tile(flags_joint_displacements, 2)
+        n = np.count_nonzero(flags_frame_displacements)
 
         rows = []
         cols = []
@@ -429,44 +436,45 @@ class Structure:
         load_pattern_frame_end_actions = {}
 
         for frame in self.frames.values():
-            t = frame.get_rotation_matrix(flag_joint_displacements)
+            t = frame.get_matrix_rotation(flags_joint_displacements)
             indexes_element = np.concatenate((indexes[frame.joint_j], indexes[frame.joint_k]))
 
-            k_element = frame.get_local_stiffness_matrix(flag_joint_displacements)
+            k_element = frame.get_local_stiffness_matrix(flags_joint_displacements)
             u_element = np.dot(np.transpose(t), u[indexes_element])
 
             f_fixed = np.zeros((n, 1))
 
             if (frame in load_pattern.point_loads_at_frames.keys()):
-                f_fixed += load_pattern.point_loads_at_frame[frame].get_f_fixed(flag_joint_displacements, frame)
+                f_fixed += load_pattern.point_loads_at_frame[frame].get_f_fixed(flags_joint_displacements, frame)
 
             if (frame in load_pattern.distributed_loads.keys()):
-                f_fixed += load_pattern.distributed_loads[frame].get_f_fixed(flag_joint_displacements, frame)
+                f_fixed += load_pattern.distributed_loads[frame].get_f_fixed(flags_joint_displacements, frame)
 
-            f_end_actions = flag_frame_displacements.astype(float)
-            f_end_actions[flag_frame_displacements] = np.dot(k_element, u_element).flatten() + np.dot(np.transpose(t), f_fixed).flatten()
-            load_pattern_frame_end_actions[frame] = FrameEndActions(*f_end_actions)
+            f_end_actions = flags_frame_displacements.astype(float)
+            f_end_actions[flags_frame_displacements] = np.dot(k_element, u_element).flatten() + np.dot(np.transpose(t), f_fixed).flatten()
+            load_pattern_frame_end_actions[frame] = EndActions(*f_end_actions)
 
+            # x
             if frame.joint_j in self.supports.keys() or frame.joint_k in self.supports.keys():
                 rows += list(indexes_element)
                 cols += n * [0]
-                data += list(np.dot(t, load_pattern_frame_end_actions[frame].get_end_actions(flag_joint_displacements)).flatten())
+                data += list(np.dot(t, load_pattern_frame_end_actions[frame].get_end_actions(flags_joint_displacements)).flatten())
 
-        self.frames_end_actions[load_pattern] = load_pattern_frame_end_actions
+        self.end_actions[load_pattern] = load_pattern_frame_end_actions
 
         # store reactions
         number_joints = self.get_number_frames()
-        n = np.count_nonzero(flag_frame_displacements)
+        n = np.count_nonzero(flags_frame_displacements)
 
-        f += load_pattern.get_f_fixed(flag_joint_displacements, indexes).toarray()
+        f += load_pattern.get_f_fixed(flags_joint_displacements, indexes).toarray()
         f_end_actions = coo_matrix((data, (rows, cols)), (number_joints * n, 1)).toarray()
         
         load_pattern_reactions = {}
 
         for joint in self.supports.keys():
             joint_indexes = indexes[joint]
-            reactions = flag_joint_displacements.astype(float)
-            reactions[flag_joint_displacements] = f_end_actions[joint_indexes, 0] - f[joint_indexes, 0]
+            reactions = flags_joint_displacements.astype(float)
+            reactions[flags_joint_displacements] = f_end_actions[joint_indexes, 0] - f[joint_indexes, 0]
             load_pattern_reactions[joint] = Reaction(*reactions)
 
         self.reactions[load_pattern] = load_pattern_reactions
@@ -474,7 +482,7 @@ class Structure:
     def solve(self):
         """Solve the structure"""
         indexes = self.get_indexes()
-        k_support = self.get_stiffness_matrix_with_support(indexes)
+        k_support = self.get_stifffness_matrix_modified_by_supports(indexes)
         
         for load_pattern in self.load_patterns.values():
             self.solve_load_pattern(load_pattern, indexes, k_support)
@@ -512,31 +520,24 @@ class Structure:
                 data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
 
         # save the frames
-        material_key_list = list(self.materials.keys())  # TODO: add key to material objects
-        material_val_list = list(self.materials.values())
-
-        section_key_list = list(self.sections.keys())  # TODO: add key to section objects
-        section_val_list = list(self.sections.values())
-
-        joint_key_list = list(self.joints.keys())  # TODO: add key to joint objects
-        joint_val_list = list(self.joints.values())
-
-        frame_key_list = list(self.frames.keys())  # TODO: add key to frame objects
-        frame_val_list = list(self.frames.values())
+        material_keys = {value: key for key, value in self.materials.items()}
+        section_keys = {value: key for key, value in self.sections.items()}
+        joint_keys = {value: key for key, value in self.joints.items()}
+        frame_keys = {value: key for key, value in self.frames.items()}
 
         if self.frames:
             data['frames'] = {}
             for key, frame in self.frames.items():
-                data['frames'][key] = {'j': joint_key_list[joint_val_list.index(frame.joint_j)],
-                                       'k': joint_key_list[joint_val_list.index(frame.joint_k)],
-                                       'material': material_key_list[material_val_list.index(frame.material)],
-                                       'section': section_key_list[section_val_list.index(frame.section)]}
+                data['frames'][key] = {'j': joint_keys[frame.joint_j],
+                                       'k': joint_keys[frame.joint_k],
+                                       'material': material_keys[frame.material],
+                                       'section': section_keys[frame.section]}
 
         # save the supports
         if self.supports:
             data['supports'] = {}
-            for key, support in self.supports.items():
-                data['supports'][joint_key_list[joint_val_list.index(key)]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
+            for joint, support in self.supports.items():
+                data['supports'][joint_keys[joint]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
 
         # save the loads
         if self.load_patterns:
@@ -547,8 +548,8 @@ class Structure:
                 if load_pattern.loads_at_joints:
                     data['load_patterns'][key]['joints'] = {}
                     for joint, point_load in load_pattern.loads_at_joints.items():
-                        data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]] = []
-                        data['load_patterns'][key]['joints'][joint_key_list[joint_val_list.index(joint)]].append({  # TODO: manage many 'point load' at the same joint for the same load pattern
+                        data['load_patterns'][key]['joints'][joint_keys[joint]] = []
+                        data['load_patterns'][key]['joints'][joint_keys[joint]].append({  # TODO: manage many 'point load' at the same joint for the same load pattern 
                             'fx': point_load.fx, 
                             'fy': point_load.fy,
                             'fz': point_load.fy,
@@ -561,16 +562,16 @@ class Structure:
                     data['load_patterns'][key]['frames'] = {}
                     if load_pattern.distributed_loads:
                         for frame, distributed_load in load_pattern.distributed_loads.items():
-                            if not frame_key_list[frame_val_list.index(frame)] in data['load_patterns'][key]['frames']:
-                                data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]] = {}
+                            if not frame_keys[frame] in data['load_patterns'][key]['frames']:
+                                data['load_patterns'][key]['frames'][frame_keys[frame]] = {}
 
-                            data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed'] = {}
+                            data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed'] = {}
 
                             if distributed_load.system == 'local':
-                                if not 'local' in data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']:
-                                    data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']['local'] = []
+                                if not 'local' in data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']:
+                                    data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']['local'] = []
                                 
-                                data['load_patterns'][key]['frames'][frame_key_list[frame_val_list.index(frame)]]['distributed']['local'].append({
+                                data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']['local'].append({
                                     'fx': distributed_load.fx,  
                                     'fy': distributed_load.fy,
                                     'fz': distributed_load.fz
@@ -584,7 +585,7 @@ class Structure:
                  "------------------------\n"
 
         report += "ux: {}\nuy: {}\nuz: {}" \
-                  "\nrx: {}\nry: {}\nrz: {}\n".format(*self.get_flag_active_joint_displacements())
+                  "\nrx: {}\nry: {}\nrz: {}\n".format(*self.get_flags_active_joint_displacements())
         report += "\n"
 
         report += "Materials\n" \
@@ -675,7 +676,7 @@ class Structure:
 
         report += "Frame end actions\n" \
                   "------------------\n"
-        for load_pattern, frame_end_actions in self.frames_end_actions.items():
+        for load_pattern, frame_end_actions in self.end_actions.items():
             report += "{}:\n".format(load_patterns[load_pattern])
             row_format = "{:>11}" * 6
             report += "label" + row_format.format("fxj", "fyj", "fzj", "rxj", "ryj", "rzj", "fxk", "fyk", "fzk", "rxk", "ryk", "rzk") + '\n'
@@ -706,13 +707,13 @@ if __name__ == '__main__':
         model = Structure(ux=True, uy=True)
 
         # add materials
-        model.add_material(key='1', modulus_elasticity=2040e4)
+        model.add_material(key='1', E=2040e4)
 
         # add sections
-        model.add_section(key='1', area=030e-4)
-        model.add_section(key='2', area=040e-4)
-        model.add_section(key='3', area=100e-4)
-        model.add_section(key='4', area=150e-4)
+        model.add_section(key='1', A=030e-4)
+        model.add_section(key='2', A=040e-4)
+        model.add_section(key='3', A=100e-4)
+        model.add_section(key='4', A=150e-4)
 
         # add joints
         model.add_joint(key=1, x=0, y=0)
@@ -721,22 +722,22 @@ if __name__ == '__main__':
         model.add_joint(key=4, x=4, y=0)
 
         # add frames
-        model.add_frame(key='1-3', key_joint_j=1, key_joint_k=3, key_material='1', key_section='3')
-        model.add_frame(key='1-4', key_joint_j=1, key_joint_k=4, key_material='1', key_section='2')
-        model.add_frame(key='3-2', key_joint_j=3, key_joint_k=2, key_material='1', key_section='4')
-        model.add_frame(key='4-2', key_joint_j=4, key_joint_k=2, key_material='1', key_section='2')
-        model.add_frame(key='4-3', key_joint_j=4, key_joint_k=3, key_material='1', key_section='1')
+        model.add_frame(key='1-3', joint_j=1, joint_k=3, material='1', section='3')
+        model.add_frame(key='1-4', joint_j=1, joint_k=4, material='1', section='2')
+        model.add_frame(key='3-2', joint_j=3, joint_k=2, material='1', section='4')
+        model.add_frame(key='4-2', joint_j=4, joint_k=2, material='1', section='2')
+        model.add_frame(key='4-3', joint_j=4, joint_k=3, material='1', section='1')
 
         # add supports
-        model.add_support(key_joint=1, ux=True, uy=True)
-        model.add_support(key_joint=2, ux=False, uy=True)
+        model.add_support(joint=1, ux=True, uy=True)
+        model.add_support(joint=2, ux=False, uy=True)
 
         # add load patterns
         model.add_load_pattern(key="point loads")
 
         # add point loads
-        model.add_load_at_joint(key_load_pattern="point loads", key_joint=3, fx=5 * 0.8, fy=5 * 0.6)
-        model.add_load_at_joint(key_load_pattern="point loads", key_joint=4, fy=-20)
+        model.add_load_at_joint(load_pattern="point loads", joint=3, fx=5 * 0.8, fy=5 * 0.6)
+        model.add_load_at_joint(load_pattern="point loads", joint=4, fy=-20)
 
         # solve the problem
         model.solve()
