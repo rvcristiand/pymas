@@ -12,7 +12,7 @@ from pyFEM.classtools import AttrDisplay, UniqueInstances
 
 class Material(AttrDisplay):
     """
-    Linear elastic material
+    Linear elastic material.
 
     Attributes
     ----------
@@ -23,90 +23,90 @@ class Material(AttrDisplay):
     """
     __slots__ = ('E', 'G')
 
-    def __init__(self, modulus_elasticity=0, shearing_modulus_elasticity=0):
+    def __init__(self, E=0, G=0):
         """
-        Instantiate a Material object
+        Instantiate a Material object.
 
         Parameters
         ----------
-        modulus_elasticity : float
+        E : float
             Young's modulus.
-        shearing_modulus_elasticity : float
+        G : float
             Shear modulus.
         """
-        self.E = modulus_elasticity
-        self.G = shearing_modulus_elasticity
+        self.E = E
+        self.G = G
 
 
 class Section(AttrDisplay):
     """
-    Cross-sectional area
+    Cross section.
 
     Attributes
     ----------
     A : float
-        Cross-sectional area.
+        Area.
     Ix : float
-        Inertia around axis x-x.
+        Inertia around x-axis.
     Iy : float
-        Inertia around axis y-y.
+        Inertia around y-axis.
     Iz : float
-        Inertia around axis z-z.
+        Inertia around z-axis.
     """
     __slots__ = ('A', 'Iy', 'Iz', 'Ix')
 
-    def __init__(self, area=0, torsion_constant=0, moment_inertia_y=0, moment_inertia_z=0):
+    def __init__(self, A=0, Ix=0, Iy=0, Iz=0):
         """
-        Instantiate a Section object
+        Instantiate a Section object.
 
         Parameters
         ----------
-        area : float
-            Cross-sectional area.
-        torsion_constant : float
-            Inertia around axis x-x.
-        moment_inertia_y : float
-            Inertia around axis y-y.
-        moment_inertia_z : float
-            Inertia around axis z-z.
+        A : float
+            Area.
+        Ix : float
+            Inertia around x-axis.
+        Iy : float
+            Inertia around y-axis.
+        Iz : float
+            Inertia around z-axis.
         """
-        self.A = area
-        self.Ix = torsion_constant
-        self.Iy = moment_inertia_y
-        self.Iz = moment_inertia_z
+        self.A = A
+        self.Ix = Ix
+        self.Iy = Iy
+        self.Iz = Iz
 
 
 class RectangularSection(Section):
     """
-    Rectangular cross-section
+    Rectangular cross section.
 
     Attributes
     ----------
     width : float
-        Width rectangular cross section.
+        Width.
     height : float
-        Height rectangular cross section.
+        Height.
     A : float
-        Cross-sectional area.
+        Area.
     Ix : float
-        Inertia around axis x-x.
+        Inertia around x-axis.
     Iy : float
-        Inertia around axis y-y.
+        Inertia around y-axis.
     Iz : float
-        Inertia around axis z-z.
+        Inertia around z-axis.
     """
     __slots__ = ('width', 'height')
 
     def __init__(self, width, height):
         """
-        Instantiate a rectangular section object
+        Instantiate a RectangularSection object.
 
         Parameters
         ----------
         width : float
-            Width rectangular cross section.
+            Width.
         height : float
-            Height rectangular cross section.
+            Height.
         """
         self.width = width
         self.height = height
@@ -114,17 +114,17 @@ class RectangularSection(Section):
         a = min(width, height)
         b = max(width, height)
 
-        area = width * height
-        torsion_constant = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
-        moment_inertia_y = (1 / 12) * width * height ** 3
-        moment_inertia_z = (1 / 12) * height * width ** 3
+        A = width * height
+        Ix = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
+        Iy = (1 / 12) * width * height ** 3
+        Iz = (1 / 12) * height * width ** 3
 
-        super().__init__(area, torsion_constant, moment_inertia_y, moment_inertia_z)
+        super().__init__(A, Ix, Iy, Iz)
 
 
 class Joint(AttrDisplay, metaclass=UniqueInstances):
     """
-    End of frames
+    End of frames.
 
     Attributes
     ----------
@@ -138,13 +138,13 @@ class Joint(AttrDisplay, metaclass=UniqueInstances):
     Methods
     -------
     get_coordinate()
-        Return joint's coordinates.
+        Return joint coordinate.
     """
     __slots__ = ('x', 'y', 'z')
 
     def __init__(self, x=0, y=0, z=0):
         """
-        Instantiate a Joint object
+        Instantiate a Joint object.
 
         Parameters
         ----------
@@ -160,24 +160,24 @@ class Joint(AttrDisplay, metaclass=UniqueInstances):
         self.z = z
 
     def get_coordinate(self):
-        """Get coordinates"""
+        """Get coordinate"""
         return np.array([self.x, self.y, self.z])
 
 
 class Frame(AttrDisplay, metaclass=UniqueInstances):
     """
-    Long elements in comparison to their cross-sectional dimensions
+    Long elements in comparison to their cross section.
 
     Attributes
     ----------
     joint_j : Joint
-        Near Joint object.
+        Near Joint.
     joint_k : Joint
-        Far Joint object.
+        Far Joint.
     material : Material
-        Frame's Material object.
+        Material.
     section : Section
-        Frame's Section object.
+        Section.
 
     Methods
     -------
@@ -186,30 +186,30 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
     get_direction_cosines()
         Get direction cosines.
     get_rotation()
-        Get Rotation object.
-    get_rotation_matrix(active_joint_displacements)
-        Get rotation matrix.
+        Get Rotation.
+    get_matrix_rotation(active_joint_displacements)
+        Get matrix rotation.
     get_local_stiffness_matrix(active_joint_displacements)
         Get local stiffness matrix.
     get_global_stiffness_matrix(active_joint_displacements)
         Get global stiffness matrix.
     """
-    __slots__ = ("joint_j", "joint_k", "material", "section")
+    __slots__ = ('joint_j', 'joint_k', 'material', 'section')
 
     def __init__(self, joint_j=None, joint_k=None, material=None, section=None):
         """
-        Instantiate a Frame object
+        Instantiate a Frame object.
 
         Parameters
         ----------
         joint_j : Joint
-            Near Joint object.
+            Near Joint.
         joint_k : Joint
-            Far Joint object.
+            Far Joint.
         material : Material
-            Material object.
+            Material.
         section : Section
-            Section object.
+            Section.
         """
         self.joint_j = joint_j
         self.joint_k = joint_k
@@ -227,7 +227,7 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         return vector / linalg.norm(vector)
 
     def get_rotation(self):
-        """Get rotation"""
+        """Get Rotation"""
         v_from = np.array([1, 0, 0])
         v_to = self.get_direction_cosines()
 
@@ -244,14 +244,14 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
 
             return Rotation.from_quat([x * np.sin(theta/2) for x in w] + [np.cos(theta/2)])
 
-    def get_rotation_matrix(self, flag_active_joint_displacements):
+    def get_matrix_rotation(self, active_joint_displacements):
         """
-        Get rotation matrix
+        Get matrix rotation.
 
         Parameters
         ----------
-        flag_active_joint_displacements : array
-            Flags active joint's displacements.
+        active_joint_displacements : array
+            Flags active joint displacements.
         """
         # rotation as direction cosine matrix
         indptr = np.array([0, 1, 2])
@@ -261,22 +261,22 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
         # matrix rotation for a joint
         t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).toarray()
 
-        flag_active_joint_displacements = np.nonzero(flag_active_joint_displacements)[0]
-        n = 2 * np.size(flag_active_joint_displacements)
+        active_joint_displacements = np.nonzero(active_joint_displacements)[0]
+        n = 2 * np.size(active_joint_displacements)
         
-        t1 = t1[flag_active_joint_displacements[:, None], flag_active_joint_displacements]
+        t1 = t1[active_joint_displacements[:, None], active_joint_displacements]
         data = np.tile(t1, (2, 1, 1))
 
         return bsr_matrix((data, indices, indptr), shape=(n, n)).toarray()
 
     def get_local_stiffness_matrix(self, active_joint_displacements):
         """
-        Get local stiffness matrix
+        Get local stiffness matrix.
 
         Parameters
         ----------
         active_joint_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         """
         length = self.get_length()
 
@@ -358,15 +358,15 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
 
     def get_global_stiffness_matrix(self, active_joint_displacements):
         """
-        Get the global stiffness matrix
+        Get global stiffness matrix.
 
         Parameters
         ----------
         active_joint_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         """
         k = self.get_local_stiffness_matrix(active_joint_displacements)
-        t = self.get_rotation_matrix(active_joint_displacements)
+        t = self.get_matrix_rotation(active_joint_displacements)
 
         return np.dot(np.dot(t, k), np.transpose(t))
 
@@ -380,48 +380,48 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
 
 class Support(AttrDisplay):
     """
-    Point of support
+    Point of support.
 
     Attributes
     ----------
     ux : bool
-        Flag restrain x-axis translation.
+        Flag translation along x-axis restaint.
     uy : bool
-        Flag restrain y-axis translation.
+        Flag translation along y-axis restaint.
     uz : bool
-        Flag restrain z-axis translation.
+        Flag translation along z-axis restaint.
     rx : bool
-        Flag restrain x-axis rotation.
+        Flag rotation around x-axis restraint.
     ry : bool
-        Flag restrain y-axis rotation.
+        Flag rotation around y-axis restraint.
     rz : bool
-        Flag restrain z-axis rotation.
+        Flag rotation around z-axis restraint.
 
     Methods
     -------
-    get_restrains()
-        Get flag restrains.
+    get_restraints()
+        Get flags restraints.
     """
     __slots__ = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
 
     def __init__(self, ux=False, uy=False, uz=False, rx=False, ry=False, rz=False):
         """
-        Instantiate a Support object
+        Instantiate a Support object.
 
         Parameters
         ----------
         ux : bool
-            Flag restrain x-axis translation.
+            Flag translation along x-axis restaint.
         uy : bool
-            Flag restrain y-axis translation.
+            Flag translation along y-axis restaint.
         uz : bool
-            Flag restrain z-axis translation.
+            Flag translation along z-axis restaint.
         rx : bool
-            Flag restrain x-axis rotation.
+            Flag rotation around x-axis restraint.
         ry : bool
-            Flag restrain y-axis rotation.
+            Flag rotation around y-axis restraint.
         rz : bool
-            Flag restrain z-axis rotation.
+            Flag rotation around z-axis restraint.
         """
         self.ux = ux
         self.uy = uy
@@ -430,47 +430,49 @@ class Support(AttrDisplay):
         self.ry = ry
         self.rz = rz
 
-    def get_restrains(self, flag_joint_displacements):
+    def get_restraints(self, flags_joint_displacements):
         """
-        Get restrains
+        Get flags restraints.
 
-        Attributes
+        Parameters
         ----------
-        flag_joint_displacements : array
-            Flag active joint displacements.
+        flags_joint_displacements : array
+            Flags active joint displacements.
         """
-        return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
+        return np.array([getattr(self, name) for name in self.__slots__])[flags_joint_displacements]
 
 
 class LoadPattern(AttrDisplay):
     """
-    Load pattern
+    Load pattern.
 
     Attributes
     ----------
     loads_at_joints : dict
         Loads at joints.
+    point_loads_at_frames : dict
+        Point loads at frames.
     distributed_loads : dict
         Distributed loads at frames.
 
     Methods
     -------
-    add_point_load_at_joint
+    add_point_load_at_joint(joint, *args, **kwargs)
         Add a load at joint.
-    add_point_load_at_frame
+    add_point_load_at_frame(frame, *args, **kwargs)
         Add a point load at frame.
-    add_distributed_load
+    add_distributed_load(frame, *args, **kwargs)
         Add a distributed load at frame.
-    get_number_point_loads_at_joints
+    get_number_point_loads_at_joints()
         Get number joint with loads.
-    get_number_point_loads_at_frames
+    get_number_point_loads_at_frames()
         Get number loads at frames.
-    get_number_distributed_loads
+    get_number_distributed_loads()
         Get number frames with distributed load.
-    get_f
+    get_f(flag_displacements, indexes)
         Get the load vector.
-    get_f_fixed
-        Get the modified load vector.
+    get_f_fixed(flag_joint_displacements, indexes)
+        Get f fixed.
     """
     __slots__ = ("loads_at_joints", "point_loads_at_frames", "distributed_loads")
 
@@ -482,7 +484,7 @@ class LoadPattern(AttrDisplay):
 
     def add_point_load_at_joint(self, joint, *args, **kwargs):
         """
-        Add a point load at joint
+        Add a point load at joint.
 
         Parameters
         ----------
@@ -493,7 +495,7 @@ class LoadPattern(AttrDisplay):
     
     def add_point_load_at_frame(self, frame, *args, **kwargs):
         """
-        Add a point load at frame
+        Add a point load at frame.
 
         Parameters
         ----------
@@ -504,7 +506,7 @@ class LoadPattern(AttrDisplay):
 
     def add_distributed_load(self, frame, *args, **kwargs):
         """
-        Add a distributed load at frame
+        Add a distributed load at frame.
 
         Parameters
         ----------
@@ -518,7 +520,7 @@ class LoadPattern(AttrDisplay):
         return len(self.loads_at_joints)
 
     def get_number_point_loads_at_frames(self):
-        """det number point loads at frames"""
+        """Get number point loads at frames"""
         return len(self.point_loads_at_frames)
 
     def get_number_distributed_loads(self):
@@ -527,22 +529,27 @@ class LoadPattern(AttrDisplay):
 
     def get_f(self, flag_displacements, indexes):
         """
-        Get the load vector
+        Get the load vector.
 
         Attributes
         ----------
         flag_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         indexes : dict
             Key value pairs joints and indexes.
+        
+        Returns
+        -------
+        coo_matrix
+            Load vector.
         """
         no = np.count_nonzero(flag_displacements)
 
-        n = self.get_number_point_loads_at_joints()
+        n = no * self.get_number_point_loads_at_joints()
 
-        rows = np.empty(n * no, dtype=int)
-        cols = np.zeros(n * no, dtype=int)
-        data = np.empty(n * no)
+        rows = np.empty(n, dtype=int)
+        cols = np.zeros(n, dtype=int)
+        data = np.empty(n)
 
         for i, (joint, point_load) in enumerate(self.loads_at_joints.items()):
             rows[i * no:(i + 1) * no] = indexes[joint]
@@ -552,27 +559,31 @@ class LoadPattern(AttrDisplay):
 
     def get_f_fixed(self, flag_joint_displacements, indexes):
         """
-        Get the f fixed.
+        Get f fixed.
 
         Attributes
         ----------
         flag_joint_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         indexes : dict
             Key value pairs joints and indexes.
+        
+        Returns
+        -------
+        coo_matrix
+            f fixed.
         """
         no = np.count_nonzero(flag_joint_displacements)
 
         # point loads
-        n = self.get_number_point_loads_at_frames()
+        n = 2 * no * self.get_number_point_loads_at_frames()
 
-        rows = np.empty(n * 2 * no, dtype=int)
-        cols = np.zeros(n * 2 * no, dtype=int)
-        data = np.empty(n * 2 * no)
+        rows = np.empty(n, dtype=int)
+        cols = np.zeros(n, dtype=int)
+        data = np.empty(n)
 
         for i, (frame, point_load) in enumerate(self.point_loads_at_frames.items()):
-            joint_j = frame.joint_j
-            joint_k = frame.joint_k
+            joint_j, joint_k = frame.joint_j, frame.joint_k
             
             rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
             data[i * 2 * no:(i + 1) * 2 * no] = point_load.get_f_fixed(flag_joint_displacements, frame).flatten()
@@ -586,8 +597,7 @@ class LoadPattern(AttrDisplay):
         data = np.empty(n * 2 * no)        
         
         for i, (frame, distributed_load) in enumerate(self.distributed_loads.items()):
-            joint_j = frame.joint_j
-            joint_k = frame.joint_k
+            joint_j, joint_k = frame.joint_j, frame.joint_k
 
             rows[i * 2 * no:(i + 1) * 2 * no] = np.concatenate((indexes[joint_j], indexes[joint_k]))
             data[i * 2 * no:(i + 1) * 2 * no] = distributed_load.get_f_fixed(flag_joint_displacements, frame).flatten()
@@ -599,22 +609,22 @@ class LoadPattern(AttrDisplay):
 
 class PointLoadAtJoint(AttrDisplay):
     """
-    Point load at joint
+    Point load at joint.
 
     Attributes
     ----------
     fx : float
-        Force along 'x' axis.
+        Force along x-axis.
     fy : float
-        Force along 'y' axis.
+        Force along y-axis.
     fz : float
-        Force along 'z'axis.
+        Force along z-axis.
     mx : float
-        Force around 'x' axis.
+        Force around x-axis.
     my : float
-        Force around 'y' axis.
+        Force around y-axis.
     mz : float
-        Force around 'z' axis.
+        Force around z-axis.
 
     Methods
     -------
@@ -625,22 +635,22 @@ class PointLoadAtJoint(AttrDisplay):
 
     def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
         """
-        Instantiate a PointLoadAtJoint object
+        Instantiate a PointLoadAtJoint object.
 
         Parameters
         ----------
         fx : float
-            Force along 'x' axis.
+            Force along x-axis.
         fy : float
-            Force along 'y' axis.
+            Force along y-axis.
         fz : float
-            Force along 'z' axis.
+            Force along z-axis.
         mx : float
-            Force around 'x' axis.
+            Force around x-axis.
         my : float
-            Force around 'y' axis.
+            Force around y-axis.
         mz : float
-            Force around 'z' axis.
+            Force around z-axis.
         """
         self.fx = fx
         self.fy = fy
@@ -652,7 +662,7 @@ class PointLoadAtJoint(AttrDisplay):
 
     def get_load(self, flag_joint_displacements):
         """
-        Get load
+        Get load.
 
         Parameters
         ----------
@@ -663,7 +673,7 @@ class PointLoadAtJoint(AttrDisplay):
 
 class PointLoadAtFrame(AttrDisplay):
     """
-    Point load at frame
+    Point load at frame.
 
     Attributes
     ----------
@@ -679,13 +689,12 @@ class PointLoadAtFrame(AttrDisplay):
         (value, position).
     mz : tuple
         (value, position).
-
     """
     __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
 
     def __init__(self, fx=None, fy=None, fz=None, mx=None, my=None, mz=None):
         """
-        Instantiate a PointLoadAtFrame object
+        Instantiate a PointLoadAtFrame object.
 
         Parameters
         ----------
@@ -701,7 +710,6 @@ class PointLoadAtFrame(AttrDisplay):
             (value, position).
         mz : tuple
             (value, position).
-        
         """
         self.fx = fx if fx is not None else (0, 0)
         self.fy = fy if fy is not None else (0, 0)
@@ -717,7 +725,7 @@ class PointLoadAtFrame(AttrDisplay):
         Parameters
         ----------
         flag_joint_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         frame : Frame
             Frame.
         """
@@ -792,18 +800,18 @@ class PointLoadAtFrame(AttrDisplay):
 
 class DistributedLoad(AttrDisplay):
     """
-    Distributed load
+    Distributed load at frame.
 
     Attributes
     ----------
     system: str
         Coordinate system ('local' by default).
     fx : float
-        Distributed force along 'x' axis.
+        Distributed force along x-axis.
     fy : float
-        Distributed force along 'y' axis.
+        Distributed force along y-axis.
     fz : float
-        Distributed force along 'z' axis.
+        Distributed force along z-axis.
 
     Methods
     -------
@@ -814,16 +822,16 @@ class DistributedLoad(AttrDisplay):
 
     def __init__(self, fx=0, fy=0, fz=0):
         """
-        Instantiate a Distributed object
+        Instantiate a DistributedLoad object.
 
         Parameters
         ----------
         fx : float
-            Distributed force along 'x' axis.
+            Distributed force along x-axis.
         fy : float
-            Distributed force along 'y' axis.
+            Distributed force along y-axis.
         fz : float
-            Distributed force along 'z' axis.
+            Distributed force along z-axis.
         """
         self.system = 'local'
 
@@ -838,40 +846,42 @@ class DistributedLoad(AttrDisplay):
         Parameters
         ----------
         flag_joint_displacements : array
-            Flags active joint's displacements.
+            Flags active joint displacements.
         frame : Frame
             Frame.
         """
         length = frame.get_length()
 
-        fx = self.fx
-        fy = self.fy
-        fz = self.fz
+        fx_2 = self.fx * length / 2
+        fy_2 = self.fy * length / 2
+        fz_2 = self.fz * length / 2
 
-        f_local = np.array([[-fx * length / 2, -fy * length / 2, -fz * length / 2, 0,  fz * length ** 2 / 12, -fy * length ** 2 / 12, 
-                             -fx * length / 2, -fy * length / 2, -fz * length / 2, 0, -fz * length ** 2 / 12,  fy * length ** 2 / 12]]).T
+        fy_12 = self.fy * length ** 2 / 12
+        fz_12 = self.fz * length ** 2 / 12
         
-        return np.dot(frame.get_rotation_matrix(flag_joint_displacements), f_local[np.nonzero(np.tile(flag_joint_displacements, 2))[0]])
+        f_local = np.array([[-fx_2, -fy_2, -fz_2, 0, fz_12, -fy_12, -fx_2, -fy_2, -fz_2, 0, -fz_12, fy_12]]).T
+        
+        return np.dot(frame.get_matrix_rotation(flag_joint_displacements), f_local[np.nonzero(np.tile(flag_joint_displacements, 2))[0]])
 
 
 class Displacement(AttrDisplay):
     """
-    Displacement
+    Displacement.
 
     Attributes
     ----------
     ux : float
-        Translation along 'x' axis.
+        Translation along x-axis.
     uy : float
-        Translation along 'y' axis.
+        Translation along y-axis.
     uz : float
-        Translation along 'z' axis.
+        Translation along z-axis.
     rx : float
-        Rotation around 'x' axis.
+        Rotation around x-axis.
     ry : float
-        Rotation around 'y' axis.
+        Rotation around y-axis.
     rz : float
-        Rotation around 'z' axis.
+        Rotation around z-axis.
 
     Methods
     -------
@@ -882,22 +892,22 @@ class Displacement(AttrDisplay):
 
     def __init__(self, ux=0, uy=0, uz=0, rx=0, ry=0, rz=0):
         """
-        Instantiate a Displacement
+        Instantiate a Displacement.
 
         Parameters
         ----------
         ux : float
-            Translation along 'x' axis.
+            Translation along x-axis.
         uy : float
-            Translation along 'y' axis.
+            Translation along y-axis.
         uz : float
-            Translation along 'z' axis.
+            Translation along z-axis.
         rx : float
-            Rotation around 'x' axis.
+            Rotation around x-axis.
         ry : float
-            Rotation around 'y' axis.
+            Rotation around y-axis.
         rz : float
-            Rotation around 'z' axis.
+            Rotation around z-axis.
         """
         self.ux = ux
         self.uy = uy
@@ -914,22 +924,22 @@ class Displacement(AttrDisplay):
 
 class Reaction(AttrDisplay):
     """
-    Reaction
+    Reaction.
 
     Attributes
     ----------
     fx : float
-        Force along 'x' axis.
+        Force along x-axis.
     fy : float
-        Force along 'y' axis.
+        Force along y-axis.
     fz : float
-        Force along 'z' axis.
+        Force along z-axis.
     mx : float
-        Moment around 'x' axis.
+        Moment around x-axis.
     my : float
-        Moment around 'y' axis.
+        Moment around y-axis.
     mz : float
-        Moment around 'z' axis.
+        Moment around z-axis.
 
     Methods
     -------
@@ -940,7 +950,7 @@ class Reaction(AttrDisplay):
 
     def __init__(self, fx=0, fy=0, fz=0, mx=0, my=0, mz=0):
         """
-        Instantiate a Reaction
+        Instantiate a Reaction.
 
         Parameters
         ----------
@@ -969,36 +979,36 @@ class Reaction(AttrDisplay):
         return np.array([getattr(self, name) for name in self.__slots__])[flag_joint_displacements]
 
 
-class FrameEndActions(AttrDisplay):
+class EndActions(AttrDisplay):
     """
-    Frame end actions.
+    End actions.
 
     Attributes
     ----------
     fx_j : float
-        Force along 'x' axis at joint_j.
+        Force along x-axis at near joint.
     fy_j : float
-        Force along 'y' axis at joint_j.
+        Force along y-axis at near joint.
     fz_j : float
-        Force along 'z' axis at joint_j.
+        Force along z-axis at near joint.
     rx_j : float
-        Moment around 'x' axis at joint_j.
+        Moment around x-axis at near joint.
     ry_j : float
-        Moment around 'y' axis at joint_j.
+        Moment around y-axis at near joint.
     rz_j : float
-        Moment around 'z' axis at joint_j.
+        Moment around z-axis at near joint.
     fx_k : float
-        Force along 'x' axis at joint_k.
+        Force along x-axis at far joint.
     fy_k : float
-        Force along 'y' axis at joint_k.
+        Force along y-axis at far joint.
     fz_k : float
-        Force along 'z' axis at joint_k.
+        Force along z-axis at far joint.
     rx_k : float
-        Moment around 'x' axis at joint_k.
+        Moment around x-axis at far joint.
     ry_k : float
-        Moment around 'y' axis at joint_k.
+        Moment around y-axis at far joint.
     rz_k : float
-        Moment around 'z' axis at joint_k.
+        Moment around z-axis at far joint.
 
     Methods
     -------
@@ -1011,7 +1021,7 @@ class FrameEndActions(AttrDisplay):
     def __init__(self, fx_j=0, fy_j=0, fz_j=0, rx_j=0, ry_j=0, rz_j=0,
                        fx_k=0, fy_k=0, fz_k=0, rx_k=0, ry_k=0, rz_k=0):
         """
-        Instantiate a FrameEndActions
+        Instantiate a EndActions object.
 
         Parameters
         ----------
@@ -1055,8 +1065,7 @@ class FrameEndActions(AttrDisplay):
         self.rz_k = rz_k
 
     def get_end_actions(self, flag_joint_displacements):
-        """Get end actions"""
-        
+        """Get end actions"""  
         return np.array([getattr(self, name) for name in self.__slots__])[np.tile(flag_joint_displacements, 2)].reshape((-1, 1))
 
 
