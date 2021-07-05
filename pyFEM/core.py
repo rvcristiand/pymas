@@ -39,6 +39,8 @@ class Structure:
         End actions.
     reactions : dict
         Reactions.
+    internal_forces: dict
+        Internal forces.
     
     Methods
     -------
@@ -126,6 +128,9 @@ class Structure:
         self.displacements = {}
         self.end_actions = {}
         self.reactions = {}
+
+        # dict internal forces
+        self.internal_forces = {}
 
     def add_material(self, key, *args, **kwargs):
         """
@@ -433,7 +438,7 @@ class Structure:
         cols = []
         data = []
 
-        load_pattern_frame_end_actions = {}
+        load_pattern_end_actions = {}
 
         for frame in self.frames.values():
             t = frame.get_matrix_rotation(flags_joint_displacements)
@@ -452,15 +457,15 @@ class Structure:
 
             f_end_actions = flags_frame_displacements.astype(float)
             f_end_actions[flags_frame_displacements] = np.dot(k_element, u_element).flatten() + np.dot(np.transpose(t), f_fixed).flatten()
-            load_pattern_frame_end_actions[frame] = EndActions(*f_end_actions)
+            load_pattern_end_actions[frame] = EndActions(*f_end_actions)
 
             # x
             if frame.joint_j in self.supports.keys() or frame.joint_k in self.supports.keys():
                 rows += list(indexes_element)
                 cols += n * [0]
-                data += list(np.dot(t, load_pattern_frame_end_actions[frame].get_end_actions(flags_joint_displacements)).flatten())
+                data += list(np.dot(t, load_pattern_end_actions[frame].get_end_actions(flags_joint_displacements)).flatten())
 
-        self.end_actions[load_pattern] = load_pattern_frame_end_actions
+        self.end_actions[load_pattern] = load_pattern_end_actions
 
         # store reactions
         number_joints = self.get_number_frames()
@@ -478,6 +483,14 @@ class Structure:
             load_pattern_reactions[joint] = Reaction(*reactions)
 
         self.reactions[load_pattern] = load_pattern_reactions
+
+        # store internal forces
+        load_pattern_internal_forces = {}
+
+        for frame in self.frames.values():
+            load_pattern_internal_forces[frame] = InternalForce(**frame.get_internal_force(load_pattern_end_actions[frame], load_pattern))
+            
+        self.internal_forces[load_pattern] = load_pattern_internal_forces
 
     def solve(self):
         """Solve the structure"""
@@ -696,6 +709,18 @@ class Structure:
                 report += "{}\t\t{}\n".format(joints[joint],
                                               ',\t'.join(["{:+.5f}".format(getattr(reaction, name))
                                                           for name in reaction.__slots__]))
+
+        report += "Internal forces\n" \
+                  "---------------\n"
+        for load_pattern, internal_forces in self.internal_forces.items():
+            report += "{}:\n".format(load_patterns[load_pattern])
+
+            for frame, internal_force in internal_forces.items():
+                report += frames[frame] + '\n'
+
+                for force in internal_force.__slots__:
+                    report += force + '\n'
+                    report += getattr(internal_force, force).__repr__() + '\n'
 
         return report
 
