@@ -377,8 +377,67 @@ class Frame(AttrDisplay, metaclass=UniqueInstances):
 #         return -np.dot(np.linalg.inv(self.get_matrix_transformation()), np.dot(self.get_global_stiff_matrix(),
 #                                                                                displacements))[0, 0]
 
+    def get_internal_force(self, end_actions, load_pattern, no_div=20):
+        """
+        Get internal force.
 
-class Support(AttrDisplay):
+        Parameters
+        ----------
+        no_divs : float, optional
+            Number divisions.
+        """
+        length = self.get_length()
+        internal_force = {}
+
+        internal_force['fx'] = np.full(shape=no_div+1, fill_value=-end_actions.fx_j)
+        internal_force['fy'] = np.full(shape=no_div+1, fill_value= end_actions.fy_j)
+        internal_force['fz'] = np.full(shape=no_div+1, fill_value= end_actions.fz_j)
+        internal_force['mx'] = np.full(shape=no_div+1, fill_value=-end_actions.rx_j)
+        internal_force['my'] = np.full(shape=no_div+1, fill_value= end_actions.ry_j)
+        internal_force['mz'] = np.full(shape=no_div+1, fill_value=-end_actions.rz_j)
+
+        for i in range(no_div+1):
+            x = (i / no_div) * length
+            internal_force['my'][i] += end_actions.fz_j * x
+            internal_force['mz'][i] += end_actions.fy_j * x
+        
+        if self in load_pattern.distributed_loads:
+            distributed_load = load_pattern.distributed_loads[self]
+            fx = distributed_load.fx
+            fy = distributed_load.fy
+            fz = distributed_load.fz
+            
+            for i in range(no_div+1):
+                x = (i / no_div) * length
+                internal_force['fx'][i] -= fx * x
+                internal_force['fy'][i] += fy * x
+                internal_force['fz'][i] += fz * x
+
+                internal_force['my'][i] += fz * x ** 2 / 2
+                internal_force['mz'][i] += fy * x ** 2 / 2
+        
+        if self in load_pattern.point_loads_at_frames:
+            point_load = load_pattern.point_loads_at_frames[self]
+
+            fx = point_load.fx
+            fy = point_load.fy
+            fz = point_load.fz
+            mx = point_load.mx
+            my = point_load.my
+            mz = point_load.mz
+
+            for i in range(no_div+1):
+                x = (i / no_div) * length
+                internal_force['fx'][i] -= fx[0] if x > fx[1] else 0
+                internal_force['fy'][i] += fy[0] if x > fy[1] else 0
+                internal_force['fz'][i] += fz[0] if x > fz[1] else 0
+                internal_force['mx'][i] -= mx[0] if x > mx[1] else 0
+                internal_force['my'][i] += my[0] if x > my[1] else 0
+                internal_force['mz'][i] += mz[0] if x > mz[1] else 0
+
+        return internal_force
+
+class Support(AttrDisplay): 
     """
     Point of support.
 
@@ -1068,6 +1127,52 @@ class EndActions(AttrDisplay):
         """Get end actions"""  
         return np.array([getattr(self, name) for name in self.__slots__])[np.tile(flag_joint_displacements, 2)].reshape((-1, 1))
 
+class InternalForce(AttrDisplay):
+    """
+    Internal force.
+
+    Attributes
+    ----------
+    fx : list
+        ...
+    fy : list
+        ...
+    fz : list
+        ...
+    mx : list
+        ...
+    my : list
+        ...
+    mz : list
+        ...
+    """
+    __slots__ = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+
+    def __init__(self, fx, fy, fz, mx, my, mz):
+        """
+        Instantiate a InternalForces object.
+
+        Parameters
+        ----------
+        fx : list
+            ...
+        fy : list
+            ...
+        fz : list
+            ...
+        mx : list
+            ...
+        my : list
+            ...
+        mz : list
+            ...
+        """
+        self.fx = fx
+        self.fy = fy
+        self.fz = fz
+        self.mx = mx
+        self.my = my
+        self.mz = mz
 
 if __name__ == "__main__":
     pass
