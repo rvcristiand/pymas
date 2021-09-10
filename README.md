@@ -1,6 +1,6 @@
 # pyFEM
 
-Model and analyse framed structures with [python](python.org).
+Model and analyse framed structures with [Python](https://www.python.org/).
 
 ## Table of Contents
 
@@ -12,67 +12,64 @@ Model and analyse framed structures with [python](python.org).
 
 ## Background
 
-Implementación del problema del método de elementos finitos en [python](python.org).
+Implementación del [método directo de rigideces](https://en.wikipedia.org/wiki/Direct_stiffness_method) en [Python](https://www.python.org).
 
 ## Install
 
-Este proyecto usa [python](http://nodejs.org) y varias librerias científicas. La recomendación es instalar [Ananconda](https://www.anaconda.com/distribution/).
+pyFEM usa [Python](python.org) y varias librerias científicas (véase [Scipy](https://scipy.org/)). La recomendación es instalar [Ananconda](https://www.anaconda.com/distribution/).
 
-<!--- ```sh
-$ npm install --global standard-readme-spec
-``` -->
+Puede instalar esta librería con [pip](https://pip.pypa.io/en/stable/).
+```
+python -m pip install pyFEM
+```
+
+### Manual
+Puede obtener una copia de pyFEM descargándola de la [página del repositorio](https://github.com/rvcristiand/pyFEM), o puede clonar este repositorio con [git](https://git-scm.com/).
+
+```
+git clone https://github.com/rvcristiand/pyFEM.git
+```
+
+Para importar pyFEM en otros proyectos, incluya la ruta del código fuente de la librería en la lista [`sys.path`](https://docs.python.org/3/tutorial/modules.html#the-module-search-path).
+
+```
+sys.path.append('.../pyFEM/src/')
+```
 
 ## Usage
 
-Puedes crear modelos a partir de la clase Structure.
+Puede analizar estructuras con la clase [Structure](https://github.com/rvcristiand/pyFEM/blob/b394a88a30b09d5cd7351a5ac35b69fa1c419b93/src/pyFEM/core.py#L7).
 
 ```python
+import makepath
 from pyFEM import Structure
 
-structure = Structure()
+# model simplest beam
+model = Structure(uy=True, rz=True)
+
+model.add_material('concrete', E=4700*28**0.5*1000)
+rect_sect = model.add_rectangular_section('V0.5x1.0', width=0.5, height=1)
+
+model.add_joint('a', x=0)
+model.add_joint('b', x=10)
+model.add_frame('1', 'a', 'b', 'concrete', 'V0.5x1.0')
+
+model.add_support('a', uy=True)
+model.add_support('b', uy=True)
+
+model.add_load_pattern('self weight')
+model.add_distributed_load('self weight', '1', fy=-24*rect_sect.A)
+
+model.solve()
+
+print(model.reactions['self weight']['a'].fy)  # 60 kN
+print(max(model.internal_forces['self weight']['1'].mz)) # 150 kN m
 ```
 
-<!-- ### Generator
 
-To use the generator, look at [generator-standard-readme](https://github.com/RichardLitt/generator-standard-readme). There is a global executable to run the generator in that package, aliased as `standard-readme`. -->
-
-<!--- ## Badge
-
-If your README is compliant with Standard-Readme and you're on GitHub, it would be great if you could add the badge. This allows people to link back to this Spec, and helps adoption of the README. The badge is **not required**.
-
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-
-To add in Markdown format, use this code:
-
-```
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-``` -->
-
-<!--- ## Example Readmes
-
-To see how the specification has been applied, see the [example-readmes](example-readmes/). -->
-
-<!--- ## Related Efforts
-
-- [Art of Readme](https://github.com/noffle/art-of-readme) - 💌 Learn the art of writing quality READMEs.
-- [open-source-template](https://github.com/davidbgk/open-source-template/) - A README template to encourage open-source contributions. -->
-
-<!--- ## Maintainers
-
-[@RichardLitt](https://github.com/RichardLitt). -->
 
 ## Contributing
-
-Feel free to dive in! [Open an issue](https://github.com/rvcristiand/pyFEM/issues/new) or submit PRs (pull requests).
-
-pyFEM follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
-
-<!--- ### Contributors
-
-This project exists thanks to all the people who contribute.
-<a href="graphs/contributors"><img src="https://opencollective.com/standard-readme/contributors.svg?width=890&button=false" /></a> -->
-
+Puede contribuir en este proyecto creando un [issue](https://github.com/rvcristiand/pyFEM/issues/new) o haciendo [pull requests](https://github.com/rvcristiand/pyFEM/pulls).
 
 ## License
-
 [MIT](LICENSE)

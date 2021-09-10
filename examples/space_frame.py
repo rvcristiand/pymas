@@ -1,0 +1,49 @@
+import examples.makepath
+from pyFEM import Structure
+
+import numpy as np
+
+
+""""Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
+# structure
+model= Structure(*6 * (True,))
+
+# add material
+model.add_material('material1', 220e4, 85e4)
+
+# add sections
+model.add_section('section1', 0.12, 1.944e-3, 9e-4, 1.6e-3)
+model.add_section('section2', 0.10, 1.2734e-3, 1.333e-3, 5.208e-4)
+
+# add nodes
+model.add_joint('1', 0, 3, 3)
+model.add_joint('2', 5, 3, 3)
+model.add_joint('3', 0, 0, 3)
+model.add_joint('4', 0, 3, 0)
+
+# add frames
+model.add_frame('1-2', '1', '2', 'material1', 'section1')
+model.add_frame('4-1', '4', '1', 'material1', 'section2')
+model.add_frame('3-1', '3', '1', 'material1', 'section1')
+
+# add supports
+model.add_support('2', *6 * (True,))
+model.add_support('3', *6 * (True,))
+model.add_support('4', *6 * (True,))
+
+# add load pattern
+model.add_load_pattern("distributed loads")
+
+# add distributed loads
+model.add_distributed_load('distributed loads', '1-2', fy=-2.4)
+model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
+
+# solve
+model.solve()
+
+np.set_printoptions(precision=3, suppress=True)
+for key, value in model.__dict__.items():
+    if isinstance(value, dict) and not key.startswith('_'):
+        print(key)
+        for _key, _value in value.items():
+            print(_value)
