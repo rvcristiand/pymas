@@ -1,13 +1,9 @@
-#!/bin/python
-import os
-import sys
+import examples.makepath
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(__file__, "../..")))
-
-from pyFEM.core import *
+from pyFEM import Structure
 
 
 def pratt(a_input, h_input):
@@ -21,57 +17,55 @@ def pratt(a_input, h_input):
 
     for a in a_input:
         for h in h_input:
-            structure = Structure()
+            structure = Structure(ux=True, uy=True)
             structures.append(structure)
 
             # add material
-            structure.materials.add('mat', 1)
+            structure.add_material('mat', 1)
 
             # add section
-            structure.sections.add('sec', 'mat', 1)
+            structure.add_section('sec', 1)
 
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.joints.add(label + '0', i * a, 0, 0)
+                structure.add_joint(label + '0', i * a, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.joints.add(label + '1', (i + 1) * a, h, 0)
+                structure.add_joint(label + '1', (i + 1) * a, h)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.add_frame(label + '0', letters[i] + '0', letters[i + 1] + '0', 'mat', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.add_frame(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'mat', 'sec')
             # vertical
             for label in letters[1:-1]:
-                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
+                structure.add_frame(label + '2', label + '0', label + '1', 'mat', 'sec')
             # left to right
             for i in range(1, 3):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'mat', 'sec')
             # right to left
             for i in range(3, 5):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'mat', 'sec')
             # border
-            structure.trusse.add('ab', 'a0', 'b1', 'sec')
-            structure.trusse.add('fg', 'f1', 'g0', 'sec')
+            structure.add_frame('ab', 'a0', 'b1', 'mat', 'sec')
+            structure.add_frame('fg', 'f1', 'g0', 'mat', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.joints]:
+            for label in structure.joints:
                 if label == 'a0':
-                    structure.supports.add(label, True, True, True)
+                    structure.add_support(label, True, True)
                 elif label == 'g0':
-                    structure.supports.add(label, False, True, True)
-                else:
-                    structure.supports.add(label, False, False, True)
+                    structure.add_support(label, False, True)
 
             # add load pattern
-            structure.load_patterns.add("point load")
+            structure.add_load_pattern("point load")
 
             # add point load
-            structure.load_patterns["point load"].point_loads.add('d1', 0, -1, 0)
+            structure.load_patterns["point load"].add_point_load_at_joint('d1', fy= -1)
 
             # solve the problem
             structure.solve()
@@ -79,17 +73,17 @@ def pratt(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") > max_tension:
-                    label_max_tension = truss.label
-                    max_tension = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k > max_tension:
+                    label_max_tension = end_actions.frame
+                    max_tension = end_actions.fx_k
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") < max_compression:
-                    label_max_compression = truss.label
-                    max_compression = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k < max_compression:
+                    label_max_compression = end_actions.frame
+                    max_compression = end_actions.fx_k
 
             a_h.append(a / h)
             label_tension.append(label_max_tension)
@@ -119,7 +113,7 @@ def pratt(a_input, h_input):
     axs[1].set_ylabel('Compression')
     axs[1].grid(True)
 
-    plt.show()
+    plt.savefig('pratt.jpg')
 
     print("Pratt")
     print("{}: \t{}({}) \t{}({})".format("a/h", "label tension", "tension", "label compression", "compression"))
@@ -141,57 +135,55 @@ def howe(a_input, h_input):
 
     for a in a_input:
         for h in h_input:
-            structure = Structure()
+            structure = Structure(ux=True, uy=True)
             structures.append(structure)
 
             # add material
-            structure.materials.add('mat', 1)
+            structure.add_material('mat', 1)
 
             # add section
-            structure.sections.add('sec', 'mat', 1)
+            structure.add_section('sec', 1)
 
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.joints.add(label + '0', i * a, 0, 0)
+                structure.add_joint(label + '0', i * a, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.joints.add(label + '1', (i + 1) * a, h, 0)
+                structure.add_joint(label + '1', (i + 1) * a, h)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.add_frame(label + '0', letters[i] + '0', letters[i + 1] + '0', 'mat', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.add_frame(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'mat', 'sec')
             # vertical
             for label in letters[1:-1]:
-                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
+                structure.add_frame(label + '2', label + '0', label + '1', 'mat', 'sec')
             # left to right
             for i in range(1, 3):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'mat', 'sec')
             # right to left
             for i in range(3, 5):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'mat', 'sec')
             # border
-            structure.trusse.add('ab', 'a0', 'b1', 'sec')
-            structure.trusse.add('fg', 'f1', 'g0', 'sec')
+            structure.add_frame('ab', 'a0', 'b1', 'mat', 'sec')
+            structure.add_frame('fg', 'f1', 'g0', 'mat', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.joints]:
+            for label in structure.joints:
                 if label == 'a0':
-                    structure.supports.add(label, True, True, True)
+                    structure.add_support(label, True, True)
                 elif label == 'g0':
-                    structure.supports.add(label, False, True, True)
-                else:
-                    structure.supports.add(label, False, False, True)
-
+                    structure.add_support(label, False, True)
+                    
             # add load pattern
-            structure.load_patterns.add("point load")
+            structure.add_load_pattern("point load")
 
             # add point load
-            structure.load_patterns["point load"].point_loads.add('d1', 0, -1, 0)
+            structure.load_patterns["point load"].add_point_load_at_joint('d1', fy= -1)
 
             # solve the problem
             structure.solve()
@@ -199,17 +191,17 @@ def howe(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") > max_tension:
-                    label_max_tension = truss.label
-                    max_tension = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k > max_tension:
+                    label_max_tension = end_actions.frame
+                    max_tension = end_actions.fx_k
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") < max_compression:
-                    label_max_compression = truss.label
-                    max_compression = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k < max_compression:
+                    label_max_compression = end_actions.frame
+                    max_compression = end_actions.fx_k
 
             a_h.append(a / h)
             label_tension.append(label_max_tension)
@@ -239,9 +231,9 @@ def howe(a_input, h_input):
     axs[1].set_ylabel('Compression')
     axs[1].grid(True)
 
-    plt.show()
+    plt.savefig('howe.jpg')
 
-    print("Pratt")
+    print("Howe")
     print("{}: \t{}({}) \t{}({})".format("a/h", "label tension", "tension", "label compression", "compression"))
     for i in range(len(a_h)):
         print("{:.3f}: \t{}({:.3f}) \t\t\t\t{}({:.3f})".format(a_h[i], label_tension[i], tension[i],
@@ -261,61 +253,59 @@ def warren(a_input, h_input):
 
     for a in a_input:
         for h in h_input:
-            structure = Structure()
+            structure = Structure(ux=True, uy=True)
             structures.append(structure)
 
             # add material
-            structure.materials.add('mat', 1)
+            structure.add_material('mat', 1)
 
             # add section
-            structure.sections.add('sec', 'mat', 1)
+            structure.add_section('sec', 1)
 
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
                 if i % 2 == 0:
-                    structure.joints.add(label + '0', i * a, 0, 0)
+                    structure.add_joint(label + '0', i * a, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
                 if i % 2 == 0:
-                    structure.joints.add(label + '1', (i + 1) * a, h, 0)
+                    structure.add_joint(label + '1', (i + 1) * a, h)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
                 if i % 2 == 0:
-                    structure.trusse.add(label + '0', letters[i] + '0', letters[i + 2] + '0', 'sec')
+                    structure.add_frame(label + '0', letters[i] + '0', letters[i + 2] + '0', 'mat', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
                 if i % 2 == 0:
-                    structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 3] + '1', 'sec')
+                    structure.add_frame(label + '1', letters[i + 1] + '1', letters[i + 3] + '1', 'mat', 'sec')
             # vertical
             # for label in letters[1:-1]:
             #     structure.trusses.add(label + '2', label + '0', label + '1', 'sec')
             # left to right
             for i in range(1, 5, 2):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '1', letters[i + 1] + '0', 'mat', 'sec')
             # right to left
             for i in range(2, 6, 2):
-                structure.trusse.add(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'sec')
+                structure.add_frame(letters[i] + letters[i + 1], letters[i] + '0', letters[i + 1] + '1', 'mat', 'sec')
             # border
-            structure.trusse.add('ab', 'a0', 'b1', 'sec')
-            structure.trusse.add('fg', 'f1', 'g0', 'sec')
+            structure.add_frame('ab', 'a0', 'b1', 'mat', 'sec')
+            structure.add_frame('fg', 'f1', 'g0', 'mat', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.joints]:
+            for label in structure.joints:
                 if label == 'a0':
-                    structure.supports.add(label, True, True, True)
+                    structure.add_support(label, True, True)
                 elif label == 'g0':
-                    structure.supports.add(label, False, True, True)
-                else:
-                    structure.supports.add(label, False, False, True)
+                    structure.add_support(label, False, True)
 
             # add load pattern
-            structure.load_patterns.add("point load")
+            structure.add_load_pattern("point load")
 
             # add point load
-            structure.load_patterns["point load"].point_loads.add('d1', 0, -1, 0)
+            structure.add_load_at_joint('point load', 'd1', fy=-1)
 
             # solve the problem
             structure.solve()
@@ -323,17 +313,17 @@ def warren(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") > max_tension:
-                    label_max_tension = truss.label
-                    max_tension = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k > max_tension:
+                    label_max_tension = end_actions.frame
+                    max_tension = end_actions.fx_k
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") < max_compression:
-                    label_max_compression = truss.label
-                    max_compression = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k < max_compression:
+                    label_max_compression = end_actions.frame
+                    max_compression = end_actions.fx_k
 
             a_h.append(a / h)
             label_tension.append(label_max_tension)
@@ -363,7 +353,7 @@ def warren(a_input, h_input):
     axs[1].set_ylabel('Compression')
     axs[1].grid(True)
 
-    plt.show()
+    plt.savefig('warren.jpg')
 
     print("Pratt")
     print("{}: \t{}({}) \t{}({})".format("a/h", "label tension", "tension", "label compression", "compression"))
@@ -385,69 +375,67 @@ def k(a_input, h_input):
 
     for a in a_input:
         for h in h_input:
-            structure = Structure()
+            structure = Structure(ux=True, uy=True)
             structures.append(structure)
 
             # add material
-            structure.materials.add('mat', 1)
+            structure.add_material('mat', 1)
 
             # add section
-            structure.sections.add('sec', 'mat', 1)
+            structure.add_section('sec', 1)
 
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.joints.add(label + '0', i * a, 0, 0)
+                structure.add_joint(label + '0', i * a, 0)
             # top cord
             for i, label in enumerate(letters[1:-1]):
-                structure.joints.add(label + '1', (i + 1) * a, h, 0)
+                structure.add_joint(label + '1', (i + 1) * a, h)
             # middle
             for i, label in enumerate(letters[1:3]):
-                structure.joints.add(label + '2', (i + 1) * a, h / 2, 0)
+                structure.add_joint(label + '2', (i + 1) * a, h / 2)
             for i, label in enumerate(letters[4:6]):
-                structure.joints.add(label + '2', (i + 4) * a, h / 2, 0)
+                structure.add_joint(label + '2', (i + 4) * a, h / 2)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.add_frame(label + '0', letters[i] + '0', letters[i + 1] + '0', 'mat', 'sec')
             # top cord
             for i, label in enumerate(letters[1:-2]):
-                structure.trusse.add(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'sec')
+                structure.add_frame(label + '1', letters[i + 1] + '1', letters[i + 2] + '1', 'mat', 'sec')
             # vertical
             for i in range(2):
                 for label in letters[1:3] + letters[4:6]:
-                    structure.trusse.add(label + '2' + str(i), label + str(2 * i), label + str(2 - i), 'sec')
+                    structure.add_frame(label + '2' + str(i), label + str(2 * i), label + str(2 - i), 'mat', 'sec')
 
-                structure.trusse.add('d2', 'd0', 'd1', 'sec')
+                structure.add_frame('d2', 'd0', 'd1', 'mat', 'sec')
             # diagonals
             for i in range(2):
                 # left
                 for j in range(2):
-                    structure.trusse.add(letters[j + 1] + letters[j + 2] + str(i), letters[j + 1] + '2',
-                                         letters[j + 2] + str(i), 'sec')
+                    structure.add_frame(letters[j + 1] + letters[j + 2] + str(i), letters[j + 1] + '2',
+                                        letters[j + 2] + str(i), 'mat', 'sec')
                 # right
                 for j in range(2):
-                    structure.trusse.add(letters[j + 3] + letters[j + 4] + str(i), letters[j + 3] + str(i),
-                                         letters[j + 4] + '2', 'sec')
+                    structure.add_frame(letters[j + 3] + letters[j + 4] + str(i), letters[j + 3] + str(i),
+                                        letters[j + 4] + '2', 'mat', 'sec')
             # border
-            structure.trusse.add('ab', 'a0', 'b1', 'sec')
-            structure.trusse.add('fg', 'f1', 'g0', 'sec')
+            structure.add_frame('ab', 'a0', 'b1', 'mat', 'sec')
+            structure.add_frame('fg', 'f1', 'g0', 'mat', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.joints]:
+            for label in structure.joints:
                 if label == 'a0':
-                    structure.supports.add(label, True, True, True)
+                    structure.add_support(label, True, True)
                 elif label == 'g0':
-                    structure.supports.add(label, False, True, True)
-                else:
-                    structure.supports.add(label, False, False, True)
+                    structure.add_support(label, False, True)
 
             # add load pattern
-            structure.load_patterns.add("point load")
+            structure.add_load_pattern("point load")
 
-            # add point load
-            structure.load_patterns["point load"].point_loads.add('d1', 0, -1, 0)
+            # Add Point load
+            structure.add_load_at_joint('point load', 'd1', 0, -1)
 
             # solve the problem
             structure.solve()
@@ -455,17 +443,17 @@ def k(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") > max_tension:
-                    label_max_tension = truss.label
-                    max_tension = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k > max_tension:
+                    label_max_tension = end_actions.frame
+                    max_tension = end_actions.fx_k
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") < max_compression:
-                    label_max_compression = truss.label
-                    max_compression = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k < max_compression:
+                    label_max_compression = end_actions.frame
+                    max_compression = end_actions.fx_k
 
             a_h.append(a / h)
             label_tension.append(label_max_tension)
@@ -495,7 +483,7 @@ def k(a_input, h_input):
     axs[1].set_ylabel('Compression')
     axs[1].grid(True)
 
-    plt.show()
+    plt.savefig('k.jpg')
 
     print("k")
     print("{}: \t{}({}) \t{}({})".format("a/h", "label tension", "tension", "label compression", "compression"))
@@ -517,74 +505,72 @@ def baltimore(a_input, h_input):
 
     for a in a_input:
         for h in h_input:
-            structure = Structure()
+            structure = Structure(ux=True, uy=True)
             structures.append(structure)
 
             # add material
-            structure.materials.add('mat', 1)
+            structure.add_material('mat', 1)
 
             # add section
-            structure.sections.add('sec', 'mat', 1)
+            structure.add_section('sec', 1)
 
             # add nodes
             # lower cord
             for i, label in enumerate(letters):
-                structure.joints.add(label + '0', i * a / 2, 0, 0)
+                structure.add_joint(label + '0', i * a / 2, 0)
             # top cord
             for i, label in enumerate(letters[2:-2:2]):
-                structure.joints.add(label + '1', (2 * i + 2) * a / 2, h, 0)
+                structure.add_joint(label + '1', (2 * i + 2) * a / 2, h)
             # middle
             for i, label in enumerate(letters[1::2]):
-                structure.joints.add(label + '2', (2 * i + 1) * a / 2, h / 2, 0)
+                structure.add_joint(label + '2', (2 * i + 1) * a / 2, h / 2)
 
             # add trusses
             # lower cord
             for i, label in enumerate(letters[0:-1]):
-                structure.trusse.add(label + '0', letters[i] + '0', letters[i + 1] + '0', 'sec')
+                structure.add_frame(label + '0', letters[i] + '0', letters[i + 1] + '0', 'mat', 'sec')
             # top cord
             for i, label in enumerate(letters[2:-4:2]):
-                structure.trusse.add(label + '1', letters[2 * i + 2] + '1', letters[2 * i + 4] + '1', 'sec')
+                structure.add_frame(label + '1', letters[2 * i + 2] + '1', letters[2 * i + 4] + '1', 'mat', 'sec')
             # vertical
             # longest
             for label in letters[2:-2:2]:
-                structure.trusse.add(label + '2', label + '0', label + '1', 'sec')
+                structure.add_frame(label + '2', label + '0', label + '1', 'mat', 'sec')
             # shortest
             for label in letters[1:-1:2]:
-                structure.trusse.add(label + '2', label + '0', label + '2', 'sec')
+                structure.add_frame(label + '2', label + '0', label + '2', 'mat', 'sec')
             # left to right first level
             for i, label in enumerate(letters[:-1:2]):
-                structure.trusse.add(letters[2 * i] + letters[2 * i + 1] + '0',
-                                     letters[2 * i] + '0', letters[2 * i + 1] + '2', 'sec')
+                structure.add_frame(letters[2 * i] + letters[2 * i + 1] + '0',
+                                    letters[2 * i] + '0', letters[2 * i + 1] + '2', 'mat', 'sec')
             # right to left first level
             for i, label in enumerate(letters[1:-1:2]):
-                structure.trusse.add(letters[2 * i + 1] + letters[2 * i + 2] + '0',
-                                     letters[2 * i + 1] + '2', letters[2 * i + 2] + '0', 'sec')
+                structure.add_frame(letters[2 * i + 1] + letters[2 * i + 2] + '0',
+                                    letters[2 * i + 1] + '2', letters[2 * i + 2] + '0', 'mat', 'sec')
             # left to right second level
             for i, label in enumerate(letters[7:-2:2]):
-                structure.trusse.add(letters[2 * i + 7] + letters[2 * i + 8] + '1',
-                                     letters[2 * i + 7] + '2', letters[2 * i + 8] + '1', 'sec')
+                structure.add_frame(letters[2 * i + 7] + letters[2 * i + 8] + '1',
+                                    letters[2 * i + 7] + '2', letters[2 * i + 8] + '1', 'mat', 'sec')
             # right to left second level
             for i, label in enumerate(letters[2:6:2]):
-                structure.trusse.add(letters[2 * i + 2] + letters[2 * i + 3] + '1',
-                                     letters[2 * i + 2] + '1', letters[2 * i + 3] + '2', 'sec')
+                structure.add_frame(letters[2 * i + 2] + letters[2 * i + 3] + '1',
+                                    letters[2 * i + 2] + '1', letters[2 * i + 3] + '2', 'mat', 'sec')
             # border
-            structure.trusse.add('bc1', 'b2', 'c1', 'sec')
-            structure.trusse.add('kl1', 'k1', 'l2', 'sec')
+            structure.add_frame('bc1', 'b2', 'c1', 'mat', 'sec')
+            structure.add_frame('kl1', 'k1', 'l2', 'mat', 'sec')
 
             # add supports
-            for label in [node.label for node in structure.joints]:
+            for label in structure.joints:
                 if label == 'a0':
-                    structure.supports.add(label, True, True, True)
+                    structure.add_support(label, True, True)
                 elif label == 'm0':
-                    structure.supports.add(label, False, True, True)
-                else:
-                    structure.supports.add(label, False, False, True)
+                    structure.add_support(label, False, True)
 
             # add load pattern
-            structure.load_patterns.add("point load")
+            structure.add_load_pattern("point load")
 
             # add point load
-            structure.load_patterns["point load"].point_loads.add('g1', 0, -1, 0)
+            structure.add_load_at_joint('point load', 'g1', fy=-1)
 
             # solve the problem
             structure.solve()
@@ -592,17 +578,17 @@ def baltimore(a_input, h_input):
             # save maximum values
             label_max_tension = ''
             max_tension = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") > max_tension:
-                    label_max_tension = truss.label
-                    max_tension = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k > max_tension:
+                    label_max_tension = end_actions.frame
+                    max_tension = end_actions.fx_k
 
             label_max_compression = ''
             max_compression = 0
-            for truss in structure.trusse:
-                if truss.get_forces("point load") < max_compression:
-                    label_max_compression = truss.label
-                    max_compression = truss.get_forces("point load")
+            for end_actions in structure.end_actions['point load'].values():
+                if end_actions.fx_k < max_compression:
+                    label_max_compression = end_actions.frame
+                    max_compression = end_actions.fx_k
 
             a_h.append(a / h)
             label_tension.append(label_max_tension)
@@ -632,7 +618,7 @@ def baltimore(a_input, h_input):
     axs[1].set_ylabel('Compression')
     axs[1].grid(True)
 
-    plt.show()
+    plt.savefig('baltimore.jpg')
 
     print("Baltimore")
     print("{}: \t{}({}) \t{}({})".format("a/h", "label tension", "tension", "label compression", "compression"))
@@ -640,7 +626,7 @@ def baltimore(a_input, h_input):
         print("{:.3f}: \t{}({:.3f}) \t\t\t\t{}({:.3f})".format(a_h[i], label_tension[i], tension[i],
                                                                label_compression[i], compression[i]))
 
-    return structures
+    # return structures
 
 
 pratt(a_input=np.linspace(1, 5, 5), h_input=np.linspace(1, 6, 6))
