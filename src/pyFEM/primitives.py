@@ -991,7 +991,7 @@ class PointLoadAtFrame(AttrDisplay):
         f_local[5] += M*b*(2*a-b) / L ** 2
         f_local[11] += M*a*(2*b-a) / L ** 2
 
-        f_local = f_local[np.nonzero(np.tile(flag_joint_displacements, 2))[0], :]
+        f_local = f_local[np.tile(self._parent.get_flags_active_joint_displacements(), 2)]
 
         return np.dot(frame.get_matrix_rotation(), f_local)
 
