@@ -1,4 +1,5 @@
 import numpy as np
+import pyFEM.sections as sections
 
 from numpy import linalg
 from scipy.spatial import distance
@@ -136,6 +137,201 @@ class RectangularSection(Section):
         Iz = (1 / 12) * height * width ** 3
 
         super().__init__(parent, name, A, Ix, Iy, Iz)
+
+
+class BoxSection(Section):
+    """Box section."""
+
+    def __init__(self, parent, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1):
+        """
+        Instantiate a BoxSection object.
+        
+        Parameters
+        ----------
+        parent : Structure
+            Structure.
+        name : str
+            Section name.
+        width : float
+            Total width.
+        depth : float
+            Total depth.
+        L3 : float
+            Exterior girder bottom offset.
+        t1 : float
+            Top slab thickness.
+        t2 : float
+            Bottom slab thickness.
+        t3 : float
+            Exterior girder thickness.
+        f1h : float
+            f1 horizontal dimension.
+        f1v : float
+            f1 vertical dimension.
+        f2h : float
+            f2 horizontal dimension.
+        f2v : float
+            f2 vertical dimension.
+        f3h : float
+            f3 horizontal dimension.
+        f3v : float
+            f3 vertical dimension.
+        L1 : float
+            Overhang length
+        """
+        self.width = width
+        self.depth = depth
+        self.L3 = L3
+        self.t1 = t1
+        self.t2 = t2
+        self.t3 = t3
+        self.f1h = f1h
+        self.f1v = f1v
+        self.f2h = f2h
+        self.f2v = f2v
+        self.f3h = f3h
+        self.f3v = f3v
+        self.L1 = L1
+
+        A = self.get_A()
+        Ix = None
+        Iy = self.get_Iyy()
+        Iz = self.get_Izz()
+
+        super().__init__(parent, name, A, Ix, Iy, Iz)
+        
+    def get_A(self):
+        """ """
+        return sections.A(self.get_outerPoints()) - sections.A(self.get_innerPoints())
+
+    def get_Qy(self):
+        """ """
+        return sections.Qy(self.get_outerPoints()) - sections.Qy(self.get_innerPoints())
+
+    def get_Qz(self):
+        """ """
+        return sections.Qz(self.get_outerPoints()) - sections.Qz(self.get_innerPoints())
+
+    def get_y(self):
+        """ """
+        return self.get_Qz() / self.get_A()
+
+    def get_z(self):
+        """ """
+        return self.get_Qy() / self.get_A()
+
+    def get_Iyy(self):
+        """ """
+        outerPoints = self.get_outerPoints()
+        innerPoints = self.get_innerPoints()
+        
+        z = self.get_z()
+    
+        Iyy = sections.Iyy(outerPoints) + sections.A(outerPoints) * (z - sections.z(outerPoints)) ** 2
+        
+        Iyy -= sections.Iyy(innerPoints) + sections.A(innerPoints) * (z - sections.z(innerPoints)) ** 2
+
+        return Iyy
+
+    def get_Izz(self):
+        """ """
+        outerPoints = self.get_outerPoints()
+        innerPoints = self.get_innerPoints()
+    
+        y = self.get_y()
+    
+        Izz = sections.Izz(outerPoints) + sections.A(outerPoints) * (y - sections.y(outerPoints)) ** 2
+        Izz -= sections.Izz(innerPoints) + sections.A(innerPoints) * (y - sections.y(innerPoints)) ** 2
+
+        return Izz
+    
+    def get_outerPoints(self):
+        """ """
+        points = np.empty((10, 2))
+
+        points[0, 0] = self.width / 2 - (self.L1 + self.L3)
+        points[0, 1] = 0
+
+        points[1, 0] = self.width / 2 - self.L1
+        points[1, 1] = self.depth - (self.t1 + self.f1v)
+        
+        points[2, 0] = self.width / 2 - (self.L1 - self.f1h)
+        points[2, 1] = self.depth - self.t1
+
+        points[3, 0] = self.width / 2
+        points[3, 1] = self.depth - self.t1
+
+        points[4, 0] = points[3, 0]
+        points[4, 1] = self.depth
+
+        points[5, 0] = -points[4, 0]
+        points[5, 1] =  points[4, 1]
+
+        points[6, 0] = -points[3, 0]
+        points[6, 1] =  points[3, 1]
+
+        points[7, 0] = -points[2, 0]
+        points[7, 1] =  points[2, 1]
+
+        points[8, 0] = -points[1, 0]
+        points[8, 1] =  points[1, 1]
+
+        points[9, 0] = -points[0, 0]
+        points[9, 1] =  points[0, 1]
+
+        return points
+
+    def get_innerPoints(self):
+        """ """
+        auxPoints = np.empty((4, 2))
+        points = np.empty((8, 2))
+
+        dx = self.L3
+        dy = self.depth - (self.t1 + self.f1v)
+    
+        # puntos auxiliares
+        dblAux = self.t3 / ((dx ** 2 + dy ** 2) ** 0.5)
+        xi = -dy * dblAux
+        yi =  dx * dblAux
+    
+        auxPoints[0, 0] = xi + dx * (self.t2 - yi) / dy + (self.width / 2 - (self.L1 + self.L3))
+        auxPoints[0, 1] = self.t2
+    
+        auxPoints[1, 0] = auxPoints[0, 0] + dx * (self.depth - self.t1 - auxPoints[0, 1]) / dy
+        auxPoints[1, 1] = self.depth - self.t1
+    
+        auxPoints[2, 0] = -auxPoints[1, 0]
+        auxPoints[2, 1] =  auxPoints[1, 1]
+    
+        auxPoints[3, 0] = -auxPoints[0, 0]
+        auxPoints[3, 1] =  auxPoints[0, 1]
+    
+        # puntos internos
+        points[0, 0] = auxPoints[0, 0] - self.f3h
+        points[0, 1] = auxPoints[0, 1]
+    
+        points[1, 0] = auxPoints[0, 0] + dx * (auxPoints[0, 1] + self.f3v - auxPoints[0, 1]) / dy
+        points[1, 1] = auxPoints[0, 1] + self.f3v
+    
+        points[2, 0] = auxPoints[1, 0] - dx * (-((self.depth - (self.t1 + self.f2v)) - auxPoints[1, 1]) / dy)
+        points[2, 1] = self.depth - (self.t1 + self.f2v)
+    
+        points[3, 0] = points[2, 0] - self.f2h
+        points[3, 1] = auxPoints[1, 1]
+    
+        points[4, 0] = -points[3, 0]
+        points[4, 1] =  points[3, 1]
+    
+        points[5, 0] = -points[2, 0]
+        points[5, 1] =  points[2, 1]
+    
+        points[6, 0] = -points[1, 0]
+        points[6, 1] =  points[1, 1]
+    
+        points[7, 0] = -points[0, 0]
+        points[7, 1] =  points[0, 1]
+
+        return points
 
 
 class Joint(AttrDisplay):
