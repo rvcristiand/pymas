@@ -52,6 +52,8 @@ class Structure:
         Add a section.
     add_rectangular_section(name, width, height)
         Add a rectangular section.
+    add_box_section(name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1)
+        Add a box section.
     add_joint(name, *args, **kwargs)
         Add a joint.
     add_frame(name, *args, **kwargs)
@@ -198,6 +200,50 @@ class Structure:
         rect_sect = self.sections[name] = RectangularSection(self, name, width, height)
 
         return rect_sect
+
+    def add_box_section(self, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1):
+        """
+        Add a box section.
+
+        Parameters
+        ----------
+        name : str
+            Box section name.
+        width : float
+            Total width.
+        depth : float
+            Total depth.
+        L3 : float
+            Exterior girder bottom offset.
+        t1 : float
+            Top slab thickness.
+        t2 : float
+            Bottom slab thickness.
+        t3 : float
+            Exterior girder thickness.
+        f1h : float
+            f1 horizontal dimension.
+        f1v : float
+            f1 vertical dimension.
+        f2h : float
+            f2 horizontal dimension.
+        f2v : float
+            f2 vertical dimension.
+        f3h : float
+            f3 horizontal dimension.
+        f3v : float
+            f3 vertical dimension.
+        L1 : float
+            Overhang length.
+
+        Returns
+        -------
+        box_sect : BoxSection
+            BoxSection.
+        """
+        box_sect = self.sections[name] = BoxSection(self, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1)
+
+        return box_sect
 
     def add_joint(self, name, *args, **kwargs):
         """
