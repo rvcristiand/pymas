@@ -140,9 +140,9 @@ class RectangularSection(Section):
 
 
 class BoxSection(Section):
-    """Box section."""
+    """Box section"""
 
-    def __init__(self, parent, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1):
+    def __init__(self, parent, name, width, depth, L1, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L3=None, t0=None, t4=None):
         """
         Instantiate a BoxSection object.
         
@@ -156,8 +156,8 @@ class BoxSection(Section):
             Total width.
         depth : float
             Total depth.
-        L3 : float
-            Exterior girder bottom offset.
+        L1 : float
+            Overhang length
         t1 : float
             Top slab thickness.
         t2 : float
@@ -176,12 +176,16 @@ class BoxSection(Section):
             f3 horizontal dimension.
         f3v : float
             f3 vertical dimension.
-        L1 : float
-            Overhang length
+        L3 : float, optional
+            Exterior girder bottom offset.
+        t0 : float, optional
+            Exterior cantilever thickness.
+        t4 : float, optional
+            Middle cantilever thickness.
         """
         self.width = width
         self.depth = depth
-        self.L3 = L3
+        self.L1 = L1
         self.t1 = t1
         self.t2 = t2
         self.t3 = t3
@@ -191,7 +195,10 @@ class BoxSection(Section):
         self.f2v = f2v
         self.f3h = f3h
         self.f3v = f3v
-        self.L1 = L1
+
+        self.L3 = 0 if L3 is None else L3
+        self.t0 = self.t1 if t0 is None else t0
+        self.t4 = self.t1 if t4 is None else t4
 
         A = self.get_A()
         Ix = None
@@ -253,13 +260,13 @@ class BoxSection(Section):
         points[0, 1] = 0
 
         points[1, 0] = self.width / 2 - self.L1
-        points[1, 1] = self.depth - (self.t1 + self.f1v)
+        points[1, 1] = self.depth - (self.t4 + self.f1v)
         
         points[2, 0] = self.width / 2 - (self.L1 - self.f1h)
-        points[2, 1] = self.depth - self.t1
+        points[2, 1] = self.depth - self.t4
 
         points[3, 0] = self.width / 2
-        points[3, 1] = self.depth - self.t1
+        points[3, 1] = self.depth - self.t0
 
         points[4, 0] = points[3, 0]
         points[4, 1] = self.depth

@@ -52,7 +52,7 @@ class Structure:
         Add a section.
     add_rectangular_section(name, width, height)
         Add a rectangular section.
-    add_box_section(name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1)
+    add_box_section(name, width, depth, L1, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L3=None, t0=None, t4=None)
         Add a box section.
     add_joint(name, *args, **kwargs)
         Add a joint.
@@ -201,7 +201,7 @@ class Structure:
 
         return rect_sect
 
-    def add_box_section(self, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1):
+    def add_box_section(self, name, width, depth, L1, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L3=None, t0=None, t4=None):
         """
         Add a box section.
 
@@ -213,8 +213,8 @@ class Structure:
             Total width.
         depth : float
             Total depth.
-        L3 : float
-            Exterior girder bottom offset.
+        L1 : float
+            Overhang length.
         t1 : float
             Top slab thickness.
         t2 : float
@@ -233,15 +233,19 @@ class Structure:
             f3 horizontal dimension.
         f3v : float
             f3 vertical dimension.
-        L1 : float
-            Overhang length.
+        L3 : float
+            Exterior girder bottom offset.
+        t0 : float, optional
+            Exterior cantilever thickness.
+        t4 : float, optional
+            Middle cantilever thickness.
 
         Returns
         -------
         box_sect : BoxSection
             BoxSection.
         """
-        box_sect = self.sections[name] = BoxSection(self, name, width, depth, L3, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L1)
+        box_sect = self.sections[name] = BoxSection(self, name, width, depth, L1, t1, t2, t3, f1h, f1v, f2h, f2v, f3h, f3v, L3, t0, t4)
 
         return box_sect
 
