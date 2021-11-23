@@ -398,7 +398,7 @@ class Frame(AttrDisplay):
 
         return np.dot(np.dot(t, k), np.transpose(t))
         
-    def get_internal_forces(self, load_pattern, no_div=10):
+    def get_internal_forces(self, load_pattern, no_div=100):
         """
         Get internal forces.
 
@@ -487,12 +487,12 @@ class Frame(AttrDisplay):
                     internal_forces['mz'][i] += fy[0] * (x - fy[1]) * length if x > fy[1] else 0
 
         flags = self._parent.get_flags_active_joint_displacements()
-        if not flags[0]: internal_forces['fx'] = None
-        if not flags[1]: internal_forces['fy'] = None
-        if not flags[2]: internal_forces['fz'] = None
-        if not flags[3]: internal_forces['mx'] = None
-        if not flags[4]: internal_forces['my'] = None
-        if not flags[5]: internal_forces['mz'] = None
+        internal_forces['fx'] = internal_forces['fx'].tolist() if flags[0] else None
+        internal_forces['fy'] = internal_forces['fy'].tolist() if flags[1] else None
+        internal_forces['fz'] = internal_forces['fz'].tolist() if flags[2] else None
+        internal_forces['mx'] = internal_forces['mx'].tolist() if flags[3] else None
+        internal_forces['my'] = internal_forces['my'].tolist() if flags[4] else None
+        internal_forces['mz'] = internal_forces['mz'].tolist() if flags[5] else None
         
         return internal_forces
     
