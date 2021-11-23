@@ -580,100 +580,126 @@ class Structure:
     #         self.add_material(name, E, G)
             
     
-    # def export(self, filename=None):
-    #     """
-    #     Save the structure to a file in json format.
+    def export(self, filename):
+        """
+        Save the structure to a file in json format.
 
-    #     Parameters
-    #     ----------
-    #     filename : string
-    #         Filename
-    #     """
-    #     data = {}
+        Parameters
+        ----------
+        filename : string
+            Filename
+        """
+        data = {}
 
-    #     # save the materials
-    #     if self.materials:
-    #         data['materials'] = {}
-    #         for key, material in self.materials.items():
-    #             data['materials'][key] = {'E': material.E, 'G': material.G}
+        # save the materials
+        if self.materials:
+            data['materials'] = {}
+            for key, material in self.materials.items():
+                data['materials'][key] = {attr: value for attr, value in material.__dict__.items() if not attr.startswith('_') and value is not None}
+                        
+        # save the sections
+        if self.sections:
+            data['sections'] = {}
+            for key, section in self.sections.items():
+                data['sections'][key] = {'type': section.__class__.__name__}
+                data['sections'][key].update({attr: value for attr, value in section.__dict__.items() if not attr.startswith('_') and value is not None})
 
-    #     # save sections
-    #     if self.sections:
-    #         data['sections'] = {}
-    #         for key, section in self.sections.items():
-    #             data['sections'][key] = {'area': section.A, 'Ix': section.Ix, 'Iy': section.Iy, 'Iz': section.Iz, 'type': section.__class__.__name__}
-    #             if section.__class__.__name__ == "RectangularSection":
-    #                 data['sections'][key]['width'] = section.width
-    #                 data['sections'][key]['height'] = section.height
+        # save the joints
+        if self.joints:
+            data['joints'] = {}
+            for key, joint in self.joints.items():
+                data['joints'][key] = {attr: value for attr, value in joint.__dict__.items() if not attr.startswith('_') and value is not None}
 
-    #     # save the joints
-    #     if self.joints:
-    #         data['joints'] = {}
-    #         for key, joint in self.joints.items():
-    #             data['joints'][key] = {'x': joint.x, 'y': joint.y, 'z': joint.z}
+        # save the frames
+        if self.frames:
+            data['frames'] = {}
+            for key, frame in self.frames.items():
+                data['frames'][key] = {attr: value for attr, value in frame.__dict__.items() if not attr.startswith('_') and value is not None}
 
-    #     # save the frames
-    #     material_keys = {value: key for key, value in self.materials.items()}
-    #     section_keys = {value: key for key, value in self.sections.items()}
-    #     joint_keys = {value: key for key, value in self.joints.items()}
-    #     frame_keys = {value: key for key, value in self.frames.items()}
-
-    #     if self.frames:
-    #         data['frames'] = {}
-    #         for key, frame in self.frames.items():
-    #             data['frames'][key] = {'j': joint_keys[frame.joint_j],
-    #                                    'k': joint_keys[frame.joint_k],
-    #                                    'material': material_keys[frame.material],
-    #                                    'section': section_keys[frame.section]}
-
-    #     # save the supports
-    #     if self.supports:
-    #         data['supports'] = {}
-    #         for joint, support in self.supports.items():
-    #             data['supports'][joint_keys[joint]] = {'ux': support.ux, 'uy': support.uy, 'uz': support.uz, 'rx': support.rx, 'ry': support.ry, 'rz': support.rz}
-
-    #     # save the loads
-    #     if self.load_patterns:
-    #         data['load_patterns'] = {}
-    #         for key, load_pattern in self.load_patterns.items():
-    #             data['load_patterns'][key] = {}
-
-    #             if load_pattern.loads_at_joints:
-    #                 data['load_patterns'][key]['joints'] = {}
-    #                 for joint, point_load in load_pattern.loads_at_joints.items():
-    #                     data['load_patterns'][key]['joints'][joint_keys[joint]] = []
-    #                     data['load_patterns'][key]['joints'][joint_keys[joint]].append({  # TODO: manage many 'point load' at the same joint for the same load pattern 
-    #                         'fx': point_load.fx, 
-    #                         'fy': point_load.fy,
-    #                         'fz': point_load.fy,
-    #                         'mx': point_load.mx,
-    #                         'my': point_load.my,
-    #                         'mz': point_load.mz
-    #                     })
+        # save the supports
+        if self.supports:
+            data['supports'] = {}
+            for key, support in self.supports.items():
+                data['supports'][key] = {attr: value for attr, value in support.__dict__.items() if not attr.startswith('_') and value is not None}
                 
-    #             if load_pattern.distributed_loads:
-    #                 data['load_patterns'][key]['frames'] = {}
-    #                 if load_pattern.distributed_loads:
-    #                     for frame, distributed_load in load_pattern.distributed_loads.items():
-    #                         if not frame_keys[frame] in data['load_patterns'][key]['frames']:
-    #                             data['load_patterns'][key]['frames'][frame_keys[frame]] = {}
+        # save the load patterns
+        if self.load_patterns:
+            data['load_patterns'] = {}
+            for key, loadPattern in self.load_patterns.items():
+                data['load_patterns'][key] = {'name': loadPattern.name}
 
-    #                         data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed'] = {}
+                # save loads at joints
+                if loadPattern.loads_at_joints:
+                    data['load_patterns'][key]['joints'] = {}
+                    for _joint, point_loads in loadPattern.loads_at_joints.items():
+                        data['load_patterns'][key]['joints'][_joint] = []
+                        for pointLoad in point_loads:
+                            data['load_patterns'][key]['joints'][_joint].append({attr: value for attr, value in pointLoad if not attr.startswith('_') and value is not None})
 
-    #                         if distributed_load.system == 'local':
-    #                             if not 'local' in data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']:
-    #                                 data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']['local'] = []
-                                
-    #                             data['load_patterns'][key]['frames'][frame_keys[frame]]['distributed']['local'].append({
-    #                                 'fx': distributed_load.fx,  
-    #                                 'fy': distributed_load.fy,
-    #                                 'fz': distributed_load.fz
-    #                         })
+                # save loads at frames
+                if loadPattern.point_loads_at_frames or loadPattern.distributed_loads:
+                    data['load_patterns'][key]['frames'] = {}
 
-    #     # with open(filename, 'w') as outfile:
-    #     #     json.dump(data, outfile, indent=4)
+                    for _frame, point_loads in loadPattern.point_loads_at_frames.items():
+                        if not _frame in data['load_patterns'][key]['frames']:
+                            data['load_patterns'][key]['frames'][_frame] = []
+                        for pointLoadAtFrame in point_loads:
+                            _data = {'type': pointLoadAtFrame.__class__.__name__}
+                            _data.update({attr: value for attr, value in pointLoadAtFrame.__dict__.items() if not attr.startswith('_') and value is not None})
+                            data['load_patterns'][key]['frames'][_frame].append(_data)
 
-    #     return data
+                    for _frame, distributed_loads in loadPattern.distributed_loads.items():
+                        if not _frame in data['load_patterns'][key]['frames']:
+                            data['load_patterns'][key]['frames'][_frame] = []
+                        for distributedLoad in distributed_loads:
+                            _data = {'type': distributedLoad.__class__.__name__}
+                            _data.update({attr: value for attr, value in distributedLoad.__dict__.items() if not attr.startswith('_') and value is not None})
+                            data['load_patterns'][key]['frames'][_frame].append(_data)
+
+        # save displacements
+        if self.displacements:
+            data['displacements'] = {}
+            for key, displacements in self.displacements.items():
+                data['displacements'][key] = {}
+                for joint, displacement in displacements.items():
+                    data['displacements'][key][joint] = {attr: value for attr, value in displacement.__dict__.items() if not attr.startswith('_') and value is not None}
+
+        # save end actions
+        if self.end_actions:
+            data['end_actions'] = {}
+            for key, end_actions in self.end_actions.items():
+                data['end_actions'][key] = {}
+                for frame, end_action in end_actions.items():
+                    data['end_actions'][key][frame] = {attr: value for attr, value in end_action.__dict__.items() if not attr.startswith('_') and value is not None}
+
+        # save reactions
+        if self.reactions:
+            data['reactions'] = {}
+            for key, reactions in self.reactions.items():
+                data['reactions'][key] = {}
+                for joint, reaction in reactions.items():
+                    data['reactions'][key][joint] = {attr: value for attr, value in reaction.__dict__.items() if not attr.startswith('_') and value is not None}
+
+        # save internal forces
+        if self.internal_forces:
+            data['internal_forces'] = {}
+            for key, internal_forces in self.internal_forces.items():
+                data['internal_forces'][key] = {}
+                for frame, internal_force in internal_forces.items():
+                    data['internal_forces'][key][frame] = {attr: value for attr, value in internal_force.__dict__.items() if not attr.startswith('_') and value is not None}
+
+        # save internal displacements
+        if self.internal_displacements:
+            data['internal_displacement'] = {}
+            for key, internal_displacements in self.internal_displacements.items():
+                data['internal_displacements'][key] = {}
+                for frame, internal_displacement in internal_displacements.items():
+                    data['internal_forces'][key][frame] = {attr: value for attr, value in internal_displacement.__dict__.items() if not attr.startswith('_') and value is not None}
+                    
+        with open(filename, 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+
+        return data
 
     # def __str__(self):
     #     report = "Flag joint displacements\n" \
