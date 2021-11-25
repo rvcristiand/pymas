@@ -546,14 +546,14 @@ class Structure:
             
         self.internal_forces[load_pattern] = load_pattern_internal_forces
 
-        # # store internal displacements
-        # load_pattern_internal_displacements = {}
-        # for frame in self.frames.values():
-        #     j = load_pattern_displacements[frame.joint_j]
-        #     k = load_pattern_displacements[frame.joint_k]
-        #     load_pattern_internal_displacements[frame] = InternalDisplacement(**frame.get_internal_displacement(j, k))
+        # store internal displacements
+        load_pattern_internal_displacements = {}
+        
+        for key, frame in self.frames.items():
+            load_pattern_internal_displacements[key] = InternalDisplacements(self, load_pattern, key, **frame.get_internal_displacements(load_pattern))
 
-        # self.internal_displacements[load_pattern] = load_pattern_internal_displacements
+
+        self.internal_displacements[load_pattern] = load_pattern_internal_displacements
 
     def solve(self):
         """Solve the structure"""
@@ -690,11 +690,11 @@ class Structure:
 
         # save internal displacements
         if self.internal_displacements:
-            data['internal_displacement'] = {}
+            data['internal_displacements'] = {}
             for key, internal_displacements in self.internal_displacements.items():
                 data['internal_displacements'][key] = {}
                 for frame, internal_displacement in internal_displacements.items():
-                    data['internal_forces'][key][frame] = {attr: value for attr, value in internal_displacement.__dict__.items() if not attr.startswith('_') and value is not None}
+                    data['internal_displacements'][key][frame] = {attr: value for attr, value in internal_displacement.__dict__.items() if not attr.startswith('_') and value is not None}
                     
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
