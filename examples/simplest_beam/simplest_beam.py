@@ -1,3 +1,4 @@
+import makepath
 from pyFEM import Structure
 
 # model simplest beam
@@ -28,6 +29,7 @@ model.add_distributed_load('self weight', '1', fy=-24*rect_sect.A)
 
 # solve the model
 model.solve()
+model.export('simplest_beam.json')
 
 print(model.reactions['self weight']['a'].fy)  # 60 kN
 print(max(model.internal_forces['self weight']['1'].mz)) # 150 kN m
