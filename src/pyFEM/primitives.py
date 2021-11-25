@@ -414,21 +414,17 @@ class Frame(AttrDisplay):
         internal_forces : dict
             Internal forces.
         """        
-        length = self.get_length()
         loadPattern = self._parent.load_patterns[load_pattern]
         end_actions = self._parent.end_actions[load_pattern][self.name]
+
+        length = self.get_length()
+        
         fx_j = end_actions.fx_j if end_actions.fx_j is not None else 0
         fy_j = end_actions.fy_j if end_actions.fy_j is not None else 0
         fz_j = end_actions.fz_j if end_actions.fz_j is not None else 0
         mx_j = end_actions.mx_j if end_actions.mx_j is not None else 0
         my_j = end_actions.my_j if end_actions.my_j is not None else 0
         mz_j = end_actions.mz_j if end_actions.mz_j is not None else 0
-        fx_k = end_actions.fx_k if end_actions.fx_k is not None else 0
-        fy_k = end_actions.fy_k if end_actions.fy_k is not None else 0
-        fz_k = end_actions.fz_k if end_actions.fz_k is not None else 0
-        mx_k = end_actions.mx_k if end_actions.mx_k is not None else 0
-        my_k = end_actions.my_k if end_actions.my_k is not None else 0
-        mz_k = end_actions.mz_k if end_actions.mz_k is not None else 0
 
         internal_forces = {}
         internal_forces['fx'] = np.full(shape=no_div+1, fill_value=-fx_j)
@@ -481,10 +477,10 @@ class Frame(AttrDisplay):
                     internal_forces['fz'][i] += fz[0] if x > fz[1] else 0
                     internal_forces['mx'][i] -= mx[0] if x > mx[1] else 0
                     internal_forces['my'][i] += my[0] if x > my[1] else 0
-                    internal_forces['mz'][i] += mz[0] if x > mz[1] else 0
+                    internal_forces['mz'][i] -= mz[0] if x > mz[1] else 0
 
-                    internal_forces['my'][i] += fz[0] * (x - fz[1]) * length if x > fz[1] else 0
-                    internal_forces['mz'][i] += fy[0] * (x - fy[1]) * length if x > fy[1] else 0
+                    internal_forces['my'][i] += fz[0] * (x - fz[1]) if x > fz[1] else 0
+                    internal_forces['mz'][i] += fy[0] * (x - fy[1]) if x > fy[1] else 0
 
         flags = self._parent.get_flags_active_joint_displacements()
         internal_forces['fx'] = internal_forces['fx'].tolist() if flags[0] else None
@@ -496,29 +492,117 @@ class Frame(AttrDisplay):
         
         return internal_forces
     
-    # def get_internal_displacements(self, load_pattern, no_div=10):
-    #     """
-    #     Get internal displacements.
+    def get_internal_displacements(self, load_pattern, no_div=100):
+        """
+        Get internal displacements.
         
-    #     Parameters
-    #     ----------
-    #     load_pattern : str
-    #         Load pattern name.
-    #     np_div : float, optional
-    #         Number divisions.
-    #     """
-    #     length = self.get_length()
-    #     loadPattern = self._parent.load_patterns[load_pattern]
-    #     end_displacements = self._parent.displacements[load ]
+        Parameters
+        ----------
+        load_pattern : str
+            Load pattern name.
+        np_div : float, optional
+            Number divisions.
 
-    #     internal_displacement['ux'] = 0
-    #     internal_displacement['uy'] = np.empty(shape=no_div+1)
-    #     internal_displacement['uz'] = 0
-    #     internal_displacement['rx'] = 0
-    #     internal_displacement['ry'] = 0
-    #     internal_displacement['rz'] = 0
+        Returns
+        -------
+        internal_displacements : dict
+            Internal displacements.
+        """
+        material = self._parent.materials[self.material]
+        section = self._parent.sections[self.section]
+        loadPattern = self._parent.load_patterns[load_pattern]
+        end_actions = self._parent.end_actions[load_pattern][self.name]
+        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j]
 
-    #     return internal_displacement
+        length = self.get_length()
+        E = material.E if material.E is not None else 0
+        G = material.G if material.G is not None else 0
+        A = section.A if section.A is not None else 0
+        J = section.J if section.J is not None else 0
+        Iy = section.Iy if section.Iy is not None else 0
+        Iz = section.Iz if section.Iz is not None else 0
+
+        fx_j = end_actions.fx_j if end_actions.fx_j is not None else 0
+        fy_j = end_actions.fy_j if end_actions.fy_j is not None else 0
+        fz_j = end_actions.fz_j if end_actions.fz_j is not None else 0
+        mx_j = end_actions.mx_j if end_actions.mx_j is not None else 0
+        my_j = end_actions.my_j if end_actions.my_j is not None else 0
+        mz_j = end_actions.mz_j if end_actions.mz_j is not None else 0
+        
+        ux_j = j_joint_displamcement.ux if j_joint_displamcement.ux is not None else 0
+        uy_j = j_joint_displamcement.uy if j_joint_displamcement.uy is not None else 0
+        uz_j = j_joint_displamcement.uz if j_joint_displamcement.uz is not None else 0
+        rx_j = j_joint_displamcement.rx if j_joint_displamcement.rx is not None else 0
+        ry_j = j_joint_displamcement.ry if j_joint_displamcement.ry is not None else 0
+        rz_j = j_joint_displamcement.rz if j_joint_displamcement.rz is not None else 0
+
+        internal_displacements = {}
+        internal_displacements['ux'] = np.full(shape=no_div+1, fill_value=ux_j)
+        internal_displacements['uy'] = np.full(shape=no_div+1, fill_value=uy_j)
+        internal_displacements['uz'] = np.full(shape=no_div+1, fill_value=uz_j)
+        internal_displacements['rx'] = np.full(shape=no_div+1, fill_value=rx_j)
+        internal_displacements['ry'] = np.full(shape=no_div+1, fill_value=ry_j)
+        internal_displacements['rz'] = np.full(shape=no_div+1, fill_value=rz_j)
+
+        for i in range(no_div+1):
+            x = (i / no_div) * length
+            internal_displacements['ux'][i] -= fx_j * x / (E * A)
+            internal_displacements['uy'][i] -= fy_j * x ** 3 / (6 * E * Iz)
+            internal_displacements['uy'][i] += mz_j * x ** 2 / (2 * E * Iz)
+            internal_displacements['uz'][i] -= fz_j * x ** 3 / (6 * E * Iy)
+            internal_displacements['uz'][i] -= my_j * x ** 2 / (2 * E * Iy)
+            internal_displacements['rx'][i] -= mx_j * x / (G * J) if G != 0 and J != 0 else 0
+            internal_displacements['ry'][i] -= fz_j * x ** 2 / (2 * E * Iz)
+            internal_displacements['ry'][i] -= my_j * x / (E * Iz)
+            internal_displacements['rz'][i] -= fy_j * x ** 2 / (2 * E * Iy)
+            internal_displacements['rz'][i] += mz_j * x / (E * Iy)
+            
+        if self.name in loadPattern.distributed_loads:
+            for distributed_load in loadPattern.distributed_loads[self.name]:
+                fx = distributed_load.fx if distributed_load.fx is not None else 0
+                fy = distributed_load.fy if distributed_load.fy is not None else 0
+                fz = distributed_load.fz if distributed_load.fz is not None else 0
+
+                for i in range(no_div+1):
+                    x = (i / no_div) * length
+                    internal_displacements['ux'][i] -= fx * x ** 2 / (2 * E * A)
+                    internal_displacements['uy'][i] -= fy * x ** 4 / (24 * E * Iz)
+                    internal_displacements['uz'][i] -= fz * x ** 4 / (24 * E * Iy)
+
+                    internal_displacements['ry'][i] -= fz * x ** 3 / (6 * E * Iz)
+                    internal_displacements['rz'][i] -= fy * x ** 3 / (6 * E * Iy)
+
+        if self.name in loadPattern.point_loads_at_frames:
+            for point_load in loadPattern.point_loads_at_frames[self.name]:
+                fx = point_load.fx if point_load.fx is not None else (0, 0)
+                fy = point_load.fy if point_load.fy is not None else (0, 0)
+                fz = point_load.fz if point_load.fz is not None else (0, 0)
+                mx = point_load.mx if point_load.mx is not None else (0, 0)
+                my = point_load.my if point_load.my is not None else (0, 0)
+                mz = point_load.mz if point_load.mz is not None else (0, 0)
+                
+                for i in range(no_div+1):
+                    x = (i / no_div)
+                    internal_displacements['ux'][i] -= fx[0] * x / (E * A) if x > fx[1] else 0
+                    internal_displacements['uy'][i] -= fy[0] * (x ** 3 / 6 - fy[1] * x ** 2 / 2) / (E * Iz) if x > fy[1] else 0
+                    internal_displacements['uy'][i] += mz[0] * x ** 2 / (2 * E * Iz) if x >  mz[1] else 0
+                    internal_displacements['uz'][i] -= fz[0] * (x ** 3 / 6 - fz[1] * x ** 2 / 2) / (E * Iy) if x > fz[1] else 0
+                    internal_displacements['uz'][i] -= my[0] * x ** 2 / (2 * E * Iy) if x > my[1] else 0
+                    internal_displacements['rx'][i] -= mx[0] * x / (G * J) if x > fz[1] else 0
+                    internal_displacements['ry'][i] -= fz[0] * (x ** 2 / 2 - fy[1] * x) / (E * Iz) if x > fy[1] else 0
+                    internal_displacements['ry'][i] -= my[0] * x / (E * Iz) if x > my[1] else 0
+                    internal_displacements['rz'][i] -= fy[0] * (x ** 2 / 2 - fy[1] * x) / (E * Iy) if x > fy[1] else 0
+                    internal_displacements['rz'][i] += mz[0] * x / (E * Iy) if x > mz[1] else 0
+
+        flags = self._parent.get_flags_active_joint_displacements()
+        internal_displacements['ux'] = internal_displacements['ux'].tolist() if flags[0] else None
+        internal_displacements['uy'] = internal_displacements['uy'].tolist() if flags[1] else None
+        internal_displacements['uz'] = internal_displacements['uz'].tolist() if flags[2] else None
+        internal_displacements['rx'] = internal_displacements['rx'].tolist() if flags[3] else None
+        internal_displacements['ry'] = internal_displacements['ry'].tolist() if flags[4] else None
+        internal_displacements['rz'] = internal_displacements['rz'].tolist() if flags[5] else None
+
+        return internal_displacements
 
 
 class Support(AttrDisplay): 
