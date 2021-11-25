@@ -52,15 +52,15 @@ class Section(AttrDisplay):
         Section name.
     A : float
         Area.
-    Ix : float
-        Inertia around x-axis.
+    J : float
+        Torsion.
     Iy : float
         Inertia around y-axis.
     Iz : float
         Inertia around z-axis.
     """
 
-    def __init__(self, parent, name, A=None, Ix=None, Iy=None, Iz=None):
+    def __init__(self, parent, name, A=None, J=None, Iy=None, Iz=None):
         """
         Instantiate a Section object.
 
@@ -72,8 +72,8 @@ class Section(AttrDisplay):
             Section name.
         A : float, optional
             Area.
-        Ix : float, optional
-            Inertia around x-axis.
+        J : float, optional
+            Torsion.
         Iy : float, optional
             Inertia around y-axis.
         Iz : float, optional
@@ -82,7 +82,7 @@ class Section(AttrDisplay):
         self._parent = parent
         self.name = name
         self.A = A
-        self.Ix = Ix
+        self.J = J
         self.Iy = Iy
         self.Iz = Iz
 
@@ -101,8 +101,8 @@ class RectangularSection(Section):
         Height.
     A : float
         Area.
-    Ix : float
-        Inertia around x-axis.
+    J : float
+        Torsion.
     Iy : float
         Inertia around y-axis.
     Iz : float
@@ -131,11 +131,11 @@ class RectangularSection(Section):
         b = max(width, height)
 
         A = width * height
-        Ix = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
+        J = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
         Iy = (1 / 12) * width * height ** 3
         Iz = (1 / 12) * height * width ** 3
 
-        super().__init__(parent, name, A, Ix, Iy, Iz)
+        super().__init__(parent, name, A, J, Iy, Iz)
 
 
 class Joint(AttrDisplay):
@@ -314,7 +314,7 @@ class Frame(AttrDisplay):
 
         section = self._parent.sections[self.section]
         a = section.A if section.A is not None else 0
-        ix = section.Ix if section.Ix is not None else 0
+        j = section.J if section.J is not None else 0
         iy = section.Iy if section.Iy is not None else 0
         iz = section.Iz if section.Iz is not None else 0
 
@@ -323,7 +323,7 @@ class Frame(AttrDisplay):
         el3 = e / l ** 3
 
         ael = a * el
-        gjl = ix * g / l
+        gjl = j * g / l
 
         e_iy_l = iy * el
         e_iz_l = iz * el
