@@ -41,7 +41,6 @@ sys.path.append('.../pyFEM/src/')
 Puede analizar estructuras con la clase [Structure](https://github.com/rvcristiand/pyFEM/blob/b394a88a30b09d5cd7351a5ac35b69fa1c419b93/src/pyFEM/core.py#L7).
 
 ```python
-import makepath
 from pyFEM import Structure
 
 # model simplest beam
@@ -65,8 +64,6 @@ model.solve()
 print(model.reactions['self weight']['a'].fy)  # 60 kN
 print(max(model.internal_forces['self weight']['1'].mz)) # 150 kN m
 ```
-
-
 
 ## Contributing
 Puede contribuir en este proyecto creando un [issue](https://github.com/rvcristiand/pyFEM/issues/new) o haciendo [pull requests](https://github.com/rvcristiand/pyFEM/pulls).

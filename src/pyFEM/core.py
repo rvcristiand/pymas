@@ -5,22 +5,22 @@ from pyFEM.primitives import *
 
 
 class Structure:
-    """Model and analyse framed structures.
+    """Model and analyse a framed structure.
 
     Attributes
     ----------
     ux : bool
-        Flag translation along x-axis active.
+        Flag analyze translation along x-axis.
     uy : bool
-        Flag translation along y-axis active.
+        Flag analyze translation along y-axis.
     uz : bool
-        Flag translation along z-axis active.
+        Flag analyze translation along z-axis.
     rx : bool
-        Flag rotation around x-axis active.
+        Flag analyze rotation around x-axis.
     ry : bool
-        Flag rotation around y-axis active.
+        Flag analyze rotation around y-axis.
     rz : bool
-        Flag rotation around z-axis active.
+        Flag analyze rotation around z-axis.
     materials : dict
         Materials.
     sections : dict
@@ -85,7 +85,7 @@ class Structure:
     solve_load_pattern(load_pattern)
         Solve a load pattern.
     solve()
-        Solve the structure due to a load pattern.
+        Solve the structure.
     export(filename)
         Export the model.
     """
@@ -96,17 +96,17 @@ class Structure:
         Parameters
         ----------
         ux : bool, optional
-            Flag translation along x-axis active.
+            Flag analyze translation along x-axis.
         uy : bool, optional
-            Flag translation along y-axis active.
+            Flag analyze translation along y-axis.
         uz : bool, optional
-            Flag translation along z-axis active.
+            Flag analyze translation along z-axis.
         rx : bool, optional
-            Flag rotation around x-axis active.
+            Flag analyze rotation around x-axis.
         ry : bool, optional
-            Flag rotation around y-axis active.
+            Flag analyze rotation around y-axis.
         rz : bool, optional
-            Flag rotation around z-axis active.
+            Flag analyze rotation around z-axis.
         """
         self._active_joint_displacements = np.array([])
         self._indexes = {}
@@ -308,7 +308,7 @@ class Structure:
         pointLoad : PointLoadAtFrame
             Point load at frame.
         """
-        pointLoad = self.load_patterns[load_pattern].add_point_load_frame(frame, *args, **kwargs)
+        pointLoad = self.load_patterns[load_pattern].add_point_load_at_frame(frame, *args, **kwargs)
 
         return pointLoad
         
@@ -329,6 +329,8 @@ class Structure:
             Distributed loads.
         """
         distributedLoad = self.load_patterns[load_pattern].add_distributed_load(frame, *args, **kwargs)
+
+        return distributedLoad
 
     def get_flags_active_joint_displacements(self):
         """Get flags active joint displacements.
@@ -489,39 +491,41 @@ class Structure:
 
         load_pattern_end_actions = {}
 
-        for frame, _frame in self.frames.items():
-            t = _frame.get_matrix_rotation()
-            indexes_element = np.concatenate((indexes[_frame.joint_j], indexes[_frame.joint_k]))
+        for key, frame in self.frames.items():
+            indexes_element = np.concatenate((indexes[frame.joint_j], indexes[frame.joint_k]))
 
-            k_element = _frame.get_local_stiffness_matrix()
-            u_element = np.dot(np.transpose(t), u[indexes_element])
+            t = frame.get_matrix_rotation()
+            k_element = frame.get_local_stiffness_matrix()
+            
+            u_element = np.zeros((12,1))
+            u_element[flags_frame_displacements] = u[indexes_element]
+            u_element = np.dot(np.transpose(t), u_element)
+            f_fixed = np.zeros((12, 1))
 
-            f_fixed = np.zeros((n, 1))
+            if key in loadPattern.point_loads_at_frames:
+                for point_load in loadPattern.point_loads_at_frames[key]:
+                    f_fixed[flags_frame_displacements] += point_load.get_f_fixed()
 
-            if frame in loadPattern.point_loads_at_frames:
-                for point_load in loadPattern.point_loads_at_frames[frame]:
-                    f_fixed += point_load.get_f_fixed()
-
-            if frame in loadPattern.distributed_loads:
-                for distributed_load in loadPattern.distributed_loads[frame]:
-                    f_fixed += distributed_load.get_f_fixed()
-
-            f_end_actions = np.array(12*[None])
-            f_end_actions[flags_frame_displacements] = np.dot(k_element, u_element).flatten() + np.dot(np.transpose(t), f_fixed).flatten()
-            load_pattern_end_actions[frame] = EndActions(self, load_pattern, frame, *f_end_actions)
+            if key in loadPattern.distributed_loads:
+                for distributed_load in loadPattern.distributed_loads[key]:
+                    f_fixed[flags_frame_displacements] += distributed_load.get_f_fixed()
+                    
+            f_end_actions = np.dot(k_element, u_element).flatten()
+            f_end_actions += np.dot(np.transpose(t), f_fixed).flatten()
+            load_pattern_end_actions[key] = EndActions(self, load_pattern, key, *f_end_actions)
 
             # reactions
-            if any(joint in self.supports for joint in (_frame.joint_k, _frame.joint_j)):
-                rows.extend(list(indexes_element))
+            if frame.joint_j in self.supports or frame.joint_k in self.supports:
+                rows.extend(indexes_element)
                 cols.extend(n * [0])
-                data.extend(list(np.dot(t, load_pattern_end_actions[frame].get_end_actions()).flatten()))
+                data.extend(np.dot(t, load_pattern_end_actions[key].get_end_actions()).flatten()[flags_frame_displacements])
 
         self.end_actions[load_pattern] = load_pattern_end_actions
 
         # store reactions
         number_joints = len(self.joints)
-        n = np.count_nonzero(flags_frame_displacements)
-
+        n = np.count_nonzero(flags_joint_displacements)
+        
         f += loadPattern.get_f_fixed().toarray()
         f_end_actions = coo_matrix((data, (rows, cols)), (number_joints * n, 1)).toarray()
         
@@ -541,9 +545,9 @@ class Structure:
         # store internal forces
         load_pattern_internal_forces = {}
 
-        for frame, _frame in self.frames.items():
-            load_pattern_internal_forces[frame] = InternalForces(self, load_pattern, frame, **_frame.get_internal_forces(load_pattern))
-            
+        for key, frame in self.frames.items():
+            load_pattern_internal_forces[key] = InternalForces(self, load_pattern, key, **frame.get_internal_forces(load_pattern))
+
         self.internal_forces[load_pattern] = load_pattern_internal_forces
 
         # store internal displacements
@@ -551,7 +555,6 @@ class Structure:
         
         for key, frame in self.frames.items():
             load_pattern_internal_displacements[key] = InternalDisplacements(self, load_pattern, key, **frame.get_internal_displacements(load_pattern))
-
 
         self.internal_displacements[load_pattern] = load_pattern_internal_displacements
 

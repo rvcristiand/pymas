@@ -1,7 +1,5 @@
 import numpy as np
 
-from numpy import linalg
-from scipy.spatial import distance
 from scipy.spatial.transform import Rotation
 from scipy.sparse import bsr_matrix, coo_matrix
 from pyFEM.classtools import AttrDisplay
@@ -132,8 +130,8 @@ class RectangularSection(Section):
 
         A = width * height
         J = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
-        Iy = (1 / 12) * width * height ** 3
-        Iz = (1 / 12) * height * width ** 3
+        Iy = (1 / 12) * height * width ** 3
+        Iz = (1 / 12) * width * height ** 3
 
         super().__init__(parent, name, A, J, Iy, Iz)
 
@@ -254,18 +252,18 @@ class Frame(AttrDisplay):
 
     def get_length(self):
         """Get length"""
-        j = self._parent.joints[self.joint_j]
-        k = self._parent.joints[self.joint_k]
+        j = self._parent.joints[self.joint_j].get_coordinate()
+        k = self._parent.joints[self.joint_k].get_coordinate()
         
-        return distance.euclidean(j.get_coordinate(), k.get_coordinate())
+        return np.linalg.norm(k - j)
 
     def get_direction_cosines(self):
         """Get direction cosines"""
-        j = self._parent.joints[self.joint_j]
-        k = self._parent.joints[self.joint_k]
-        vector = k.get_coordinate() - j.get_coordinate()
+        j = self._parent.joints[self.joint_j].get_coordinate()
+        k = self._parent.joints[self.joint_k].get_coordinate()
+        vector = k - j
 
-        return vector / linalg.norm(vector)
+        return vector / np.linalg.norm(vector)
 
     def get_rotation(self):
         """Get Rotation"""
@@ -280,29 +278,19 @@ class Frame(AttrDisplay):
 
         else:
             w = np.cross(v_from, v_to)
-            w = w / linalg.norm(w)
+            w = w / np.linalg.norm(w)
             theta = np.arccos(np.dot(v_from, v_to))
 
-            return Rotation.from_quat([x * np.sin(theta/2) for x in w] + [np.cos(theta/2)])
+            return Rotation.from_quat(list(np.sin(theta/2) * w) + [np.cos(theta/2)])
 
     def get_matrix_rotation(self):
         """Get matrix rotation"""
         
-        # rotation as direction cosine matrix
-        indptr = np.array([0, 1, 2])
-        indices = np.array([0, 1])
-        data = np.tile(self.get_rotation().as_matrix(), (2, 1, 1))
+        indptr = np.array([0, 1, 2, 3, 4])
+        indices = np.array([0, 1, 2, 3])
+        data = np.tile(self.get_rotation().as_matrix(), (4, 1, 1))
 
-        # matrix rotation for a joint
-        t1 = bsr_matrix((data, indices, indptr), shape=(6, 6)).toarray()
-
-        active_joint_displacements = np.nonzero(self._parent.get_flags_active_joint_displacements())[0]
-        n = 2 * np.size(active_joint_displacements)
-        
-        t1 = t1[active_joint_displacements[:, None], active_joint_displacements]
-        data = np.tile(t1, (2, 1, 1))
-
-        return bsr_matrix((data, indices, indptr), shape=(n, n)).toarray()
+        return bsr_matrix((data, indices, indptr), shape=(12, 12)).toarray()
 
     def get_local_stiffness_matrix(self):
         """Get local stiffness matrix"""
@@ -360,19 +348,19 @@ class Frame(AttrDisplay):
         # 6EI / L^2
         rows[16:20] = np.array([1, 5, 1, 11])
         cols[16:20] = np.array([5, 1, 11, 1])
-        data[16:20] = np.array([e_iz_l2, e_iz_l2, e_iz_l2, e_iz_l2])
+        data[16:20] = np.array(4 * [e_iz_l2])
 
         rows[20:24] = np.array([5, 7, 7, 11])
         cols[20:24] = np.array([7, 5, 11, 7])
-        data[20:24] = np.array([-e_iz_l2, -e_iz_l2, -e_iz_l2, -e_iz_l2])
+        data[20:24] = np.array(4 * [-e_iz_l2])
 
         rows[24:28] = np.array([2, 4, 2, 10])
         cols[24:28] = np.array([4, 2, 10, 2])
-        data[24:28] = np.array([-e_iy_l2, -e_iy_l2, -e_iy_l2, -e_iy_l2])
+        data[24:28] = np.array(4 * [-e_iy_l2])
 
         rows[28:32] = np.array([4, 8, 8, 10])
         cols[28:32] = np.array([8, 4, 10, 8])
-        data[28:32] = np.array([e_iy_l2, e_iy_l2, e_iy_l2, e_iy_l2])
+        data[28:32] = np.array(4 * [e_iy_l2])
 
         # 4EI / L
         rows[32:36] = np.array([4, 10, 5, 11])
@@ -382,22 +370,21 @@ class Frame(AttrDisplay):
         rows[36:] = np.array([10, 4, 11, 5])
         cols[36:] = np.array([4, 10, 5, 11])
         data[36:] = np.array([2 * e_iy_l, 2 * e_iy_l, 2 * e_iz_l, 2 * e_iz_l])
-
-        k = coo_matrix((data, (rows, cols)), shape=(12, 12)).toarray()
-
-        active_joint_displacements = self._parent.get_flags_active_joint_displacements()
-        active_frame_displacement = np.nonzero(np.tile(active_joint_displacements, 2))[0]
         
-        return k[active_frame_displacement[:, None], active_frame_displacement]
+        return coo_matrix((data, (rows, cols)), shape=(12, 12)).toarray()
 
     def get_global_stiffness_matrix(self):
         """Get global stiffness matrix"""
         
-        k = self.get_local_stiffness_matrix()
-        t = self.get_matrix_rotation()
-
-        return np.dot(np.dot(t, k), np.transpose(t))
+        flags_active_joint_displacements = self._parent.get_flags_active_joint_displacements()
+        active_frame_displacement = np.nonzero(np.tile(flags_active_joint_displacements, 2))[0]
         
+        k_local = self.get_local_stiffness_matrix()
+        t = self.get_matrix_rotation()
+        k_global = np.dot(np.dot(t, k_local), np.transpose(t))
+        
+        return k_global[active_frame_displacement[:, None], active_frame_displacement]
+
     def get_internal_forces(self, load_pattern, no_div=100):
         """
         Get internal forces.
@@ -460,7 +447,7 @@ class Frame(AttrDisplay):
 
                     internal_forces['my'][i] += fz * x ** 2 / 2
                     internal_forces['mz'][i] += fy * x ** 2 / 2
-        
+         
         if self.name in loadPattern.point_loads_at_frames:
             for point_load in loadPattern.point_loads_at_frames[self.name]:
                 fx = point_load.fx if point_load.fx is not None else (0, 0)
@@ -482,13 +469,12 @@ class Frame(AttrDisplay):
                     internal_forces['my'][i] += fz[0] * (x - fz[1]) if x > fz[1] else 0
                     internal_forces['mz'][i] += fy[0] * (x - fy[1]) if x > fy[1] else 0
 
-        flags = self._parent.get_flags_active_joint_displacements()
-        internal_forces['fx'] = internal_forces['fx'].tolist() if flags[0] else None
-        internal_forces['fy'] = internal_forces['fy'].tolist() if flags[1] else None
-        internal_forces['fz'] = internal_forces['fz'].tolist() if flags[2] else None
-        internal_forces['mx'] = internal_forces['mx'].tolist() if flags[3] else None
-        internal_forces['my'] = internal_forces['my'].tolist() if flags[4] else None
-        internal_forces['mz'] = internal_forces['mz'].tolist() if flags[5] else None
+        internal_forces['fx'] = internal_forces['fx'].tolist()
+        internal_forces['fy'] = internal_forces['fy'].tolist()
+        internal_forces['fz'] = internal_forces['fz'].tolist()
+        internal_forces['mx'] = internal_forces['mx'].tolist()
+        internal_forces['my'] = internal_forces['my'].tolist()
+        internal_forces['mz'] = internal_forces['mz'].tolist()
         
         return internal_forces
     
@@ -522,20 +508,13 @@ class Frame(AttrDisplay):
         Iy = section.Iy if section.Iy is not None else 0
         Iz = section.Iz if section.Iz is not None else 0
 
-        fx_j = end_actions.fx_j if end_actions.fx_j is not None else 0
-        fy_j = end_actions.fy_j if end_actions.fy_j is not None else 0
-        fz_j = end_actions.fz_j if end_actions.fz_j is not None else 0
-        mx_j = end_actions.mx_j if end_actions.mx_j is not None else 0
-        my_j = end_actions.my_j if end_actions.my_j is not None else 0
-        mz_j = end_actions.mz_j if end_actions.mz_j is not None else 0
-        
-        ux_j = j_joint_displamcement.ux if j_joint_displamcement.ux is not None else 0
-        uy_j = j_joint_displamcement.uy if j_joint_displamcement.uy is not None else 0
-        uz_j = j_joint_displamcement.uz if j_joint_displamcement.uz is not None else 0
-        rx_j = j_joint_displamcement.rx if j_joint_displamcement.rx is not None else 0
-        ry_j = j_joint_displamcement.ry if j_joint_displamcement.ry is not None else 0
-        rz_j = j_joint_displamcement.rz if j_joint_displamcement.rz is not None else 0
+        end_actions = self._parent.end_actions[load_pattern][self.name]
+        fx_j, fy_j, fz_j, mx_j, my_j, mz_j = end_actions.get_end_actions()[:6]
 
+        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j].get_displacements()
+        j_joint_displamcement = np.dot(np.transpose(self.get_matrix_rotation())[:6, :6], j_joint_displamcement)
+        ux_j, uy_j, uz_j, rx_j, ry_j, rz_j = j_joint_displamcement
+    
         internal_displacements = {}
         internal_displacements['ux'] = np.full(shape=no_div+1, fill_value=ux_j)
         internal_displacements['uy'] = np.full(shape=no_div+1, fill_value=uy_j)
@@ -547,16 +526,18 @@ class Frame(AttrDisplay):
         for i in range(no_div+1):
             x = (i / no_div) * length
             internal_displacements['ux'][i] -= fx_j * x / (E * A)
-            internal_displacements['uy'][i] -= fy_j * x ** 3 / (6 * E * Iz)
-            internal_displacements['uy'][i] += mz_j * x ** 2 / (2 * E * Iz)
+            internal_displacements['uy'][i] += fy_j * x ** 3 / (6 * E * Iz)
+            internal_displacements['uy'][i] -= mz_j * x ** 2 / (2 * E * Iz)
+            internal_displacements['uy'][i] += rz_j * x
             internal_displacements['uz'][i] -= fz_j * x ** 3 / (6 * E * Iy)
             internal_displacements['uz'][i] -= my_j * x ** 2 / (2 * E * Iy)
-            internal_displacements['rx'][i] -= mx_j * x / (G * J) if G != 0 and J != 0 else 0
+            internal_displacements['uz'][i] += ry_j * x
+            internal_displacements['rx'][i] -= mx_j * x / (G * J)
             internal_displacements['ry'][i] -= fz_j * x ** 2 / (2 * E * Iz)
             internal_displacements['ry'][i] -= my_j * x / (E * Iz)
-            internal_displacements['rz'][i] -= fy_j * x ** 2 / (2 * E * Iy)
+            internal_displacements['rz'][i] += fy_j * x ** 2 / (2 * E * Iz )
             internal_displacements['rz'][i] += mz_j * x / (E * Iy)
-            
+
         if self.name in loadPattern.distributed_loads:
             for distributed_load in loadPattern.distributed_loads[self.name]:
                 fx = distributed_load.fx if distributed_load.fx is not None else 0
@@ -566,11 +547,11 @@ class Frame(AttrDisplay):
                 for i in range(no_div+1):
                     x = (i / no_div) * length
                     internal_displacements['ux'][i] -= fx * x ** 2 / (2 * E * A)
-                    internal_displacements['uy'][i] -= fy * x ** 4 / (24 * E * Iz)
+                    internal_displacements['uy'][i] += fy * x ** 4 / (24 * E * Iz)
                     internal_displacements['uz'][i] -= fz * x ** 4 / (24 * E * Iy)
 
                     internal_displacements['ry'][i] -= fz * x ** 3 / (6 * E * Iz)
-                    internal_displacements['rz'][i] -= fy * x ** 3 / (6 * E * Iy)
+                    internal_displacements['rz'][i] += fy * x ** 3 / (6 * E * Iz)
 
         if self.name in loadPattern.point_loads_at_frames:
             for point_load in loadPattern.point_loads_at_frames[self.name]:
@@ -594,13 +575,12 @@ class Frame(AttrDisplay):
                     internal_displacements['rz'][i] -= fy[0] * (x ** 2 / 2 - fy[1] * x) / (E * Iy) if x > fy[1] else 0
                     internal_displacements['rz'][i] += mz[0] * x / (E * Iy) if x > mz[1] else 0
 
-        flags = self._parent.get_flags_active_joint_displacements()
-        internal_displacements['ux'] = internal_displacements['ux'].tolist() if flags[0] else None
-        internal_displacements['uy'] = internal_displacements['uy'].tolist() if flags[1] else None
-        internal_displacements['uz'] = internal_displacements['uz'].tolist() if flags[2] else None
-        internal_displacements['rx'] = internal_displacements['rx'].tolist() if flags[3] else None
-        internal_displacements['ry'] = internal_displacements['ry'].tolist() if flags[4] else None
-        internal_displacements['rz'] = internal_displacements['rz'].tolist() if flags[5] else None
+        internal_displacements['ux'] = internal_displacements['ux'].tolist()
+        internal_displacements['uy'] = internal_displacements['uy'].tolist()
+        internal_displacements['uz'] = internal_displacements['uz'].tolist()
+        internal_displacements['rx'] = internal_displacements['rx'].tolist()
+        internal_displacements['ry'] = internal_displacements['ry'].tolist()
+        internal_displacements['rz'] = internal_displacements['rz'].tolist()
 
         return internal_displacements
 
@@ -1075,9 +1055,9 @@ class PointLoadAtFrame(AttrDisplay):
         f_local[5] += M*b*(2*a-b) / L ** 2
         f_local[11] += M*a*(2*b-a) / L ** 2
 
-        f_local = f_local[np.tile(self._parent.get_flags_active_joint_displacements(), 2)]
+        f_local = f_local
 
-        return np.dot(frame.get_matrix_rotation(), f_local)
+        return np.dot(frame.get_matrix_rotation(), f_local)[np.tile(self._parent.get_flags_active_joint_displacements(), 2)]
 
 
 class DistributedLoad(AttrDisplay):
@@ -1150,7 +1130,7 @@ class DistributedLoad(AttrDisplay):
         
         f_local = np.array([[-fx_2, -fy_2, -fz_2, 0, fz_12, -fy_12, -fx_2, -fy_2, -fz_2, 0, -fz_12, fy_12]]).T
         
-        return np.dot(frame.get_matrix_rotation(), f_local[np.tile(self._parent.get_flags_active_joint_displacements(), 2)])
+        return np.dot(frame.get_matrix_rotation(), f_local)[np.tile(self._parent.get_flags_active_joint_displacements(), 2)]
 
 
 class Displacements(AttrDisplay):
@@ -1217,9 +1197,17 @@ class Displacements(AttrDisplay):
         self.ry = ry
         self.rz = rz
 
-    def get_displacement(self):
+    def get_displacements(self):
         """Get displacements"""
-        return np.array([self.ux, self.uy, self.uz, self.rx, self.ry, self.rz])[self._parent.get_flags_active_joint_displacements()]
+
+        ux = self.ux if self.ux is not None else 0
+        uy = self.uy if self.uy is not None else 0
+        uz = self.uz if self.uz is not None else 0
+        rx = self.rx if self.rx is not None else 0
+        ry = self.ry if self.ry is not None else 0
+        rz = self.rz if self.rz is not None else 0
+
+        return np.array([ux, uy, uz, rx, ry, rz])
 
 
 class EndActions(AttrDisplay):
@@ -1318,8 +1306,22 @@ class EndActions(AttrDisplay):
 
     def get_end_actions(self):
         """Get end actions"""
+
+        fx_j = self.fx_j if self.fx_j is not None else 0
+        fy_j = self.fy_j if self.fy_j is not None else 0
+        fz_j = self.fz_j if self.fz_j is not None else 0
+        mx_j = self.mx_j if self.mx_j is not None else 0
+        my_j = self.my_j if self.my_j is not None else 0
+        mz_j = self.mz_j if self.mz_j is not None else 0
+
+        fx_k = self.fx_k if self.fx_k is not None else 0
+        fy_k = self.fy_k if self.fy_k is not None else 0
+        fz_k = self.fz_k if self.fz_k is not None else 0
+        mx_k = self.mx_k if self.mx_k is not None else 0
+        my_k = self.my_k if self.my_k is not None else 0
+        mz_k = self.mz_k if self.mz_k is not None else 0
         
-        return np.array([self.fx_j, self.fy_j, self.fz_j, self.mx_j, self.my_j, self.mz_j, self.fx_k, self.fy_k, self.fz_k, self.mx_k, self.my_k, self.mz_k])[np.tile(self._parent.get_flags_active_joint_displacements(), 2)]
+        return np.array([fx_j, fy_j, fz_j, mx_j, my_j, mz_j, fx_k, fy_k, fz_k, mx_k, my_k, mz_k])
 
 
 class Reaction(AttrDisplay):
