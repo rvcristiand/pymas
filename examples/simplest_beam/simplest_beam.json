@@ -79,6 +79,20 @@
             }
         }
     },
+    "reactions": {
+        "self weight": {
+            "a": {
+                "load_pattern": "self weight",
+                "joint": "a",
+                "fy": 60.0
+            },
+            "b": {
+                "load_pattern": "self weight",
+                "joint": "b",
+                "fy": 60.0
+            }
+        }
+    },
     "end_actions": {
         "self weight": {
             "1": {
@@ -96,20 +110,6 @@
                 "mx_k": 0.0,
                 "my_k": 0.0,
                 "mz_k": 0.0
-            }
-        }
-    },
-    "reactions": {
-        "self weight": {
-            "a": {
-                "load_pattern": "self weight",
-                "joint": "a",
-                "fy": 60.0
-            },
-            "b": {
-                "load_pattern": "self weight",
-                "joint": "b",
-                "fy": 60.0
             }
         }
     },
