@@ -1511,7 +1511,3 @@ class InternalDisplacements(AttrDisplay):
         self.rx = rx
         self.ry = ry
         self.rz = rz
-
-
-if __name__ == "__main__":
-    pass
