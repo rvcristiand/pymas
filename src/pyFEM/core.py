@@ -651,14 +651,6 @@ class Structure:
                 for joint, displacement in displacements.items():
                     data['displacements'][key][joint] = {attr: value for attr, value in displacement.__dict__.items() if not attr.startswith('_') and value is not None}
 
-        # save end actions
-        if self.end_actions:
-            data['end_actions'] = {}
-            for key, end_actions in self.end_actions.items():
-                data['end_actions'][key] = {}
-                for frame, end_action in end_actions.items():
-                    data['end_actions'][key][frame] = {attr: value for attr, value in end_action.__dict__.items() if not attr.startswith('_') and value is not None}
-
         # save reactions
         if self.reactions:
             data['reactions'] = {}
@@ -666,6 +658,14 @@ class Structure:
                 data['reactions'][key] = {}
                 for joint, reaction in reactions.items():
                     data['reactions'][key][joint] = {attr: value for attr, value in reaction.__dict__.items() if not attr.startswith('_') and value is not None}
+
+        # save end actions
+        if self.end_actions:
+            data['end_actions'] = {}
+            for key, end_actions in self.end_actions.items():
+                data['end_actions'][key] = {}
+                for frame, end_action in end_actions.items():
+                    data['end_actions'][key][frame] = {attr: value for attr, value in end_action.__dict__.items() if not attr.startswith('_') and value is not None}
 
         # save internal forces
         if self.internal_forces:
