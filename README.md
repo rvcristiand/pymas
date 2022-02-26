@@ -66,6 +66,8 @@ rect_sect = model.add_rectangular_section('V0.5x1.0', width=b, height=h)
 # add joints
 model.add_joint('a', x=0)
 model.add_joint('b', x=L)
+
+# add frame
 model.add_frame('1', 'a', 'b', 'concrete', 'V0.5x1.0')
 
 # add supports
