@@ -122,9 +122,6 @@ class RectangularSection(Section):
         height : float
             Height.
         """
-        self.width = width
-        self.height = height
-
         a = min(width, height)
         b = max(width, height)
 
@@ -134,6 +131,8 @@ class RectangularSection(Section):
         Iz = (1 / 12) * width * height ** 3
 
         super().__init__(parent, name, A, J, Iy, Iz)
+        self.width = width
+        self.height = height
 
 
 class Joint(AttrDisplay):

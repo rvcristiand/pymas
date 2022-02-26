@@ -51,8 +51,8 @@ h = 1  # m
 L = 10  # m
 E = 4700*28**0.5*1000  # kN /m2
 
-A = b * h
-w = 24*A
+A = b * h  # m2
+w = 24*A  # kN/m
 
 # create the model
 model = Structure(uy=True, rz=True)
