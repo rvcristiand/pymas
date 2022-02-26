@@ -566,22 +566,6 @@ class Structure:
         
         for load_pattern in self.load_patterns:
             self.solve_load_pattern(load_pattern)
-
-
-    # def load(self, data):
-    #     """
-    #     Create a Structure from dict.
-    #     """
-    #     # restart
-    #     # self.__init__(ux, uy, uz, rx, ry, rz)
-        
-    #     # materials
-    #     for name, material in data['materials'].items():
-    #         E = material['E'] if 'E' in material else None
-    #         G = material['G'] if 'G' in material else None            
-            
-    #         self.add_material(name, E, G)
-            
     
     def export(self, filename):
         """
