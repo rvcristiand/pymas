@@ -1,8 +1,6 @@
-import examples.makepath
+import makepath
+
 from pyFEM import Structure
-
-import numpy as np
-
 
 """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
 # structure
@@ -41,9 +39,5 @@ model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
 # solve
 model.solve()
 
-np.set_printoptions(precision=3, suppress=True)
-for key, value in model.__dict__.items():
-    if isinstance(value, dict) and not key.startswith('_'):
-        print(key)
-        for _key, _value in value.items():
-            print(_value)
+# export
+model.export('space_frame.json')
