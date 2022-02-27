@@ -621,7 +621,7 @@ class Structure:
                     for _joint, point_loads in loadPattern.loads_at_joints.items():
                         data['load_patterns'][key]['joints'][_joint] = []
                         for pointLoad in point_loads:
-                            data['load_patterns'][key]['joints'][_joint].append({attr: value for attr, value in pointLoad if not attr.startswith('_') and value is not None})
+                            data['load_patterns'][key]['joints'][_joint].append({attr: value for attr, value in pointLoad.__dict__.items() if not attr.startswith('_') and value is not None})
 
                 # save loads at frames
                 if loadPattern.point_loads_at_frames or loadPattern.distributed_loads:
