@@ -528,9 +528,9 @@ class Frame(AttrDisplay):
             internal_displacements['uy'][i] += fy_j * x ** 3 / (6 * E * Iz)
             internal_displacements['uy'][i] -= mz_j * x ** 2 / (2 * E * Iz)
             internal_displacements['uy'][i] += rz_j * x
-            internal_displacements['uz'][i] -= fz_j * x ** 3 / (6 * E * Iy)
-            internal_displacements['uz'][i] -= my_j * x ** 2 / (2 * E * Iy)
-            internal_displacements['uz'][i] += ry_j * x
+            internal_displacements['uz'][i] += fz_j * x ** 3 / (6 * E * Iy)
+            internal_displacements['uz'][i] += my_j * x ** 2 / (2 * E * Iy)
+            internal_displacements['uz'][i] -= ry_j * x
             internal_displacements['rx'][i] -= mx_j * x / (G * J)
             internal_displacements['ry'][i] -= fz_j * x ** 2 / (2 * E * Iz)
             internal_displacements['ry'][i] -= my_j * x / (E * Iz)
@@ -547,7 +547,7 @@ class Frame(AttrDisplay):
                     x = (i / no_div) * length
                     internal_displacements['ux'][i] -= fx * x ** 2 / (2 * E * A)
                     internal_displacements['uy'][i] += fy * x ** 4 / (24 * E * Iz)
-                    internal_displacements['uz'][i] -= fz * x ** 4 / (24 * E * Iy)
+                    internal_displacements['uz'][i] += fz * x ** 4 / (24 * E * Iy)
 
                     internal_displacements['ry'][i] -= fz * x ** 3 / (6 * E * Iz)
                     internal_displacements['rz'][i] += fy * x ** 3 / (6 * E * Iz)
