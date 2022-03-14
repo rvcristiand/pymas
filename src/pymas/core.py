@@ -1,7 +1,7 @@
 import json
 import numpy as np
 
-from pyFEM.primitives import *
+from pymas.primitives import *
 
 
 class Structure:

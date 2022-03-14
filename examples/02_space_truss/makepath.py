@@ -1,3 +1,3 @@
 import sys
 
-sys.path.append('/mnt/d/Documents/pyFEM/src/')
+sys.path.append('/home/rvcristiand/Documents/pymas/src/')

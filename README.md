@@ -1,4 +1,4 @@
-# pyFEM
+# pymas
 
 Model and analyse framed structures with [Python](https://www.python.org/).
 
@@ -16,32 +16,27 @@ Implementación del [método directo de rigideces](https://en.wikipedia.org/wiki
 
 ## Install
 
-pyFEM usa [Python](python.org) y varias librerias científicas (véase [Scipy](https://scipy.org/)). La recomendación es instalar [Ananconda](https://www.anaconda.com/distribution/).
-
-Puede instalar esta librería con [pip](https://pip.pypa.io/en/stable/).
-```
-python -m pip install pyFEM
-```
+pymas usa [Python](python.org) y varias librerias científicas (véase [Scipy](https://scipy.org/)). La recomendación es instalar [Ananconda](https://www.anaconda.com/distribution/).
 
 ### Manual
-Puede obtener una copia de pyFEM descargándola de la [página del repositorio](https://github.com/rvcristiand/pyFEM), o puede clonar este repositorio con [git](https://git-scm.com/).
+Puede obtener una copia de pymas descargándola de la [página del repositorio](https://github.com/rvcristiand/pymas), o puede clonar este repositorio con [git](https://git-scm.com/).
 
 ```
-git clone https://github.com/rvcristiand/pyFEM.git
+git clone https://github.com/rvcristiand/pymas.git
 ```
 
-Para importar pyFEM en otros proyectos, incluya la ruta del código fuente de la librería en la lista [`sys.path`](https://docs.python.org/3/tutorial/modules.html#the-module-search-path).
+Para importar pymas en otros proyectos, incluya la ruta del código fuente de la librería en la lista [`sys.path`](https://docs.python.org/3/tutorial/modules.html#the-module-search-path).
 
 ```
-sys.path.append('.../pyFEM/src/')
+sys.path.append('.../pymas/src/')
 ```
 
 ## Usage
 
-Puede analizar estructuras con la clase [Structure](https://github.com/rvcristiand/pyFEM/blob/b394a88a30b09d5cd7351a5ac35b69fa1c419b93/src/pyFEM/core.py#L7).
+Puede analizar estructuras con la clase [Structure](https://github.com/rvcristiand/pymas/blob/00ee3aae72fa10c34b17381532ab87b5d1169c67/src/pymas/core.py#L7).
 
 ```python
-from pyFEM import Structure
+from pymas import Structure
 
 # model simplest beam
 
@@ -89,7 +84,7 @@ print(max(model.internal_forces['self weight']['1'].mz)) # 150 kN m
 ```
 
 ## Contributing
-Puede contribuir en este proyecto creando un [issue](https://github.com/rvcristiand/pyFEM/issues/new) o haciendo [pull requests](https://github.com/rvcristiand/pyFEM/pulls).
+Puede contribuir en este proyecto creando un [issue](https://github.com/rvcristiand/pymas/issues/new) o haciendo [pull requests](https://github.com/rvcristiand/pymas/pulls).
 
 ## License
 [MIT](LICENSE)

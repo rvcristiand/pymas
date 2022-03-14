@@ -1,6 +1,6 @@
 import makepath
 
-from pyFEM import Structure
+from pymas import Structure
 
 """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
 # structure
