@@ -1,5 +1,5 @@
 import makepath
-from pyFEM import Structure
+from pymas import Structure
 
 # model simplest beam
 
