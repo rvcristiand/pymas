@@ -4,7 +4,7 @@ Two span beam
 
 # import path to the library and the library itself
 import sys
-sys.path.append('../../src/')
+sys.path.append('../src/')
 from pymas import Structure
 
 # create the structure and stablish the degrees of freedom
