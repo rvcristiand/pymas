@@ -1,0 +1,483 @@
+{
+    "materials": {
+        "mat1": {
+            "name": "mat1",
+            "E": 21000000.0,
+            "G": 9130434.782608697
+        }
+    },
+    "sections": {
+        "sec1": {
+            "type": "Section",
+            "name": "sec1",
+            "A": 0.3,
+            "J": 0.45
+        },
+        "sec2": {
+            "type": "Section",
+            "name": "sec2",
+            "A": 0.3,
+            "J": 0.3
+        }
+    },
+    "joints": {
+        "1": {
+            "name": 1,
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "2": {
+            "name": 2,
+            "x": 6,
+            "y": 0,
+            "z": 0
+        },
+        "3": {
+            "name": 3,
+            "x": 12,
+            "y": 0,
+            "z": 0
+        },
+        "4": {
+            "name": 4,
+            "x": 18,
+            "y": 0,
+            "z": 0
+        },
+        "5": {
+            "name": 5,
+            "x": 24,
+            "y": 0,
+            "z": 0
+        },
+        "6": {
+            "name": 6,
+            "x": 0,
+            "y": 3,
+            "z": 0
+        },
+        "7": {
+            "name": 7,
+            "x": 6,
+            "y": 3,
+            "z": 0
+        },
+        "8": {
+            "name": 8,
+            "x": 12,
+            "y": 3,
+            "z": 0
+        },
+        "9": {
+            "name": 9,
+            "x": 18,
+            "y": 3,
+            "z": 0
+        },
+        "10": {
+            "name": 10,
+            "x": 24,
+            "y": 3,
+            "z": 0
+        },
+        "11": {
+            "name": 11,
+            "x": 0,
+            "y": 6,
+            "z": 0
+        },
+        "12": {
+            "name": 12,
+            "x": 6,
+            "y": 6,
+            "z": 0
+        },
+        "13": {
+            "name": 13,
+            "x": 12,
+            "y": 6,
+            "z": 0
+        },
+        "14": {
+            "name": 14,
+            "x": 18,
+            "y": 6,
+            "z": 0
+        },
+        "15": {
+            "name": 15,
+            "x": 24,
+            "y": 6,
+            "z": 0
+        },
+        "16": {
+            "name": 16,
+            "x": 0,
+            "y": 9,
+            "z": 0
+        },
+        "17": {
+            "name": 17,
+            "x": 6,
+            "y": 9,
+            "z": 0
+        },
+        "18": {
+            "name": 18,
+            "x": 12,
+            "y": 9,
+            "z": 0
+        },
+        "19": {
+            "name": 19,
+            "x": 18,
+            "y": 9,
+            "z": 0
+        },
+        "20": {
+            "name": 20,
+            "x": 24,
+            "y": 9,
+            "z": 0
+        }
+    },
+    "frames": {
+        "1": {
+            "name": 1,
+            "joint_j": 1,
+            "joint_k": 6,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "2": {
+            "name": 2,
+            "joint_j": 2,
+            "joint_k": 7,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "3": {
+            "name": 3,
+            "joint_j": 3,
+            "joint_k": 8,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "4": {
+            "name": 4,
+            "joint_j": 4,
+            "joint_k": 9,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "5": {
+            "name": 5,
+            "joint_j": 5,
+            "joint_k": 10,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "6": {
+            "name": 6,
+            "joint_j": 6,
+            "joint_k": 11,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "7": {
+            "name": 7,
+            "joint_j": 7,
+            "joint_k": 12,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "8": {
+            "name": 8,
+            "joint_j": 8,
+            "joint_k": 13,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "9": {
+            "name": 9,
+            "joint_j": 9,
+            "joint_k": 14,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "10": {
+            "name": 10,
+            "joint_j": 10,
+            "joint_k": 15,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "11": {
+            "name": 11,
+            "joint_j": 11,
+            "joint_k": 16,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "12": {
+            "name": 12,
+            "joint_j": 12,
+            "joint_k": 17,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "13": {
+            "name": 13,
+            "joint_j": 13,
+            "joint_k": 18,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "14": {
+            "name": 14,
+            "joint_j": 14,
+            "joint_k": 19,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "15": {
+            "name": 15,
+            "joint_j": 15,
+            "joint_k": 20,
+            "material": "mat1",
+            "section": "sec2"
+        },
+        "16": {
+            "name": 16,
+            "joint_j": 6,
+            "joint_k": 7,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "17": {
+            "name": 17,
+            "joint_j": 7,
+            "joint_k": 8,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "18": {
+            "name": 18,
+            "joint_j": 8,
+            "joint_k": 9,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "19": {
+            "name": 19,
+            "joint_j": 9,
+            "joint_k": 10,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "21": {
+            "name": 21,
+            "joint_j": 11,
+            "joint_k": 12,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "22": {
+            "name": 22,
+            "joint_j": 12,
+            "joint_k": 13,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "23": {
+            "name": 23,
+            "joint_j": 13,
+            "joint_k": 14,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "24": {
+            "name": 24,
+            "joint_j": 14,
+            "joint_k": 15,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "26": {
+            "name": 26,
+            "joint_j": 16,
+            "joint_k": 17,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "27": {
+            "name": 27,
+            "joint_j": 17,
+            "joint_k": 18,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "28": {
+            "name": 28,
+            "joint_j": 18,
+            "joint_k": 19,
+            "material": "mat1",
+            "section": "sec1"
+        },
+        "29": {
+            "name": 29,
+            "joint_j": 19,
+            "joint_k": 20,
+            "material": "mat1",
+            "section": "sec1"
+        }
+    },
+    "supports": {
+        "1": {
+            "joint": 1,
+            "ux": true,
+            "uy": true,
+            "rz": true
+        },
+        "2": {
+            "joint": 2,
+            "ux": true,
+            "uy": true,
+            "rz": true
+        },
+        "3": {
+            "joint": 3,
+            "ux": true,
+            "uy": true,
+            "rz": true
+        },
+        "4": {
+            "joint": 4,
+            "ux": true,
+            "uy": true,
+            "rz": true
+        },
+        "5": {
+            "joint": 5,
+            "ux": true,
+            "uy": true,
+            "rz": true
+        }
+    },
+    "load_patterns": {
+        "muerta": {
+            "name": "muerta",
+            "frames": {
+                "16": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 16,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "17": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 17,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "18": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 18,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "19": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 19,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "21": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 21,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "22": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 22,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "23": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 23,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "24": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 24,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "26": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 26,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "27": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 27,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "28": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 28,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ],
+                "29": [
+                    {
+                        "type": "DistributedLoad",
+                        "load_pattern": "muerta",
+                        "frame": 29,
+                        "system": "local",
+                        "fy": -1
+                    }
+                ]
+            }
+        }
+    }
+}
