@@ -1,0 +1,220 @@
+{
+    "materials": {
+        "2100 t/cm2": {
+            "name": "2100 t/cm2",
+            "E": 21000000.0,
+            "G": 8750000
+        }
+    },
+    "sections": {
+        "10 cm2": {
+            "type": "Section",
+            "name": "10 cm2",
+            "A": 0.001,
+            "J": 0.000000000001,
+            "Iy": 0.000000000001,
+            "Iz": 0.000000000001
+        },
+        "20 cm2": {
+            "type": "Section",
+            "name": "20 cm2",
+            "A": 0.002,
+            "J": 0.000000000001,
+            "Iy": 0.000000000001,
+            "Iz": 0.000000000001
+        },
+        "40 cm2": {
+            "type": "Section",
+            "name": "40 cm2",
+            "A": 0.004,
+            "J": 0.000000000001,
+            "Iy": 0.000000000001,
+            "Iz": 0.000000000001        },
+        "50 cm2": {
+            "type": "Section",
+            "name": "50 cm2",
+            "A": 0.005,
+            "J": 0.000000000001,
+            "Iy": 0.000000000001,
+            "Iz": 0.000000000001
+        }
+    },
+    "joints": {
+        "1": {
+            "name": "1",
+            "x": 2.25,
+            "y": 6,
+            "z": 4.8
+        },
+        "2": {
+            "name": "2",
+            "x": 3.75,
+            "y": 6,
+            "z": 2.4
+        },
+        "3": {
+            "name": "3",
+            "x": 5.25,
+            "y": 6,
+            "z": 4.8
+        },
+        "4": {
+            "name": "4",
+            "x": 0.0,
+            "y": 0,
+            "z": 6.0
+        },
+        "5": {
+            "name": "5",
+            "x": 3.75,
+            "y": 0,
+            "z": 0.0
+        },
+        "6": {
+            "name": "6",
+            "x": 7.5,
+            "y": 0,
+            "z": 6.0
+        }
+    },
+    "frames": {
+        "1-2": {
+            "name": "1-2",
+            "joint_j": "1",
+            "joint_k": "2",
+            "material": "2100 t/cm2",
+            "section": "20 cm2"
+        },
+        "1-3": {
+            "name": "1-3",
+            "joint_j": "1",
+            "joint_k": "3",
+            "material": "2100 t/cm2",
+            "section": "20 cm2"
+        },
+        "1-4": {
+            "name": "1-4",
+            "joint_j": "1",
+            "joint_k": "4",
+            "material": "2100 t/cm2",
+            "section": "40 cm2"
+        },
+        "1-6": {
+            "name": "1-6",
+            "joint_j": "1",
+            "joint_k": "6",
+            "material": "2100 t/cm2",
+            "section": "50 cm2"
+        },
+        "2-3": {
+            "name": "2-3",
+            "joint_j": "2",
+            "joint_k": "3",
+            "material": "2100 t/cm2",
+            "section": "20 cm2"
+        },
+        "2-4": {
+            "name": "2-4",
+            "joint_j": "2",
+            "joint_k": "4",
+            "material": "2100 t/cm2",
+            "section": "50 cm2"
+        },
+        "2-5": {
+            "name": "2-5",
+            "joint_j": "2",
+            "joint_k": "5",
+            "material": "2100 t/cm2",
+            "section": "40 cm2"
+        },
+        "3-5": {
+            "name": "3-5",
+            "joint_j": "3",
+            "joint_k": "5",
+            "material": "2100 t/cm2",
+            "section": "50 cm2"
+        },
+        "3-6": {
+            "name": "3-6",
+            "joint_j": "3",
+            "joint_k": "6",
+            "material": "2100 t/cm2",
+            "section": "40 cm2"
+        },
+        "4-5": {
+            "name": "4-5",
+            "joint_j": "4",
+            "joint_k": "5",
+            "material": "2100 t/cm2",
+            "section": "10 cm2"
+        },
+        "4-6": {
+            "name": "4-6",
+            "joint_j": "4",
+            "joint_k": "6",
+            "material": "2100 t/cm2",
+            "section": "10 cm2"
+        },
+        "5-6": {
+            "name": "5-6",
+            "joint_j": "5",
+            "joint_k": "6",
+            "material": "2100 t/cm2",
+            "section": "10 cm2"
+        }
+    },
+    "supports": {
+        "4": {
+            "joint": "4",
+            "ux": true,
+            "uy": true,
+            "uz": true
+        },
+        "5": {
+            "joint": "5",
+            "ux": true,
+            "uy": true,
+            "uz": true
+        },
+        "6": {
+            "joint": "6",
+            "ux": true,
+            "uy": true,
+            "uz": true
+        }
+    },
+    "load_patterns": {
+        "point loads": {
+            "name": "point loads",
+            "joints": {
+                "1": [
+                    {
+                        "load_pattern": "point loads",
+                        "joint": "1",
+                        "fx": 10,
+                        "fy": 15,
+                        "fz": -12
+                    }
+                ],
+                "2": [
+                    {
+                        "load_pattern": "point loads",
+                        "joint": "2",
+                        "fx": 5,
+                        "fy": -3,
+                        "fz": -10
+                    }
+                ],
+                "3": [
+                    {
+                        "load_pattern": "point loads",
+                        "joint": "3",
+                        "fx": -4,
+                        "fy": -2,
+                        "fz": -6
+                    }
+                ]
+            }
+        }
+    }
+}

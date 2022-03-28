@@ -88,6 +88,8 @@ class Structure:
         Solve the structure.
     export(filename)
         Export the model.
+    open(filename)
+        Import a model.
     """
     def __init__(self, ux=None, uy=None, uz=None, rx=None, ry=None, rz=None):
         """
@@ -687,3 +689,113 @@ class Structure:
             json.dump(data, outfile, indent=4)
 
         return data
+
+    def open(self, filename):
+        """Open a model."""
+
+        # load file
+        with open(filename, 'r') as fp:
+            data = json.load(fp)
+
+        # import the materials
+        if 'materials' in data:
+            for material in data['materials'].values():
+                name = material['name']
+                E = material['E']
+                G = material['G']
+                
+                self.add_material(name, E, G)
+                
+        # import the sections
+        if 'sections' in data:
+            for section in data['sections'].values():
+                tipe = section['type']
+                name = section['name']
+
+                if tipe == 'Section':
+                    A = section['A']
+                    J = section['J']
+                    Iy = section['Iy']
+                    Iz = section['Iz']
+
+                    self.add_section(name, A, J, Iy, Iz)
+                elif tipe == 'RectangularSection':
+                    width = section['width']
+                    height = section['height']
+
+                    self.add_rectangular_section(name, width, height)
+                    
+        # save the joints
+        if 'joints' in data:
+            for joint in data['joints'].values():
+                name = joint['name']
+                x = joint['x'] if 'x' in joint else None 
+                y = joint['y'] if 'y' in joint else None 
+                z = joint['z'] if 'z' in joint else None 
+
+                self.add_joint(name, x, y, z)
+                
+        # save the frames
+        if 'frames' in data:
+            for frame in data['frames'].values():
+                name = frame['name']
+                joint_j = frame['joint_j']
+                joint_k = frame['joint_k']
+                material = frame['material']
+                section = frame['section']
+
+                self.add_frame(name, joint_j, joint_k, material, section)
+
+        # save the supports
+        if 'supports'in data:
+            for support in data['supports'].values():
+                joint = support['joint']
+                ux = support['ux'] if 'ux' in support else None
+                uy = support['uy'] if 'uy' in support else None                
+                uz = support['uz'] if 'uz' in support else None
+                rx = support['rx'] if 'rx' in support else None
+                ry = support['ry'] if 'ry' in support else None
+                rz = support['rz'] if 'rz' in support else None
+
+                self.add_support(joint, ux, uy, uz, rx, ry, rz)
+
+        # save the load patterns
+
+        if 'load_patterns'in data:
+            for load_pattern in data['load_patterns'].values():
+                name = load_pattern['name']
+
+                self.add_load_pattern(name)
+
+                if 'joints' in load_pattern:
+                    for loads in load_pattern['joints'].values():
+                        for load in loads:
+                            name = load['load_pattern']
+                            joint = load['joint']
+
+                            fx = load['fx'] if 'fx' in load else None
+                            fy = load['fy'] if 'fy' in load else None
+                            fz = load['fz'] if 'fz' in load else None
+                            mx = load['mx'] if 'mx' in load else None
+                            my = load['my'] if 'my' in load else None
+                            mz = load['mz'] if 'mz' in load else None
+
+                            self.add_load_at_joint(name, joint, fx, fy, fz, mx, my, mz)
+
+                if 'frames' in load_pattern:
+                    for load in load_pattern['frames'].values():
+                        tipe = load['type']
+                        load_pattern = load['load_pattern']
+                        frame = load['frame']
+
+                        if tipe == 'DistributedLoad':
+                            fx = load['fx'] if 'fx' in load else None
+                            fy = load['fy'] if 'fy' in load else None
+                            fz = load['fz'] if 'fz' in load else None
+                            mx = load['mx'] if 'mx' in load else None
+                            my = load['my'] if 'my' in load else None
+                            mz = load['mz'] if 'mz' in load else None
+
+                            self.add_distributed_load(load_pattern, frame, fx, fy, fz, mx, my, mz)
+                        elif tipe == 'PointLoadAtFrame':
+                            pass
