@@ -1,9 +1,9 @@
-import examples.makepath
+import makepath
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pyFEM import Structure
+from pymas import Structure
 
 
 def pratt(a_input, h_input):
