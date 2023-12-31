@@ -4,7 +4,7 @@ from pymas import Structure
 
 """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
 # structure
-model= Structure(*6 * (True,))
+model= Structure()
 
 # add material
 model.add_material('material1', 220e4, 85e4)
@@ -33,8 +33,8 @@ model.add_support('4', *6 * (True,))
 model.add_load_pattern("distributed loads")
 
 # add distributed loads
-model.add_distributed_load('distributed loads', '1-2', fy=-2.4)
-model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
+model.add_uniformly_distributed_load('distributed loads', '1-2', wy=-2.4)
+model.add_uniformly_distributed_load('distributed loads', '4-1', wy=-3.5)
 
 # solve
 model.solve()
