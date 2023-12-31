@@ -12,16 +12,16 @@
             "name": "section1",
             "A": 0.12,
             "J": 0.001944,
-            "Iy": 0.0009,
-            "Iz": 0.0016
+            "Iyy": 0.0009,
+            "Izz": 0.0016
         },
         "section2": {
             "type": "Section",
             "name": "section2",
             "A": 0.1,
             "J": 0.0012734,
-            "Iy": 0.001333,
-            "Iz": 0.0005208
+            "Iyy": 0.001333,
+            "Izz": 0.0005208
         }
     },
     "joints": {
@@ -76,30 +76,30 @@
     "supports": {
         "2": {
             "joint": "2",
-            "ux": true,
-            "uy": true,
-            "uz": true,
-            "rx": true,
-            "ry": true,
-            "rz": true
+            "r_ux": true,
+            "r_uy": true,
+            "r_uz": true,
+            "r_rx": true,
+            "r_ry": true,
+            "r_rz": true
         },
         "3": {
             "joint": "3",
-            "ux": true,
-            "uy": true,
-            "uz": true,
-            "rx": true,
-            "ry": true,
-            "rz": true
+            "r_ux": true,
+            "r_uy": true,
+            "r_uz": true,
+            "r_rx": true,
+            "r_ry": true,
+            "r_rz": true
         },
         "4": {
             "joint": "4",
-            "ux": true,
-            "uy": true,
-            "uz": true,
-            "rx": true,
-            "ry": true,
-            "rz": true
+            "r_ux": true,
+            "r_uy": true,
+            "r_uz": true,
+            "r_rx": true,
+            "r_ry": true,
+            "r_rz": true
         }
     },
     "load_patterns": {
@@ -108,20 +108,18 @@
             "frames": {
                 "1-2": [
                     {
-                        "type": "DistributedLoad",
+                        "type": "UniformlyDistributedLoad",
                         "load_pattern": "distributed loads",
-                        "frame": "1-2",
-                        "system": "local",
-                        "fy": -2.4
+                        "element": "1-2",
+                        "wy": -2.4
                     }
                 ],
                 "4-1": [
                     {
-                        "type": "DistributedLoad",
+                        "type": "UniformlyDistributedLoad",
                         "load_pattern": "distributed loads",
-                        "frame": "4-1",
-                        "system": "local",
-                        "fy": -3.5
+                        "element": "4-1",
+                        "wy": -3.5
                     }
                 ]
             }
