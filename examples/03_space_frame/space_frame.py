@@ -2,9 +2,12 @@ import makepath
 
 from pymas import Structure
 
-""""Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
+"""
+Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'
+"""
+
 # structure
-model= Structure(*6 * (True,))
+model = Structure()
 
 # add material
 model.add_material('material1', 220e4, 85e4)
@@ -13,7 +16,7 @@ model.add_material('material1', 220e4, 85e4)
 model.add_section('section1', 0.12, 1.944e-3, 9e-4, 1.6e-3)
 model.add_section('section2', 0.10, 1.2734e-3, 1.333e-3, 5.208e-4)
 
-# add nodes
+# add joints
 model.add_joint('1', 0, 3, 3)
 model.add_joint('2', 5, 3, 3)
 model.add_joint('3', 0, 0, 3)
@@ -37,7 +40,7 @@ model.add_distributed_load('distributed loads', '1-2', fy=-2.4)
 model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
 
 # solve
-model.solve()
+model.run_analysis()
 
 # export
 model.export('space_frame.json')
