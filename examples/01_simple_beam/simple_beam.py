@@ -1,7 +1,7 @@
 import makepath
 from pymas import Structure
 
-# model simplest beam
+# model simple beam
 
 b = 0.5  # m
 h = 1  # m
@@ -13,13 +13,13 @@ A = b * h  # m2
 w = 24*A  # kN/m
 
 # create the model
-model = Structure(uy=True, rz=True)
+model = Structure(type='beam')
 
 # add materials
-model.add_material('concrete', E, E / (2*(1+0.2)))
+model.add_material('concrete', E)
 
 # add sections
-rect_sect = model.add_rectangular_section('V0.5x1.0', width=b, height=h)
+rect_sect = model.add_rectangular_section('V0.5x1.0', base=b, height=h)
 
 # add joints
 model.add_joint('a', x=0)
@@ -29,8 +29,8 @@ model.add_joint('b', x=L)
 model.add_frame('1', 'a', 'b', 'concrete', 'V0.5x1.0')
 
 # add supports
-model.add_support('a', uy=True)
-model.add_support('b', uy=True)
+model.add_support('a', r_uy=True)
+model.add_support('b', r_uy=True)
 
 # add load patterns
 loadPattern = model.add_load_pattern('self weight')
@@ -39,7 +39,7 @@ loadPattern = model.add_load_pattern('self weight')
 model.add_distributed_load('self weight', '1', fy=-w)
 
 # solve the model
-model.solve()
+model.run_analysis()
 model.export('simplest_beam.json')
 
 print(model.reactions['self weight']['a'].fy)  # 60 kN

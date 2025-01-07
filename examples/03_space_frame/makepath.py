@@ -1,3 +1,3 @@
 import sys
 
-sys.path.append('/home/rvcristiand/Documents/pymas/src/')
+sys.path.append('/home/rvc/pymas/src/')

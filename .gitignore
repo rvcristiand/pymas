@@ -7,3 +7,6 @@ dist/
 *~
 \#*\#
 .\#*
+
+# syncthing
+.stfolder/
