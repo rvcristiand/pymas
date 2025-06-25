@@ -89,21 +89,19 @@ class RectangularSection(Section):
     Attributes
     ----------
     name : str
-        Name of the rectangular cross section.
+        Name of the cross section.
     base : float
-        Base of the rectangular cross section.
+        Base of the cross section.
     height : float
-        Height of the rectangular cross section.
+        Height of the cross section.
     A : float
-        Area of the rectangular cross section.
+        Area of the cross section.
     J : float
-        Torsion constant of the rectangular cross section.
+        Torsion constant of the cross section.
     Iy : float
-        Inertia of the rectangular cross section with respect to the local
-        y-axis.
+        Inertia of the cross section with respect to the local y-axis.
     Iz : float
-        Inertia of the rectangular cross section with respect to the local
-        z-axis.
+        Inertia of the cross section with respect to the local z-axis.
     """
 
     def __init__(self, parent, name, base, height):
@@ -120,17 +118,17 @@ class RectangularSection(Section):
         height : float
             Height of the rectangular cross section.
         """
-        a = min(base, height)
-        b = max(base, height)
+        a, b = sorted((base, height))
 
         A = base * height
-        J = (1/3 - 0.21 * (a / b) * (1 - (1/12) * (a/b)**4)) * b * a ** 3
+        J = (1/3 - 0.21 * (a/b) * (1 - (1/12) * (a/b)**4)) * b * a**3
         Iy = (1 / 12) * height * base ** 3
         Iz = (1 / 12) * base * height ** 3
 
-        super().__init__(parent, name, A, J, Iy, Iz)
+        self._parent = parent
         self.base = base
         self.height = height
+        super().__init__(parent, name, A, J, Iy, Iz)
 
 
 class Joint(AttrDisplay):
@@ -149,8 +147,8 @@ class Joint(AttrDisplay):
 
     Methods
     -------
-    get_coordinates()
-        Returns the coordinates of the joint.
+    coordinate_vector()
+        Returns the coordinate vector of the joint.
     """
 
     def __init__(self, parent, name, x=None, y=None, z=None):
@@ -175,13 +173,13 @@ class Joint(AttrDisplay):
         self.y = y
         self.z = z
 
-    def get_coordinates(self):
-        """Returns the coordinates of the joint.
+    def coordinate_vector(self):
+        """Returns the coordinate vector of the joint.
 
         Returns
         -------
         ndarray
-            Coordinates of the joint.
+            Coordinate vector of the joint.
         """
         x = self.x if self.x is not None else 0
         y = self.y if self.y is not None else 0
@@ -191,8 +189,7 @@ class Joint(AttrDisplay):
 
 
 class Truss(AttrDisplay):
-    """Long elements in comparison to their cross section interconnected at
-    hinged joints.
+    """Long elements interconnected at hinged joints.
 
     Attributes
     ----------
@@ -209,19 +206,19 @@ class Truss(AttrDisplay):
 
     Methods
     -------
-    get_length()
+    length()
         Returns the length of the truss.
-    get_direction_cosines()
-        Returns the direction cosines of the truss.
-    get_rotation_matrix()
+    direction_cosines_vector()
+        Returns the direction cosines vector of the truss.
+    rotation_matrix()
         Returns the rotation matrix of the truss.
-    get_rotation_transformation_matrix()
+    rotation_transformation_matrix()
         Returns the rotation transformation matrix of the truss.
-    get_local_stiffness_matrix()
+    local_stiffness_matrix()
         Returns the local stiffness matrix of the truss.
-    get_global_stiffness_matrix()
+    global_stiffness_matrix()
         Returns the global stiffness matrix of the truss.
-    get_internal_forces(load_pattern[, no_div])
+    TODO get_internal_forces(load_pattern[, no_div])
         Returns the internal forces of the truss.
     """
     def __init__(self, parent, name, joint_j, joint_k, material, section):
@@ -249,7 +246,7 @@ class Truss(AttrDisplay):
         self.material = material
         self.section = section
 
-    def get_length(self):
+    def length(self):
         """Returns the length of the truss.
 
         Returns
@@ -257,12 +254,12 @@ class Truss(AttrDisplay):
         float
             Length of the truss.
         """
-        j = self._parent.joints[self.joint_j].get_coordinates()
-        k = self._parent.joints[self.joint_k].get_coordinates()
+        j = self._parent.joints[self.joint_j].coordinate_vector()
+        k = self._parent.joints[self.joint_k].coordinate_vector()
 
         return np.linalg.norm(k - j)
 
-    def get_direction_cosines(self):
+    def direction_cosines_vector(self):
         """Returns the direction cosines of the truss.
 
         Returns
@@ -270,13 +267,13 @@ class Truss(AttrDisplay):
         ndarray
             Direction cosines of the truss.
         """
-        j = self._parent.joints[self.joint_j].get_coordinates()
-        k = self._parent.joints[self.joint_k].get_coordinates()
-        vector = k - j
+        j  = self._parent.joints[self.joint_j].coordinate_vector()
+        k = self._parent.joints[self.joint_k].coordinate_vector()
+        vector = k - j 
 
         return vector / np.linalg.norm(vector)
 
-    def get_rotation_matrix(self):
+    def rotation_matrix(self):
         """Returns the rotation matrix of the truss.
 
         Returns
@@ -285,7 +282,7 @@ class Truss(AttrDisplay):
             Rotation matrix of the truss.
         """
         v_from = np.array([1, 0, 0])
-        v_to = self.get_direction_cosines()
+        v_to = self.direction_cosines_vector()
 
         if np.all(v_from == v_to):
             return Rotation.from_quat([0, 0, 0, 1]).as_matrix()
@@ -297,11 +294,11 @@ class Truss(AttrDisplay):
             w = np.cross(v_from, v_to)
             w /= np.linalg.norm(w)
             theta = np.arccos(np.dot(v_from, v_to))
-            quaternion = np.array([*(np.sin(theta/2) * w), np.cos(theta/2)])
+            quaternion = np.hstack((w * np.sin(theta/2), np.cos(theta/2)))
 
         return Rotation.from_quat(quaternion).as_matrix()
 
-    def get_rotation_transformation_matrix(self):
+    def rotation_transformation_matrix(self):
         """Returns the rotation transformation matrix of the truss.
 
         Returns
@@ -311,11 +308,11 @@ class Truss(AttrDisplay):
         """
         indptr = np.array([0, 1, 2, 3, 4])
         indices = np.array([0, 1, 2, 3])
-        data = np.tile(self.get_rotation_matrix(), (4, 1, 1))
+        data = np.tile(self.rotation_matrix(), (4, 1, 1))
 
         return bsr_matrix((data, indices, indptr), shape=(12, 12)).toarray()
 
-    def get_local_stiffness_matrix(self):
+    def local_stiffness_matrix(self):
         """Returns the local stiffness matrix of the truss.
 
         Returns
@@ -323,7 +320,7 @@ class Truss(AttrDisplay):
         ndarray
             Local stiffness matrix of the truss.
         """
-        L = self.get_length()
+        L = self.length()
 
         material = self._parent.materials[self.material]
         E = material.E if material.E is not None else 0
@@ -340,7 +337,7 @@ class Truss(AttrDisplay):
 
         return coo_matrix((data, (rows, cols)), (12, 12)).toarray()
 
-    def get_global_stiffness_matrix(self):
+    def global_stiffness_matrix(self):
         """Returns the global stiffness matrix of the truss.
 
         Returns
@@ -348,24 +345,23 @@ class Truss(AttrDisplay):
         k_global : ndarray
             Global stiffness matrix of the truss.
         """
-        # flags of degrees of freedom
-        flags_dof = self._parent.get_flags_degrees_freedom()
-        # flags of degrees of freedom of the truss
-        flags_dof_truss = np.nonzero(np.tile(flags_dof, 2))[0]
+        # degrees of freedom
+        dof = self._parent.get_degrees_freedom()
+        # degrees of freedom of the truss
+        dof_truss = np.nonzero(np.tile(dof, 2))[0]
 
         # local siffness matrix of the truss
-        k_local = self.get_local_stiffness_matrix()
+        k_local = self.local_stiffness_matrix()
         # rotation transformation matrix of the truss
-        t = self.get_rotation_transformation_matrix()
+        t = self.rotation_transformation_matrix()
         # global matrix sfiffness of the truss
         k_global = np.dot(np.dot(t, k_local), np.transpose(t))
 
-        return k_global[flags_dof_truss[:, None], flags_dof_truss]
+        return k_global[dof_truss[:, None], dof_truss]
 
 
 class Frame(Truss):
-    """Long elements in comparison to their cross section interconnected at
-    rigid joints.
+    """Long elements interconnected at rigid joints.
 
     Attributes
     ----------
@@ -382,19 +378,19 @@ class Frame(Truss):
 
     Methods
     -------
-    get_length()
+    length()
         Returns the length of the frame.
-    get_direction_cosines()
+    direction_cosines_vector()
         Returns the direction cosines of the frame.
-    get_rotation_matrix()
+    rotation_matrix()
         Returns the rotation matrix of the frame.
-    get_rotation_transformation_matrix()
+    rotation_transformation_matrix()
         Returns the rotation transformation matrix of the frame.
-    get_local_stiffness_matrix()
+    local_stiffness_matrix()
         Returns the local stiffness matrix of the frame.
-    get_global_stiffness_matrix()
+    global_stiffness_matrix()
         Returns the global stiffness matrix of the frame.
-    get_internal_forces(load_pattern[, no_div])
+    TODO get_internal_forces(load_pattern[, no_div])
         Returns the internal forces of the frame.
     """
 
@@ -418,15 +414,15 @@ class Frame(Truss):
         """
         super().__init__(parent, name, joint_j, joint_k, material, section)
 
-    def get_local_stiffness_matrix(self):
-        """Returns the local stiffness matrix of the element.
+    def local_stiffness_matrix(self):
+        """Returns the local stiffness matrix of the frame.
 
         Returns
         -------
         ndarray
-            Local stiffness matrix of the element.
+            Local stiffness matrix of the frame.
         """
-        L = self.get_length()
+        L = self.length()
 
         material = self._parent.materials[self.material]
         E = material.E if material.E is not None else 0
@@ -496,7 +492,7 @@ class Frame(Truss):
         cols[32:] = np.array([4, 10, 5, 11])
         data[32:] = np.array(2 * [2 * e_iy_l] + 2 * [2 * e_iz_l])
 
-        k_truss = super().get_local_stiffness_matrix()
+        k_truss = super().local_stiffness_matrix()
 
         return k_truss + coo_matrix((data, (rows, cols)), (12, 12)).toarray()
 
@@ -518,7 +514,7 @@ class Frame(Truss):
         loadPattern = self._parent.load_patterns[load_pattern]
         endActions = self._parent.end_actions[load_pattern][self.name]
 
-        length = self.get_length()
+        length = self.length()
 
         fx_j = endActions.fx_j if endActions.fx_j is not None else 0
         fy_j = endActions.fy_j if endActions.fy_j is not None else 0
@@ -547,9 +543,9 @@ class Frame(Truss):
         # internal_forces['my'][-1] += ry_k
         # internal_forces['mz'][-1] += rz_k
 
-        if self.name in loadPattern.distributed_loads:
+        if self.name in loadPattern.element_distributed_loads:
             for distributed_load in \
-                loadPattern.distributed_loads[self.name]:
+                loadPattern.element_distributed_loads[self.name]:
                 fx = distributed_load.fx if distributed_load.fx is not None else 0
                 fy = distributed_load.fy if distributed_load.fy is not None else 0
                 fz = distributed_load.fz if distributed_load.fz is not None else 0
@@ -593,7 +589,7 @@ class Frame(Truss):
         end_actions = self._parent.end_actions[load_pattern][self.name]
         j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j]
 
-        length = self.get_length()
+        length = self.length()
         E = material.E if material.E is not None else 0
         G = material.G if material.G is not None else 0
         A = section.A if section.A is not None else 0
@@ -604,10 +600,10 @@ class Frame(Truss):
         end_actions = self._parent.end_actions[load_pattern][self.name]
         fx_j, fy_j, fz_j, mx_j, my_j, mz_j = end_actions.get_end_actions()[:6]
 
-        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j].get_displacements(
+        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j].displacement_vector(
         )
         j_joint_displamcement = np.dot(np.transpose(
-            self.get_rotation_transformation_matrix())[:6, :6], j_joint_displamcement)
+            self.rotation_transformation_matrix())[:6, :6], j_joint_displamcement)
         ux_j, uy_j, uz_j, rx_j, ry_j, rz_j = j_joint_displamcement
 
         internal_displacements = {}
@@ -633,8 +629,8 @@ class Frame(Truss):
             internal_displacements['rz'][i] += fy_j * x ** 2 / (2 * E * Iz)
             internal_displacements['rz'][i] += mz_j * x / (E * Iy)
 
-        if self.name in loadPattern.distributed_loads:
-            for distributed_load in loadPattern.distributed_loads[self.name]:
+        if self.name in loadPattern.element_distributed_loads:
+            for distributed_load in loadPattern.element_distributed_loads[self.name]:
                 fx = distributed_load.fx if distributed_load.fx is not None else 0
                 fy = distributed_load.fy if distributed_load.fy is not None else 0
                 fz = distributed_load.fz if distributed_load.fz is not None else 0
@@ -691,8 +687,8 @@ class Support(AttrDisplay):
 
     Methods
     -------
-    get_restraints()
-        Returns the restrains of the support.
+    restrain_vector()
+        Returns the restrain vector of the support.
     """
 
     def __init__(self, parent, joint, r_ux=None, r_uy=None, r_uz=None,
@@ -733,14 +729,17 @@ class Support(AttrDisplay):
         self.r_ry = r_ry
         self.r_rz = r_rz
 
-    def get_restraints(self):
-        """Returns the restrains of the support.
+    def restrain_vector(self):
+        """Returns the restrain vector of the support.
 
         Returns
         -------
-        ndarray
-            Restrains of the support.
+        restrains : ndarray
+            Restrain vector.
         """
+        # degrees of freedom
+        dof = self._parent.get_degrees_freedom()
+
         r_ux = self.r_ux if self.r_ux is not None else False
         r_uy = self.r_uy if self.r_uy is not None else False
         r_uz = self.r_uz if self.r_uz is not None else False
@@ -750,7 +749,7 @@ class Support(AttrDisplay):
 
         restrains = np.array([r_ux, r_uy, r_uz, r_rx, r_ry, r_rz])
 
-        return restrains[self._parent.get_flags_degrees_freedom()]
+        return restrains[dof]
 
 
 class LoadPattern(AttrDisplay):
@@ -760,22 +759,28 @@ class LoadPattern(AttrDisplay):
     ----------
     name : str
         Name of the load pattern.
-    loads_at_joints : dict
-        Point loads at joints of the load pattern.
-    uniformly_distributed_loads_at_elements : dict
-        Uniformly distributed loads at elements of the load pattern.
+    joint_point_loads : dict
+        Joint point loads of the load pattern.
+    element_point_loads : dict
+        Element point loads of the load pattern.
+    element_distributed_loads : dict
+        Element uniformly distributed loads of the load pattern.
 
     Methods
     -------
-    add_point_load_at_joint(joint, [fx, fy, fz, mx, my, mz])
-        Add a point load at joint to the dictionary of point loads at joints.
-    add_uniformly_distributed_load(element, [fx, fy, fz])
-        Add a uniformly distributed load at element to the dictionary of
+    add_joint_point_load(joint, [fx, fy, fz, mx, my, mz])
+        Add a joint point load to the dictionary of joint point loads.
+    add_element_point_load(joint, dist, [fx, fy, fz, mx, my, mz])
+        Add a element point load to the dictionary of element point loads.
+    add_element_distributed_load(element, [fx, fy, fz, mx, my, mz])
+        Add a element distributed load to the dictionary of uniformly
         distributed loads at elements.
-    get_f()
-        Get the load vector.
-    get_f_fixed()
-        Get f fixed.
+    load_vector()
+        Returns the load vector of the load pattern.
+    actual_load_vector()
+        Returns the actual load vector of the load pattern.
+    fixed_load_vector()
+        Returns the fixed-end load vector of the load pattern.
     """
 
     def __init__(self, parent, name):
@@ -790,12 +795,13 @@ class LoadPattern(AttrDisplay):
         """
         self._parent = parent
         self.name = name
-        self.point_loads = {}
-        self.distributed_loads = {}
+        self.joint_point_loads = {}
+        self.element_point_loads = {}
+        self.element_distributed_loads = {}
 
-    def add_point_load(self, joint, fx=None, fy=None, fz=None, mx=None,
-                       my=None, mz=None):
-        """Add a point load to a joint of the structure.
+    def add_joint_point_load(self, joint, fx=None, fy=None, fz=None, mx=None,
+                             my=None, mz=None):
+        """Add a joint point load to the dictionary of joint point loads.
 
         Parameters
         ----------
@@ -816,21 +822,62 @@ class LoadPattern(AttrDisplay):
 
         Returns
         -------
-        pointLoad : PointLoad
-            PointLoad object.
+        pointLoad : JointPointLoad
+            Joint point load.
         """
-        pL = PointLoad(self._parent, self.name, joint, fx, fy, fz, mx, my, mz)
+        pointLoad = JointPointLoad(self._parent, self.name, joint, fx, fy, fz,
+                                   mx, my, mz)
 
         try:
-            self.point_loads[joint].append(pL)
+            self.joint_point_loads[joint].append(pointLoad)
         except KeyError:
-            self.point_loads[joint] = [pL]
+            self.joint_point_loads[joint] = [pointLoad]
 
-        return pL
+        return pointLoad
 
-    def add_distributed_load(self, element, fx=None, fy=None, fz=None,
-                             rx=None, ry=None, rz=None):
-        """Add a uniformly distributed load to an element of the structure.
+    def add_element_point_load(self, element, dist, fx=None, fy=None, fz=None,
+                               mx=None, my=None, mz=None):
+        """Add a element point load to the dictionary of element point loads.
+
+        Parameters
+        ----------
+        element : str
+            Name of the element.
+        dist : float
+            Distance of the point load from the near joint along the local
+            x-axis.
+        fx : float, optional
+            Intensity of the point load along the local x-axis.
+        fy : float, optional
+            Intensity of the point load along the local y-axis.
+        fz : float, optional
+            Intensity of the point load along the local z-axis.
+        mx : float, optional
+            Intensity of the point load around the local x-axis.
+        my : float, optional
+            Intensity of the point load around the local y-axis.
+        mz : float, optional
+            Intensity of the point load around the local z-axis.
+
+        Returns
+        -------
+        pointLoad : ElementPointLoad
+            Element point load.
+        """
+        pointLoad = ElementPointLoad(self._parent, self.name, element, fx, fy,
+                                     fz, mx, my, mz)
+
+        try:
+            self.element_point_loads[element].append(pointLoad)
+        except KeyError:
+            self.element_point_loads[element] = [pointLoad]
+
+        return pointLoad
+
+    def add_element_distributed_load(self, element, fx=None, fy=None, fz=None,
+                             mx=None, my=None, mz=None):
+        """Add a element uniformly distributed load to the dictionary of
+        element uniformly distributed loads.
 
         Parameters
         ----------
@@ -860,106 +907,111 @@ class LoadPattern(AttrDisplay):
         distributedLoad : DistributedLoad
             DistributedLoad object.
         """
-        dL = DistributedLoad(self._parent, self.name, element, fx, fy, fz, rx,
-                             ry, rz)
+        distributedLoad = DistributedLoad(self._parent, self.name, element, fx,
+                                          fy, fz, mx, my, mz)
 
         try:
-            self.distributed_loads[element].append(dL)
+            self.element_distributed_loads[element].append(distributedLoad)
         except KeyError:
-            self.distributed_loads[element] = [dL]
+            self.element_distributed_loads[element] = [distributedLoad]
 
-        return dL
+        return distributedLoad
 
-    def get_f(self):
+    def load_vector(self):
         """
-        Get the load vector of the load pattern.
-
-        Returns
-        -------
-        coo_matrix
-            Load vector of the load pattern.
-        """
-
-        return self.get_f_actual() - self.get_f_fixed()
-
-    def get_f_actual(self):
-        """Returns f actual.
+        Returns the load vector of the load pattern.
 
         Returns
         -------
         ndarray
-            f actual
+            Load vector of the load pattern.
+        """
+        return self.actual_load_vector() - self.fixed_load_vector()
+
+    def actual_load_vector(self):
+        """Returns the actual load vector of the load pattern.
+
+        Returns
+        -------
+        ndarray
+            Actual load vector of the load pattern.
         """
         # number of joints
         n_j = len(self._parent.joints)
-        # number of active degrees of freedom
+        # number active degrees of freedom
         n_dof = self._parent.number_active_degrees_freedom()
+        # number of joint point loads
+        n_point_loads = len(self.joint_point_loads)
         # joint indices of the structure
         j_i = self._parent.get_joint_indices()
 
         # row positions of the load vectors items of the point loads
-        rows = np.empty(n_dof * len(self.point_loads), dtype=int)
-        cols = np.zeros_like(rows)
+        rows = np.empty(n_dof * n_point_loads, dtype=int)
+        cols = np.zeros_like(rows, dtype=int)
         # items of the load vectors of the point loads
         data = np.zeros_like(rows, dtype=float)
 
         # assembly the point load vectors
-        for i, (joint, point_loads) in enumerate(self.point_loads.items()):
+        for i, (joint, p_loads) in enumerate(self.joint_point_loads.items()):
             start = i * n_dof
             end = (i + 1) * n_dof
             # row positions of the load vectors items of the point loads
             rows[start:end] = j_i[joint]
 
             # items of the point loads
-            for pointLoad in point_loads:
-                data[start:end] += pointLoad.get_load_vector()
+            for pointLoad in p_loads:
+                data[start:end] += pointLoad.load_vector()
 
         return coo_matrix((data, (rows, cols)), (n_dof * n_j, 1)).toarray()
 
-    def get_f_fixed(self):
-        """
-        Get f fixed.
+    def fixed_load_vector(self):
+        """Returns the fixed-end load vector of the load pattern.
 
         Returns
         -------
-        coo_matrix
-            f fixed.
+        ndarray
+            Fixed-end load vector.
         """
         # number of joints
         n_j = len(self._parent.joints)
-        # number of active degrees of freedom
+        # degrees of freedom
+        dof_joints = self._parent.get_degrees_freedom()
+        dof_elements = np.tile(dof_joints, 2)
+        # number active degrees of freedom
         n_dof = self._parent.number_active_degrees_freedom()
+        # number of element distributed loads
+        n_distributed_loads = len(self.element_distributed_loads)
         # joint indices of the structure
         j_i = self._parent.get_joint_indices()
 
         # row positions of the load vectors items of the distributed loads
-        rows = np.empty(2 * n_dof * len(self.distributed_loads), dtype=int)
+        rows = np.empty(2 * n_dof * n_distributed_loads, dtype=int)
         cols = np.zeros_like(rows)
         # items of the load vector of the distributed loads
         data = np.zeros_like(rows, dtype=float)
 
         # assembly the distributed load vector
-        for i, (elem, d_l) in enumerate(self.distributed_loads.items()):
+        for i, (e, d_l) in enumerate(self.element_distributed_loads.items()):
             start = 2 * i * n_dof
             end = 2 * (i + 1) * n_dof
-            # element object
-            elem = self._parent.elements[elem]
 
-            # element's joints
-            joint_j, joint_k = elem.joint_j, elem.joint_k
+            # element object
+            element = self._parent.elements[e]
+            joint_j, joint_k = element.joint_j, element.joint_k
+            t = element.rotation_transformation_matrix()
 
             # row positions of the elements of the distributed load at element
             rows[start:end] = np.concatenate((j_i[joint_j], j_i[joint_k]))
 
             # data of the elements
-            for DistributedLoad in d_l:
-                data[start:end] += DistributedLoad.get_f_fixed().flatten()
+            for dL in d_l:
+                data[start:end] += np.dot(t, dL.fixed_load_vector()).flatten()[dof_elements]
 
         return coo_matrix((data, (rows, cols)), (n_dof * n_j, 1)).toarray()
 
 
-class PointLoad(AttrDisplay):
-    """Point load.
+class JointPointLoad(AttrDisplay):
+    """Joint point load.
 
     Attributes
     ----------
@@ -967,28 +1019,28 @@ class PointLoad(AttrDisplay):
         Name of the load pattern.
     joint : str
         Name of the joint.
-    fx : float, optional
+    fx : float
         Intensity of the point load along the global x-axis.
-    fy : float, optional
+    fy : float
         Intensity of the point load along the global y-axis.
-    fz : float, optional
+    fz : float
         Intensity of the point load along the global z-axis.
-    mx : float, optional
+    mx : float
         Intensity of the point load around the global x-axis.
-    my : float, optional
+    my : float
         Intensity of the point load around the global y-axis.
-    mz : float, optional
+    mz : float
         Intensity of the point load around the global z-axis.
 
     Methods
     -------
-     get_load_vector()
-        Get the load vector of the point load.
+    load_vector()
+        Returns the load vector of the joint point load.
     """
 
     def __init__(self, parent, load_pattern, joint, fx=None, fy=None,
                  fz=None, mx=None, my=None, mz=None):
-        """Instantiate a PointLoad object.
+        """Instantiate a JointPointLoad object.
 
         Parameters
         ----------
@@ -999,17 +1051,17 @@ class PointLoad(AttrDisplay):
         joint : str
             Name of the joint.
         fx : float, optional
-            Intensity of the point load along the global x-axis.
+            Intensity of the joint point load along the global x-axis.
         fy : float, optional
-            Intensity of the point load along the global y-axis.
+            Intensity of the joint point load along the global y-axis.
         fz : float, optional
-            Intensity of the point load along the global z-axis.
+            Intensity of the joint point load along the global z-axis.
         mx : float, optional
-            Intensity of the point load around the global x-axis.
+            Intensity of the joint point load around the global x-axis.
         my : float, optional
-            Intensity of the point load around the global y-axis.
+            Intensity of the joint point load around the global y-axis.
         mz : float, optional
-            Intensity of the point load around the global z-axis.
+            Intensity of the joint point load around the global z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1021,18 +1073,16 @@ class PointLoad(AttrDisplay):
         self.my = my
         self.mz = mz
 
-    def get_load_vector(self):
-        """Get the load vector of the point load.
+    def load_vector(self):
+        """Returns the load vector of the joint point load.
 
         Returns
         -------
         ndarray
             Load vector.
         """
-        # flags of degrees of freedom
-        flags_dof = self._parent.get_flags_degrees_freedom()
-        # flags of degrees of freedom of the element
-        flags_dof_element = np.nonzero(np.tile(flags_dof, 2))[0]
+        # degrees of freedom
+        dof = self._parent.get_degrees_freedom()
 
         fx = self.fx if self.fx is not None else 0
         fy = self.fy if self.fy is not None else 0
@@ -1041,11 +1091,11 @@ class PointLoad(AttrDisplay):
         my = self.my if self.my is not None else 0
         mz = self.mz if self.mz is not None else 0
 
-        return np.array([fx, fy, fz, mx, my, mz])[flags_dof].T
+        return np.array([fx, fy, fz, mx, my, mz])[dof]
 
 
-class DistributedLoad(AttrDisplay):
-    """Uniformly distributed load.
+class ElementPointLoad(AttrDisplay):
+    """Element point load.
 
     Attributes
     ----------
@@ -1053,23 +1103,155 @@ class DistributedLoad(AttrDisplay):
         Name of the load pattern.
     element : str
         Name of the element.
-    fx : float, optional
+    dist : float
+        Distance of the point load from the near joint along the local
+        x-axis.
+    fx : float
+        Intensity of the point load along the local x-axis.
+    fy : float
+        Intensity of the point load along the local y-axis.
+    fz : float
+        Intensity of the point load along the local z-axis.
+    mx : float
+        Intensity of the point load around the local x-axis.
+    my : float
+        Intensity of the point load around the local y-axis.
+    mz : float
+        Intensity of the point load around the local z-axis.
+
+    Methods
+    -------
+    fixed_load_vector()
+        Returns the fixed-end load vector of the element point load.
+    """
+
+    def __init__(self, parent, load_pattern, element, dist, fx=None, fy=None,
+                 fz=None, mx=None, my=None, mz=None):
+        """Instantiate a ElementPointLoad object.
+
+        Parameters
+        ----------
+        parent : Structure
+            Structure object.
+        load_pattern : str
+            Name of the load pattern.
+        element : str
+            Name of the element.
+        dist : float
+            Distance of the point load from the near joint along the local
+            x-axis.
+        fx : float, optional
+            Intensity of the point load along the local x-axis.
+        fy : float, optional
+            Intensity of the point load along the local y-axis.
+        fz : float, optional
+            Intensity of the point load along the local z-axis.
+        mx : float, optional
+            Intensity of the point load around the local x-axis.
+        my : float, optional
+            Intensity of the point load around the local y-axis.
+        mz : float, optional
+            Intensity of the point load around the local z-axis.
+        """
+        self._parent = parent
+        self.load_pattern = load_pattern
+        self.element = element
+        self.dist = dist
+        self.fx = fx
+        self.fy = fy
+        self.fz = fz
+        self.mx = mx
+        self.my = my
+        self.mz = mz
+
+    def fixed_load_vector(self):
+        """Returns the fixed-end load vector of the element point load.
+
+        Returns
+        -------
+        ndarray
+            Fixed-end load vector.
+        """
+        # uniformly distributed forces
+        fx = self.fx if self.fx is not None else 0
+        fy = self.fy if self.fy is not None else 0
+        fz = self.fz if self.fz is not None else 0
+        mx = self.mx if self.mx is not None else 0
+        my = self.my if self.my is not None else 0
+        mz = self.mz if self.mz is not None else 0
+
+        # dimensions of the element
+        L = self._parent.elements[self.element].length()
+        a = self.dist
+        b = L - a
+
+        load_vector = np.empty((2 * 6, 1))
+
+        # fx
+        load_vector[0] = -fx * b / L
+        load_vector[6] = -fx * a / L
+
+        # fy
+        load_vector[1] = -fy * b**2 * (3*a + b) / L**3
+        load_vector[7] = -fy * a**2 * (a + 3*b) / L**3
+
+        load_vector[5] = -fy * a * b**2 / L**2
+        load_vector[11] = fy * a**2 * b / L**2
+
+        # fz
+        load_vector[2] = -fz * b**2 * (3*a + b) / L**3
+        load_vector[8] = -fz * a**2 * (a + 3*b) / L**3
+
+        load_vector[4] = fz * a * b**2 / L**2
+        load_vector[10] = -fz * a**2 * b / L**2
+
+        # mx
+        load_vector[3] = -mx * b / L
+        load_vector[9] = -mx * a / L
+
+        # my
+        load_vector[2] += -6 * my * a * b / L**3
+        load_vector[8] += 6 * my * a * b / L**3
+
+        load_vector[4] += my * b * (2*a - b) / L**2
+        load_vector[10] += my * a * (2*b - a) / L**2
+
+        # mz
+        load_vector[1] += 6 * mz * a * b / L**3
+        load_vector[7] += -6 * mz * a * b / L**3
+
+        load_vector[5] += mz * b * (2*a - b) / L**2
+        load_vector[11] += mz * a * (2*b - a) / L**2
+
+        return load_vector
+
+
+class DistributedLoad(AttrDisplay):
+    """Element uniformly distributed load.
+
+    Attributes
+    ----------
+    load_pattern : str
+        Name of the load pattern.
+    element : str
+        Name of the element.
+    fx : float
         Intensity of the uniformly distributed load along the local x-axis.
-    fy : float, optional
+    fy : float
         Intensity of the uniformly distributed load along the local y-axis.
-    fz : float, optional
+    fz : float
         Intensity of the uniformly distributed load along the local z-axis.
-    mx : float, optional
+    mx : float
         Intensity of the uniformly distributed load around the local x-axis.
-    my : float, optional
+    my : float
         Intensity of the uniformly distributed load around the local y-axis.
-    mz : float, optional
+    mz : float
         Intensity of the uniformly distributed load around the local z-axis.
 
     Methods
     -------
-    get_f_fixed()
-        Get f fixed.
+    fixed_load_vector()
+        Returns the fixed-end load vector of the distributed load.
     """
 
     def __init__(self, parent, load_pattern, element, fx=None, fy=None,
@@ -1113,56 +1295,69 @@ class DistributedLoad(AttrDisplay):
         self.my = my
         self.mz = mz
 
-    def get_f_fixed(self):
-        """Get f fixed.
+    def fixed_load_vector(self):
+        """Returns the fixed-end load vector of the distributed load.
 
         Returns
         -------
+        load_vector[flags_dof_element] : ndarray
+            Fixed-end load vector.
 
+        Raises
+        ------
+        NotImplementedError
+            If uniformly distributed moments around the y- or z-axis (my, mz)
+            are set.
         """
-        # flags of degrees of freedom
-        flags_dof = self._parent.get_flags_degrees_freedom()
-        # flags of degrees of freedom of the element
-        flags_dof_element = np.nonzero(np.tile(flags_dof, 2))[0]
-
-        # element object
-        elem = self._parent.elements[self.element]
-        # element's length
-        L = elem.get_length()
+        # degrees of freedom
+        dof_joints = self._parent.get_degrees_freedom()
+        dof_element = np.nonzero(np.tile(dof_joints, 2))[0]
 
         # uniformly distributed forces
         fx = self.fx if self.fx is not None else 0
         fy = self.fy if self.fy is not None else 0
         fz = self.fz if self.fz is not None else 0
+        mx = self.mx if self.mx is not None else 0
+        my = self.my if self.my is not None else 0
+        mz = self.mz if self.mz is not None else 0 
 
-        # support reaction
-        wxl_2 = fx * L / 2
-        wyl_2 = fy * L / 2
-        wzl_2 = fz * L / 2
+        L = self._parent.elements[self.element].length() 
+        load_vector = np.empty((2 * 6, 1))
 
-        wyl_12 = fy * L ** 2 / 12
-        wzl_12 = fz * L ** 2 / 12
+        # fx
+        load_vector[0] = load_vector[6] = -fx * L / 2
+        # fy
+        load_vector[1] = load_vector[7] = -fy * L / 2
 
-        # load vector in local system
-        f_local = np.array([[-wxl_2, -wyl_2, -wzl_2, 0,  wzl_12, -wyl_12,
-                             -wxl_2, -wyl_2, -wzl_2, 0, -wzl_12,  wyl_12]]).T
+        load_vector[5] = -fy * L**2 / 12
+        load_vector[11] = -load_vector[5]
+        # fz
+        load_vector[2] = load_vector[8] = -fz * L / 2
 
-        # load vector in global system
-        f_global = np.dot(elem.get_rotation_transformation_matrix(), f_local)
+        load_vector[4] = fz * L**2 / 12
+        load_vector[10] = -load_vector[4]
+        # mx
+        load_vector[3] = load_vector[9] = -mx * L / 2
+        # my or mz
+        if self.my not in (None, 0) or self.mz not in (None, 0):
+            raise NotImplementedError(
+                "Uniformly distributed moments around the y-axis (my) or"
+                "z-axis (mz) are not currently implemented. Please remove"
+                "these loads or implement their effects."
+            )
 
-        return f_global[flags_dof_element]
+        return load_vector
 
 
 class Displacement(AttrDisplay):
-    """
-    Displacements.
+    """Joint displacements.
 
     Attributes
     ----------
     load_pattern : str
-        Load pattern name.
+        Name of the load pattern.
     joint : str
-        Joint name.
+        Name of the joint.
     ux : float
         Displacement along x-axis.
     uy : float
@@ -1178,8 +1373,8 @@ class Displacement(AttrDisplay):
 
     Methods
     -------
-    get_displacements()
-        Get the displacement vector.
+    displacement_vector()
+        Returns the displacement vector.
     """
 
     def __init__(self, parent, load_pattern, joint, ux=None, uy=None, uz=None,
@@ -1191,9 +1386,9 @@ class Displacement(AttrDisplay):
         parent : Structure
             Structure.
         load_pattern : str
-            Load pattern name.
+            Name of the load pattern.
         joint : str
-            Joint name.
+            Name of the joint.
         ux : float, optional
             Displacement along x-axis.
         uy : float, optional
@@ -1217,8 +1412,14 @@ class Displacement(AttrDisplay):
         self.ry = ry
         self.rz = rz
 
-    def get_displacements(self):
-        """Get displacements"""
+    def displacement_vector(self):
+        """Returns the displacement vector.
+
+        Returns
+        -------
+        ndarray
+            Displacement vector.
+        """
 
         ux = self.ux if self.ux is not None else 0
         uy = self.uy if self.uy is not None else 0

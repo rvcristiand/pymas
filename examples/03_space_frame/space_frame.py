@@ -1,5 +1,3 @@
-import makepath
-
 from pymas import Structure
 
 """
@@ -41,6 +39,8 @@ model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
 
 # solve
 model.run_analysis()
+
+print(model.displacements)
 
 # export
 model.export('space_frame.json')

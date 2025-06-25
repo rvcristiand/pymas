@@ -1,6 +1,28 @@
 [build-system]
-requires = [
-"setuptools>=42",
-"wheel"
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pymas"
+version = "0.0.2a"
+authors = [
+  { name = "Cristian Ramírez", email="rvcristiand@unal.edu.co" },
 ]
-build-backend = "setuptools.build_meta"
+description = "Model and analyze framed structures with Python"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy",
+  "scipy",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords = ["structural analysis", "direct sfiffness method", "matrix analysis"]
+
+[project.urls]
+Homepage = "https://github.com/rvcristiand/pymas"
+Issues = "https://github.com/rvcristiand/pymas/issues"
