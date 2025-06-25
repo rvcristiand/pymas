@@ -1,6 +1,6 @@
 # pymas
 
-Model and analyse framed structures with [Python](https://www.python.org/).
+Model and analyze framed structures with [Python](https://www.python.org/).
 
 ## Table of Contents
 
@@ -12,79 +12,78 @@ Model and analyse framed structures with [Python](https://www.python.org/).
 
 ## Background
 
-Implementación del [método directo de rigideces](https://en.wikipedia.org/wiki/Direct_stiffness_method) en [Python](https://www.python.org).
+pymas is a Python package implementing the [direct stiffness method](https://en.wikipedia.org/wiki/Direct_stiffness_method) that helps you model and analyze linear elastic framed structures under static loads.
 
 ## Install
 
-pymas usa [Python](python.org) y varias librerias científicas (véase [Scipy](https://scipy.org/)). La recomendación es instalar [Ananconda](https://www.anaconda.com/distribution/).
+```
+pip install pymas git+https://github.com/rvcristiand/pymas.git
+```
 
-### Manual
-Puede obtener una copia de pymas descargándola de la [página del repositorio](https://github.com/rvcristiand/pymas), o puede clonar este repositorio con [git](https://git-scm.com/).
+### Manual Installation
+You can obtain a copy of pymas from [its reporsitory](https://github.com/rvcristiand/pymas) or you can clone it using [git](https://git-scm.com/).
 
 ```
 git clone https://github.com/rvcristiand/pymas.git
 ```
 
-Para importar pymas en otros proyectos, incluya la ruta del código fuente de la librería en la lista [`sys.path`](https://docs.python.org/3/tutorial/modules.html#the-module-search-path).
-
-```
-sys.path.append('.../pymas/src/')
-```
-
 ## Usage
 
-Puede analizar estructuras con la clase [Structure](https://github.com/rvcristiand/pymas/blob/00ee3aae72fa10c34b17381532ab87b5d1169c67/src/pymas/core.py#L7).
+You can model and analyze linear elastic framed structures using the [Structure](https://github.com/rvcristiand/pymas/blob/74305d1df22b4b534f352d23f9316267b7b17998/src/pymas/core.py#L8) class.
 
 ```python
 from pymas import Structure
 
-# model simplest beam
+# model and analyze a simple concrete beam subjected to its self weight
 
-b = 0.5  # m
-h = 1  # m
+# dimensions of the rectangular cross section
+b = 0.5  # width, m
+h = 1    # heigh, m
 
-L = 10  # m
-E = 4700*28**0.5*1000  # kN /m2
+# length and stiffness modulus
+L = 10                 # length, m
+E = 4700*28**0.5*1000  # stiffness module, kN/m2
 
-A = b * h  # m2
-w = 24*A  # kN/m
+# cross-sectional area and self weight
+A = b * h  # cross-sectional area, m2
+w = 24*A   # self weight per length, kN/m
 
 # create the model
-model = Structure(uy=True, rz=True)
+model = Structure(type='beam')
 
 # add materials
-model.add_material('concrete', E, E / (2*(1+0.2)))
+model.add_material('concrete 28 MPa', E)
 
 # add sections
-rect_sect = model.add_rectangular_section('V0.5x1.0', width=b, height=h)
+model.add_rectangular_section('0.5x1.0', width=b, height=h)
 
 # add joints
 model.add_joint('a', x=0)
 model.add_joint('b', x=L)
 
 # add frame
-model.add_frame('1', 'a', 'b', 'concrete', 'V0.5x1.0')
+model.add_frame('beam', 'a', 'b', 'concrete 28 MPa', '0.5x1.0')
 
 # add supports
-model.add_support('a', ux=True)
-model.add_support('b', ux=True)
+model.add_support('a', uy=True)
+model.add_support('b', uy=True)
 
 # add load patterns
-loadPattern = model.add_load_pattern('self weight')
+model.add_load_pattern('self weight')
 
 # add distributed loads
-model.add_distributed_load('self weight', '1', fy=-w)
+model.add_distributed_load('self weight', 'beam', fy=-w)
 
-# solve the model
-model.solve()
-model.export('simplest_beam.json')
+# analyze the model
+model.run_analysis()
+model.export('simple_beam.json')
 
 print(model.reactions['self weight']['a'].fy)  # 60 kN
-print(max(model.internal_forces['self weight']['1'].mz)) # 150 kN m
+print(max(model.internal_forces['self weight']['beam'].mz)) # 150 kN m
 ```
 
 ## Contributing
-Puede contribuir en este proyecto creando un [issue](https://github.com/rvcristiand/pymas/issues/new) o haciendo [pull requests](https://github.com/rvcristiand/pymas/pulls).
+You can contribute to this project creating a new [issue](https://github.com/rvcristiand/pymas/issues/new) or creating [pull requests](https://github.com/rvcristiand/pymas/pulls).
 
 ## License
 [MIT](LICENSE)

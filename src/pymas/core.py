@@ -7,6 +7,8 @@ from pymas.primitives import *
 
 class Structure:
     """Model and analyse linear framed structures subjected to static loads.
+    
+    TODO describe this class in a paragraph.
 
     The available type of structures are:
 
@@ -17,33 +19,38 @@ class Structure:
     - 'beam'     : 2 degrees of freedom (uy, rz) applicable for the analysis of
                    beams.
 
+    Note: it would be as many options as type of structures (plane truss,
+          plane element, plane grid, space truss and space element [See Fenves,
+          1964]) and two types of elements: a frame element and a truss
+          element type. To analyse the structure, restrain the displacements
+          of the structure according to the type of structure.
 
     Attributes
     ----------
     type : str
-        Type of structure.
+        Structure type of model.
     materials : dict
-        Materials of the structure.
+        Materials of the model.
     sections : dict
-        Cross sections of the structure.
+        Cross sections of the model.
     joints : dict
-        Joints of the structure.
+        Joints of the model.
     elements : dict
-        Elements of the structure.
+        Elements of the model.
     supports : dict
-        Supports of the structure.
+        Joint supports of the model.
     load_patterns : dict
-        Load patterns of the structure.
+        Load patterns of the model.
     displacements : dict
-        Joint displacements of the structure.
+        Joint displacements of the model.
     end_actions : dict
-        Element end actions of the structure.
+        Element end-actions of the model.
     reactions : dict
-        Support reactions of the structure.
+        Joint support reactions of the model.
     internal_forces: dict
-        Internal element forces of the structure.
+        Internal element forces of the model.
     internal_displacements: dict
-        Internal element displacements of the structure.
+        Internal element displacements of the model.
 
     Methods
     -------
@@ -60,17 +67,19 @@ class Structure:
     add_frame(name, joint_j, joint_k, material, section)
         Add a frame element to the model.
     add_support(joint, [r_ux, r_uy, r_uz, r_rx, r_ry, r_rz])
-        Add a support to a joint of the model.
+        Add a joint support to the model.
     add_load_pattern(name)
         Add a load pattern to the model.
-    add_point_load(load_pattern, joint, [fx, fy, fz, mx, my, mz])
-        Add a point load to a joint of the model.
-    add_distributed_load(load_pattern, element, [fx, fy, fz, mx, my, mz])
-        Add a uniformly distributed load to a element of the model.
-    get_flags_degrees_freedom()
-        Returns the flags of degrees of freedom of the model.
-    set_flags_degrees_freedom()
-        Set the flags of degrees of freedom of the the model.
+    add_joint_point_load(load_pattern, joint, [fx, fy, fz, mx, my, mz])
+        Add a joint point load to the model.
+    add_element_point_load(l_pattern, element, dist, [fx, fy, fz, mx, my, mz])
+        Add a element point load to the model.
+    add_element_distributed_load(l_pattern, element, [fx, fy, fz, mx, my, mz])
+        Add a element uniformly distributed load to the model.
+    get_degrees_freedom()
+        Returns the degrees of freedom of the model.
+    set_degrees_freedom()
+        Set the degrees of freedom of the the model.
     number_active_degrees_freedom()
         Get the number of active degrees of freedom of the model.
     get_joint_indices()
@@ -95,28 +104,28 @@ class Structure:
         Parameters
         ----------
         type : str
-            Type of structure.
+            Structure type.
         """
         # initialize the internal variables
 
-        # flags of degrees of freedom of the structure
+        # degrees of freedom
         self._ux = None
         self._uy = None
         self._uz = None
         self._rx = None
         self._ry = None
         self._rz = None
-        # array of flags of degrees of freedom of the structure
-        self._flags_dof = np.array([])
-        # dictionary of joint indices the structure
-        self._joint_indices = {}
+        # array degrees of freedom
+        self._dof = np.array([])
+        # dictionary of joint indices
+        self._j_i = {}
         # matrix stiffness of the structure
         self._k = np.array([])
 
-        # type of the structure
+        # type of structure
         self.type = type
 
-        # material and section dictionaries
+        # material and cross section dictionaries
         self.materials = {}
         self.sections = {}
 
@@ -124,7 +133,7 @@ class Structure:
         self.joints = {}
         self.elements = {}
 
-        # support and load pattern dictionaries
+        # joint support and load pattern dictionaries
         self.supports = {}
         self.load_patterns = {}
 
@@ -177,11 +186,9 @@ class Structure:
         torsion_constant : float, optional
             Torsion constant of the cross section.
         inertia_y : float, optional
-            Moment of inertia of the cross section with respect to the
-            local y-axis.
+            Inertia of the cross section with respect to the local y-axis.
         inertia_z : float, optional
-            Moment of inertia of the cross section with respect to the
-            local z-axis.
+            Inertia of the cross section with respect to the local z-axis.
 
         Returns
         -------
@@ -308,40 +315,34 @@ class Structure:
 
     def add_support(self, joint, r_ux=None, r_uy=None, r_uz=None, r_rx=None,
                     r_ry=None, r_rz=None):
-        """Add a support to a joint of the model.
+        """Add a joint support to the model.
 
         Parameters
         ----------
         joint : str
             Name of the joint.
         r_ux : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global x-axis.
+            Indicates whether the global x-axis translation is restrained.
         r_uy : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global y-axis.
+            Indicates whether the global y-axis translation is restrained.
         r_uz : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global z-axis.
+            Indicates whether the global z-axis translation is restrained.
         r_rx : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global x-axis.
+            Indicates whether the global x-axis rotation is restrained.
         r_ry : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global y-axis.
+            Indicates whether the global y-axis rotation is restrained.
         r_rz : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global z-axis.
-
+            Indicates whether the global z-axis rotation is restrained.
+        
         Returns
         -------
         support : Support
-            Support.
+            Joint support.
         """
-        # create a support object
+        # create a joint support object
         support = Support(self, joint, r_ux, r_uy, r_uz, r_rx, r_ry, r_rz)
 
-        # add the support object to the dictionary of supports
+        # add the joint support object to the dictionary of supports
         self.supports[joint] = support
 
         return support
@@ -359,14 +360,14 @@ class Structure:
         loadPattern : LoadPattern.
             Load pattern.
         """
-        # add a load pattern to the dictionary of load patterns
+        # add a load pattern object to the dictionary of load patterns
         loadPattern = self.load_patterns[name] = LoadPattern(self, name)
 
         return loadPattern
 
-    def add_point_load(self, load_pattern, joint, fx=None, fy=None, fz=None,
-                       mx=None, my=None, mz=None):
-        """Add a point load to a joint of the model.
+    def add_joint_point_load(self, load_pattern, joint, fx=None, fy=None,
+                             fz=None, mx=None, my=None, mz=None):
+        """Add a joint point load to the model.
 
         Parameters
         ----------
@@ -393,15 +394,52 @@ class Structure:
             Point load.
         """
         # get the load pattern object from the dictionary of load patterns
-        loadPattern = self.load_patterns[load_pattern]
+        lP = self.load_patterns[load_pattern]
         # add the point load to the load pattern
-        pointLoad = loadPattern.add_point_load(joint, fx, fy, fz, mx, my, mz)
+        pointLoad = lP.add_joint_point_load(joint, fx, fy, fz, mx, my, mz)
 
         return pointLoad
 
+    def add_element_point_load(self, load_pattern, element, dist, fx=None,
+                               fy=None, fz=None, mx=None, my=None, mz=None):
+        """Add a element point load to the model.
+
+        Parameters
+        ----------
+        load_pattern : str
+            Name of the load pattern.
+        element : str
+            Name of the element.
+        dist : float
+            Distance of the point load from the near joint.
+        fx : float, optional
+            Intensity of the point load along the local x-axis.
+        fy : float, optional
+            Intensity of the point load along the local y-axis.
+        fz : float, optional
+            Intensity of the point load along the local z-axis.
+        mx : float, optional
+            Intensity of the point load around the local x-axis.
+        my : float, optional
+            Intensity of the point load around the local y-axis.
+        mz : float, optional
+            Intensity of the point load around the local z-axis.
+
+        Returns
+        -------
+        pL : ElementPointLoad
+            Element point load.
+        """
+        # get the load pattern object from the dictionary of load patterns
+        lP = self.load_patterns[load_pattern]
+        # add the point load to the load pattern
+        pL = lP.add_element_point_load(element, dist, fx, fy, fz, mx, my, mz)
+
+        return pL
+
     def add_distributed_load(self, load_pattern, element, fx=None, fy=None,
                              fz=None, mx=None, my=None, mz=None):
-        """Add a uniformly distributed load to an element of the model.
+        """Add a element uniformly distributed load to the model.
 
         Parameters
         ----------
@@ -424,49 +462,48 @@ class Structure:
         
         Returns
         -------
-        distributedLoad : DistributedLoad
+        dL : DistributedLoad
             Uniformly distributed load.
         """
         # get the load pattern object from the dictionary of load patterns
-        lPattern = self.load_patterns[load_pattern]
+        lP = self.load_patterns[load_pattern]
         # add the uniformly distributed load to the load pattern
-        dLoad = lPattern.add_distributed_load(element, fx, fy, fz, mx, my, mz)
+        dL = lP.add_element_distributed_load(element, fx, fy, fz, mx, my, mz)
 
-        return dLoad
+        return dL
 
-    def get_flags_degrees_freedom(self):
-        """Returns the flags of degrees of freedom of the model.
+    def get_degrees_freedom(self):
+        """Returns the degrees of freedom of the model.
 
         Returns
         -------
         ndarray
-            Flags of degrees of freedom.
+            Degrees of freedom of the model.
         """
-        return self._flags_dof
+        return self._dof
 
-    def set_flags_degrees_freedom(self):
-        """Set the flags of degrees of freedom of the model."""
-
+    def set_degrees_freedom(self):
+        """Set the degrees of freedom of the model."""
         # types of structures
-        type_str = ['3D', 'beam']
+        type_str = ['3D', '3D truss', 'beam']
 
-        # set the flags of degrees of freedom
+        # set the degrees of freedom
         if self.type == '3D':
-            self._ux = self._uy = self._uz = True
-            self._rx = self._ry = self._rz = True
+            self._ux = self._uy = self._uz = ux = uy = uz = True
+            self._rx = self._ry = self._rz = rx = ry = rz = True
         elif self.type == '3D truss':
-            self._ux = self._uy = self._uz = True
-            self._rx = self._ry = self._rz = False
+            self._ux = self._uy = self._uz = ux = uy = uz = True
+            self._rx = self._ry = self._rz = rx = ry = rz = False
         elif self.type == 'beam':
-            self._uy = self._rz = True
-            self._ux = self._uz = self._rx = self._ry = False
+            self._uy = self._rz = uy = rz = True
+            self._ux = self._uz = ux = uz = False
+            self._rx = self._ry = rx = ry = False
         else:
             raise ValueError(f"Invalid type of structure '{self.type}'. "
                              f"Choose one from a valid option ('{type_str}')")
 
-        # set the array of degrees of freedom of the model
-        self._flags_dof = np.array([self._ux, self._uy, self._uz,
-                                self._rx, self._ry, self._rz])
+        # set the degrees of freedom of the model
+        self._dof = np.array([ux, uy, uz, rx, ry, rz])
 
     def number_active_degrees_freedom(self):
         """
@@ -475,9 +512,9 @@ class Structure:
         Returns
         -------
         int
-            Number of active degrees of freedom.
+            Number of active degrees of freedom of the model.
         """
-        return np.count_nonzero(self.get_flags_degrees_freedom())
+        return np.count_nonzero(self.get_degrees_freedom())
 
     def get_joint_indices(self):
         """Returns the joint indices of the model.
@@ -487,19 +524,19 @@ class Structure:
         dict
             Joint indices of the model.
         """
-        return self._joint_indices
+        return self._j_i
 
     def set_joint_indices(self):
-        """Set the joint indices of the structure."""
+        """Set the joint indices of the model."""
         # number of joints
         n_j = len(self.joints)
         # number of active degrees of freedom
         n_dof = self.number_active_degrees_freedom()
         # create the joint indices of the structure
-        j_indices = np.arange(n_j * n_dof).reshape(n_j, n_dof)
+        joint_indices = np.arange(n_j * n_dof).reshape(n_j, n_dof)
 
         # set the dictionary of joint indices
-        self._joint_indices = {j: i for j, i in zip(self.joints, j_indices)}
+        self._j_i = {j: i for j, i in zip(self.joints, joint_indices)}
 
     def get_stiffness_matrix(self):
         """Returns the stiffness matrix of the model.
@@ -507,7 +544,7 @@ class Structure:
         Returns
         -------
         ndarray
-            Stiffness matrix.
+            Stiffness matrix of the model.
         """
         return self._k
 
@@ -518,8 +555,8 @@ class Structure:
         # number of elements
         n_e = len(self.elements)
 
-        # flags of degrees of freedom
-        flags_dof = self.get_flags_degrees_freedom()
+        # degrees of freedom
+        dof = self.get_degrees_freedom()
 
         # number of active degrees of freedom
         n_dof = self.number_active_degrees_freedom()
@@ -552,7 +589,7 @@ class Structure:
             # shape of the element stiffness matrix
             e_i = np.broadcast_to(e_i, 2 * (n_dof_e,))
             # get the global matrix stiffness of the element
-            k_e = elem.get_global_stiffness_matrix()
+            k_e = elem.global_stiffness_matrix()
 
             # collapse the replicated joint indices to get the rows
             # and columns positions of the elements of the stiffness matrix
@@ -570,12 +607,11 @@ class Structure:
             indices = j_i[joint]
 
             # restrains of the support
-            restraints = support.get_restraints()
+            restrains = support.restrain_vector()
 
             # modify the stiffness matrix of the structure
-            for index in indices[restraints]:
-                k_s[index] = np.zeros(n_dof_s)
-                k_s[:, index] = np.zeros(n_dof_s)
+            for index in indices[restrains]:
+                k_s[index] = k_s[:, index] = np.zeros(n_dof_s)
                 k_s[index, index] = 1
 
         # set the stiffness matrix of the structure
@@ -583,16 +619,20 @@ class Structure:
 
     def analyse_load_pattern(self, load_pattern):
         """
-        Analyse the structure subjected to a load pattern.
+        Analyse the model subjected to a load pattern.
 
         Parameters
         ----------
         load_pattern : str
             Load pattern name.
         """
-        # flags of degrees of freedom
-        flags_dof = self.get_flags_degrees_freedom()
+        # degrees of freedom of the joints
+        dof_joints = self.get_degrees_freedom()
+        # degrees of freedom of the elements
+        dof_element = np.tile(dof_joints, 2)
 
+        # number active degrees of freedom per element
+        n_dof_element = np.count_nonzero(dof_element)
         # number of joints
         n_j = len(self.joints)
         # joint indices of the structure
@@ -601,19 +641,18 @@ class Structure:
         # load pattern object
         loadPattern = self.load_patterns[load_pattern]
 
-        f = loadPattern.get_f()
-        f_support = np.copy(f)
+        load_vector = loadPattern.load_vector()
+        load_vector_support = np.copy(load_vector)
 
         for j, support in self.supports.items():
             indices = j_i[j]
-            restrains = support.get_restraints()
+            restrains = support.restrain_vector()
 
             for index in indices[restrains]:
-                f_support[index, 0] = 0
+                load_vector_support[index, 0] = 0
 
         # find displacements
-        u = np.linalg.solve(
-            self.get_stiffness_matrix(), f_support)
+        u = np.linalg.solve(self.get_stiffness_matrix(), load_vector_support)
 
         # store displacements
         l_p_d = {}
@@ -621,64 +660,63 @@ class Structure:
         for j in self.joints:
             indices = j_i[j]
 
-            displacement = np.array(6 * [None])
-            displacement[flags_dof] = u[indices, 0]
+            displacement = np.full(6, None)
+            displacement[dof_joints] = u[indices, 0]
 
             l_p_d[j] = Displacement(self, load_pattern, j, *displacement)
 
         self.displacements[load_pattern] = l_p_d
 
         # store element end actions
-        flags_dof_elem = np.tile(flags_dof, 2)
-        n = np.count_nonzero(flags_dof_elem)
         rows = []
         cols = []
         data = []
 
-        load_pattern_end_actions = {}
+        l_p_e_a = {}
 
         for key, elem in self.elements.items():
-            i_element = np.concatenate((j_i[elem.joint_j], j_i[elem.joint_k]))
+            i_e = np.concatenate((j_i[elem.joint_j], j_i[elem.joint_k]))
 
-            k_element = elem.get_local_stiffness_matrix()
-            t = elem.get_rotation_transformation_matrix()
+            k_e = elem.local_stiffness_matrix()
+            t_e = elem.rotation_transformation_matrix()
 
-            u_element = np.zeros((12, 1))
-            u_element[flags_dof_elem] = u[i_element]
-            u_element = np.dot(np.transpose(t), u_element)
+            u_e = np.zeros((12, 1))
+            u_e[dof_element] = u[i_e]
+            u_e = np.dot(np.transpose(t_e), u_e)
+
             f_fixed = np.zeros((12, 1))
 
-            if key in loadPattern.distributed_loads:
-                for distributed_load in loadPattern.distributed_loads[key]:
-                    f_fixed[flags_dof_elem] += distributed_load.get_f_fixed()
+            if key in loadPattern.element_point_loads:
+                for pLoad in loadPattern.element_point_loads[key]:
+                    f_fixed += pLoad.fixed_load_vector()
 
-            f_end_actions = np.dot(k_element, u_element).flatten()
-            f_end_actions += np.dot(np.transpose(t), f_fixed).flatten()
-            f_end_actions = f_end_actions.tolist()
+            if key in loadPattern.element_distributed_loads:
+                for dLoad in loadPattern.element_distributed_loads[key]:
+                    f_fixed += dLoad.fixed_load_vector()
 
-            load_pattern_end_actions[key] = EndActions(
-                self, load_pattern, key, *f_end_actions)
+            f_end_actions = np.ravel(np.dot(k_e, u_e) + f_fixed).tolist()
 
+            l_p_e_a[key] = EndActions(self, load_pattern, key, *f_end_actions)
+            continue
             # reactions
             if elem.joint_j in self.supports or elem.joint_k in self.supports:
-
-                rows.extend(i_element.tolist())
-                cols.extend(len(i_element) * [0])
+                rows.extend(i_e.tolist())
+                cols.extend(n_dof_element * [0])
                 data.extend(
-                    np.dot(t, load_pattern_end_actions[key].get_end_actions()).flatten()[flags_dof_elem].tolist())
+                    np.dot(t_e, l_p_e_a[key].get_end_actions()).flatten()[dof_element].tolist())
 
-        self.end_actions[load_pattern] = load_pattern_end_actions
+        self.end_actions[load_pattern] = l_p_e_a
 
         # store reactions
-        f += loadPattern.get_f_fixed()
+        load_vector += loadPattern.fixed_load_vector()
         f_end_actions = coo_matrix(
-            (data, (rows, cols)), (n_j * n, 1)).toarray()
+            (data, (rows, cols)), (n_j * n_dof_element, 1)).toarray()
 
         load_pattern_reactions = {}
 
         for j in self.supports:
             indices = j_i[j]
-            reactions = f_end_actions[indices] - f[indices]
+            reactions = f_end_actions[indices] - load_vector[indices]
             load_pattern_reactions[j] = Reaction(
                 self, load_pattern, j, *reactions[:, 0])
 
@@ -705,7 +743,7 @@ class Structure:
     def run_analysis(self):
         """Analyse the structure subjected to the load patterns."""
         # set the flags of the degrees of freedom
-        self.set_flags_degrees_freedom()
+        self.set_degrees_freedom()
 
         # set joint indices
         self.set_joint_indices()
@@ -771,19 +809,19 @@ class Structure:
                 data['load_patterns'][key] = {'name': loadPattern.name}
 
                 # save loads at joints
-                if loadPattern.point_loads:
+                if loadPattern.joint_point_loads:
                     data['load_patterns'][key]['joints'] = {}
-                    for _joint, point_loads in loadPattern.point_loads.items():
+                    for _joint, point_loads in loadPattern.joint_point_loads.items():
                         data['load_patterns'][key]['joints'][_joint] = []
                         for pointLoad in point_loads:
                             data['load_patterns'][key]['joints'][_joint].append(
                                 {attr: value for attr, value in pointLoad.__dict__.items() if not attr.startswith('_') and value is not None})
 
                 # save loads at frames
-                if loadPattern.distributed_loads:  # loadPattern.point_loads_at_frames or
+                if loadPattern.element_distributed_loads:  # loadPattern.point_loads_at_frames or
                     data['load_patterns'][key]['frames'] = {}
 
-                    for _frame, distributed_loads in loadPattern.distributed_loads.items():
+                    for _frame, distributed_loads in loadPattern.element_distributed_loads.items():
                         if not _frame in data['load_patterns'][key]['frames']:
                             data['load_patterns'][key]['frames'][_frame] = []
                         for distributedLoad in distributed_loads:
