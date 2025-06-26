@@ -45,7 +45,7 @@ L = 10                 # length, m
 E = 4700*28**0.5*1000  # stiffness module, kN/m2
 
 # cross-sectional area and self weight
-A = b * h  # cross-sectional area, m2
+A = b*h  # cross-sectional area, m2
 w = 24*A   # self weight per length, kN/m
 
 # create the model
@@ -55,7 +55,7 @@ model = Structure(type='beam')
 model.add_material('concrete 28 MPa', E)
 
 # add sections
-model.add_rectangular_section('0.5x1.0', width=b, height=h)
+model.add_rectangular_section('0.5x1.0', base=b, height=h)
 
 # add joints
 model.add_joint('a', x=0)
@@ -65,8 +65,8 @@ model.add_joint('b', x=L)
 model.add_frame('beam', 'a', 'b', 'concrete 28 MPa', '0.5x1.0')
 
 # add supports
-model.add_support('a', uy=True)
-model.add_support('b', uy=True)
+model.add_support('a', r_uy=True)
+model.add_support('b', r_uy=True)
 
 # add load patterns
 model.add_load_pattern('self weight')
@@ -78,8 +78,12 @@ model.add_distributed_load('self weight', 'beam', fy=-w)
 model.run_analysis()
 model.export('simple_beam.json')
 
-print(model.reactions['self weight']['a'].fy)  # 60 kN
-print(max(model.internal_forces['self weight']['beam'].mz)) # 150 kN m
+print(f'Θa: {model.displacements['self weight']['a'].rz:+.3e} rad')
+print(f'Θb: {model.displacements['self weight']['b'].rz:+.3e} rad')
+print(f'Ra: {model.reactions['self weight']['a'].fy:+.1f} kN')
+print(f'Rb: {model.reactions['self weight']['b'].fy:+.1f} kN')
+print(f'Mmax: {max(model.internal_forces['self weight']['beam'].mz):.1f} kN m')
+print(f'νmax: {min(model.internal_displacements['self weight']['beam'].uy):.3e} m')
 ```
 
 ## Contributing

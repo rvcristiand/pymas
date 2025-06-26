@@ -631,6 +631,8 @@ class Structure:
         # degrees of freedom of the elements
         dof_element = np.tile(dof_joints, 2)
 
+        # number active degrees of freedom per joint
+        n_dof_joint = np.count_nonzero(dof_joints)
         # number active degrees of freedom per element
         n_dof_element = np.count_nonzero(dof_element)
         # number of joints
@@ -694,10 +696,11 @@ class Structure:
                 for dLoad in loadPattern.element_distributed_loads[key]:
                     f_fixed += dLoad.fixed_load_vector()
 
-            f_end_actions = np.ravel(np.dot(k_e, u_e) + f_fixed).tolist()
+            f_end_actions = np.full(12, None)
+            f_end_actions[dof_element] = np.ravel(np.dot(k_e, u_e) + f_fixed)[dof_element]
 
             l_p_e_a[key] = EndActions(self, load_pattern, key, *f_end_actions)
-            continue
+
             # reactions
             if elem.joint_j in self.supports or elem.joint_k in self.supports:
                 rows.extend(i_e.tolist())
@@ -710,15 +713,17 @@ class Structure:
         # store reactions
         load_vector += loadPattern.fixed_load_vector()
         f_end_actions = coo_matrix(
-            (data, (rows, cols)), (n_j * n_dof_element, 1)).toarray()
+            (data, (rows, cols)), (n_j * n_dof_joint, 1)).toarray()
 
         load_pattern_reactions = {}
 
         for j in self.supports:
             indices = j_i[j]
-            reactions = f_end_actions[indices] - load_vector[indices]
+            reactions = np.full(6, None)
+            reactions[dof_joints] = np.ravel(f_end_actions[indices] - load_vector[indices])
+
             load_pattern_reactions[j] = Reaction(
-                self, load_pattern, j, *reactions[:, 0])
+                self, load_pattern, j, *reactions)
 
         self.reactions[load_pattern] = load_pattern_reactions
 
