@@ -1,67 +1,65 @@
-# pymas
+# PyMAS: Python-based Direct Stiffness Method
 
-Model and analyze framed structures with [Python](https://www.python.org/).
+![PyPI version](https://img.shields.io/pypi/v/pymas.svg)
+![License](https://img.shields.io/pypi/l/pymas.svg)
 
-## Table of Contents
+---
 
-- [Background](#background)
-- [Install](#install)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+## Project Overview
 
-## Background
+PyMAS is a versatile [Python](https://www.python.org/) library designed for **structural analysis** using the **[Direct Stiffness Method](https://en.wikipedia.org/wiki/Direct_stiffness_method)**. It offers a clear and intuitive object-oriented interface for defining structural elements, materials, loads, and supports. This makes it an excellent resource for civil engineering students, researchers, and professionals.
 
-pymas is a Python package implementing the [direct stiffness method](https://en.wikipedia.org/wiki/Direct_stiffness_method) that helps you model and analyze linear elastic framed structures under static loads.
+### Key Features
+* **Intuitive API:** Define structures, materials, and sections with a straightforward and clear syntax.
+* **Element Support:** Easily define and work with truss, beam and frame 2D or 3D elements.
+* **Extensible Design:** The architecture allows for future expansion to include more complex elements and analysis types.
+* **Open-Source:** Freely available for use, modification, and distribution under the MIT License.
 
-## Install
+---
 
-```
-pip install pymas git+https://github.com/rvcristiand/pymas.git
-```
+## Installation
 
-### Manual Installation
-You can obtain a copy of pymas from [its reporsitory](https://github.com/rvcristiand/pymas) or you can clone it using [git](https://git-scm.com/).
+The easiest way to install PyMAS is directly from PyPI using `pip`. It is recommended to use a **virtual environment** for your projects.
 
-```
-git clone https://github.com/rvcristiand/pymas.git
-```
+```bash
+pip install pymas
+````
 
-## Usage
+-----
 
-You can model and analyze linear elastic framed structures using the [Structure](https://github.com/rvcristiand/pymas/blob/74305d1df22b4b534f352d23f9316267b7b17998/src/pymas/core.py#L8) class.
+## Quick Start: Usage Example
+
+Here is a practical example demonstrating how to model a beam, apply loads, and perform a structural analysis.
 
 ```python
 from pymas import Structure
 
-# model and analyze a simple concrete beam subjected to its self weight
-
 # dimensions of the rectangular cross section
-b = 0.5  # width, m
-h = 1    # heigh, m
+b = 0.5  # cross section width, m
+h = 1.0  # cross section heigh, m
 
 # length and stiffness modulus
-L = 10                 # length, m
-E = 4700*28**0.5*1000  # stiffness module, kN/m2
+L = 10                 # beam length, m
+E = 4700*28**0.5*1000  # Youn's modulus, kN/m2
 
-# cross-sectional area and self weight
+# cross-section area and self weight
 A = b*h  # cross-sectional area, m2
-w = 24*A   # self weight per length, kN/m
+w = 24*A # self weight per length, kN/m
 
-# create the model
+# create the beam-type model
 model = Structure(type='beam')
 
 # add materials
 model.add_material('concrete 28 MPa', E)
 
-# add sections
+# add cross sections
 model.add_rectangular_section('0.5x1.0', base=b, height=h)
 
-# add joints
+# add start and end beam joints
 model.add_joint('a', x=0)
 model.add_joint('b', x=L)
 
-# add frame
+# add a frame for the beam
 model.add_frame('beam', 'a', 'b', 'concrete 28 MPa', '0.5x1.0')
 
 # add supports
@@ -78,6 +76,7 @@ model.add_distributed_load('self weight', 'beam', fy=-w)
 model.run_analysis()
 model.export('simple_beam.json')
 
+# show results
 print(f'Θa: {model.displacements['self weight']['a'].rz:+.3e} rad')
 print(f'Θb: {model.displacements['self weight']['b'].rz:+.3e} rad')
 print(f'Ra: {model.reactions['self weight']['a'].fy:+.1f} kN')
@@ -86,8 +85,29 @@ print(f'Mmax: {max(model.internal_forces['self weight']['beam'].mz):.1f} kN m')
 print(f'νmax: {min(model.internal_displacements['self weight']['beam'].uy):.3e} m')
 ```
 
-## Contributing
-You can contribute to this project creating a new [issue](https://github.com/rvcristiand/pymas/issues/new) or creating [pull requests](https://github.com/rvcristiand/pymas/pulls).
+-----
 
-## License
-[MIT](LICENSE)
+### Contributing
+
+Contributions are welcome\! If you would like to contribute, please follow these steps:
+
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature-name`).
+3.  Make your changes and commit them (`git commit -m 'Add new feature'`).
+4.  Push your changes to the branch (`git push origin feature/your-feature-name`).
+5.  Submit a [Pull Request](https://github.com/rvcristiand/pymas/pulls).
+
+You can find [here](https://www.dataschool.io/how-to-contribute-on-github/) a good gide to this workflow.
+
+-----
+
+### License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/mestradam/pymas/blob/main/LICENSE) file for complete details.
+
+-----
+
+### Contact
+
+For support, questions, or to report bugs, please utilize the [GitHub Issues](https://github.com/rvcristiand/pymas/issues) page.
+
