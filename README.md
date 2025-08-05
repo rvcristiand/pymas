@@ -1,7 +1,14 @@
 # PyMAS: Python-based Direct Stiffness Method
 
-![PyPI version](https://img.shields.io/pypi/v/pymas.svg)
-![License](https://img.shields.io/pypi/l/pymas.svg)
+![GitHub licence](https://img.shields.io/github/license/rvcristiand/pymas)
+![GitHub Release](https://img.shields.io/github/v/release/rvcristiand/pymas)
+![GitHub contributors](https://img.shields.io/github/contributors-anon/rvcristiand/pymas)
+![GitHub top language](https://img.shields.io/github/languages/top/rvcristiand/pymas)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/rvcristiand/pymas)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/rvcristiand/pymas/latest)
+![GitHub last commit](https://img.shields.io/github/last-commit/rvcristiand/pymas)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/rvcristiand/pymas/total)
+![GitHub forks](https://img.shields.io/github/forks/rvcristiand/pymas)
 
 ---
 
