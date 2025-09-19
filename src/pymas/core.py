@@ -1,110 +1,52 @@
 import json
 import numpy as np
-
 from scipy.sparse import coo_matrix
 from pymas.primitives import *
 
 
 class Structure:
-    """Model and analyse linear framed structures subjected to static loads.
-    
-    TODO describe this class in a paragraph.
+    """Models and analyzes linear framed structures subjected to static loads.
 
-    The available type of structures are:
+    This class provides functionality to define, analyze, and export structural
+    models. It supports various structure types, including 3D general analysis,
+    3D trusses, and beams, each with specific degrees of freedom. Users can add
+    materials, cross sections, joints, elements (trusses and frames), supports,
+    and load patterns to build a complete structural model.
 
-    - '3D'       : 6 degrees of freedom (ux, uy, uz, rx, ry, rz) applicable for
-                   a general tridimensional structural analysis.
-    - '3D truss' : 3 degrees of freedom (ux, uy, uz) applicable for the
-                   analysis of 3D trusses.
-    - 'beam'     : 2 degrees of freedom (uy, rz) applicable for the analysis of
-                   beams.
+    The available types of structures are:
 
-    Note: it would be as many options as type of structures (plane truss,
-          plane element, plane grid, space truss and space element [See Fenves,
-          1964]) and two types of elements: a frame element and a truss
-          element type. To analyse the structure, restrain the displacements
-          of the structure according to the type of structure.
+    - '3D': 6 degrees of freedom (ux, uy, uz, rx, ry, rz) for general 3D analysis.
+    - '3D truss': 3 degrees of freedom (ux, uy, uz) for 3D trusses.
+    - 'beam': 2 degrees of freedom (uy, rz) for beam analysis.
 
-    Attributes
-    ----------
-    type : str
-        Structure type of model.
-    materials : dict
-        Materials of the model.
-    sections : dict
-        Cross sections of the model.
-    joints : dict
-        Joints of the model.
-    elements : dict
-        Elements of the model.
-    supports : dict
-        Joint supports of the model.
-    load_patterns : dict
-        Load patterns of the model.
-    displacements : dict
-        Joint displacements of the model.
-    end_actions : dict
-        Element end-actions of the model.
-    reactions : dict
-        Joint support reactions of the model.
-    internal_forces: dict
-        Internal element forces of the model.
-    internal_displacements: dict
-        Internal element displacements of the model.
+    Note: Other structure types (plane truss, plane element, plane grid, etc.)
+    may be implemented in the future.
 
-    Methods
-    -------
-    add_material(name, [modulus_elasticity, modulus_elasticity_shear])
-        Add a material to the model.
-    add_section(name, [area, torsion_constant, inertia_y, inertia_z])
-        Add a cross section to the model.
-    add_rectangular_section(name, base, height)
-        Add a rectangular cross section to the model.
-    add_joint(name, [x, y, z])
-        Add a joint to the model.
-    add_truss(name, joint_j, joint_k, material, section)
-        Add a truss element to the model.
-    add_frame(name, joint_j, joint_k, material, section)
-        Add a frame element to the model.
-    add_support(joint, [r_ux, r_uy, r_uz, r_rx, r_ry, r_rz])
-        Add a joint support to the model.
-    add_load_pattern(name)
-        Add a load pattern to the model.
-    add_joint_point_load(load_pattern, joint, [fx, fy, fz, mx, my, mz])
-        Add a joint point load to the model.
-    add_element_point_load(l_pattern, element, dist, [fx, fy, fz, mx, my, mz])
-        Add a element point load to the model.
-    add_element_distributed_load(l_pattern, element, [fx, fy, fz, mx, my, mz])
-        Add a element uniformly distributed load to the model.
-    get_degrees_freedom()
-        Returns the degrees of freedom of the model.
-    set_degrees_freedom()
-        Set the degrees of freedom of the the model.
-    number_active_degrees_freedom()
-        Get the number of active degrees of freedom of the model.
-    get_joint_indices()
-        Returns the joint indices of the model.
-    set_joint_indices()
-        Set the joint indices of the model.
-    get_stiffness_matrix()
-        Returns the stiffness matrix of the model.
-    set_stiffness_matrix()
-        Set the stiffness matrix of the model.
-    analyse_load_pattern(load_pattern)
-        Analyse the model subjected to a load pattern.
-    run_analysis()
-        Analyse the model subjected to the load patterns.
-    export(filename)
-        Export the model.
+    Attributes:
+        type (str): Structure type of the model.
+        materials (dict): Materials of the model.
+        sections (dict): Cross sections of the model.
+        joints (dict): Joints of the model.
+        elements (dict): Elements of the model.
+        supports (dict): Joint supports of the model.
+        load_patterns (dict): Load patterns of the model.
+        displacements (dict): Joint displacements of the model.
+        end_actions (dict): Element end actions of the model.
+        reactions (dict): Joint support reactions of the model.
+        internal_forces (dict): Internal element forces of the model.
+        internal_displacements (dict): Internal element displacements of the model.
     """
 
     def __init__(self, type='3D'):
-        """Instantiate a Structure object.
+        """Instantiates a Structure object.
 
-        Parameters
-        ----------
-        type : str
-            Structure type.
+        Initializes a new structural model with a specified type and sets up
+        internal variables and empty dictionaries for various structural
+        components and analysis results.
+
+        Args:
+            type (str, optional): The structure type.
+                Defaults to '3D'.
         """
         # initialize the internal variables
 
@@ -150,19 +92,15 @@ class Structure:
                      modulus_elasticity_shear=None):
         """Add a material to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the material.
-        modulus_elasticity : float, optional
-            Modulus of elasticity of the material.
-        modulus_elasticity_shear : float, optional
-            Modulus of elasticity in shear of the material.
+        Creates and adds a new material object to the model's material dictionary.
 
-        Returns
-        -------
-        material : Material
-            Material.
+        Args:
+            name (str): Name of the material.
+            modulus_elasticity (float, optional): Elastic modulus of the material.
+            modulus_elasticity_shear (float, optional): Shear modulus of the material.
+
+        Returns:
+            Material: Material object.
         """
         # material properties
         E = modulus_elasticity
@@ -177,23 +115,17 @@ class Structure:
                     inertia_y=None, inertia_z=None):
         """Add a cross section to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the cross section.
-        area : float, optional
-            Area of the cross section.
-        torsion_constant : float, optional
-            Torsion constant of the cross section.
-        inertia_y : float, optional
-            Inertia of the cross section with respect to the local y-axis.
-        inertia_z : float, optional
-            Inertia of the cross section with respect to the local z-axis.
+        Creates and adds a new generic cross section object to the model's section dictionary.
 
-        Returns
-        -------
-        section : Section
-            Cross section.
+        Args:
+            name (str): Name of the cross section.
+            area (float, optional): Area of the cross section.
+            torsion_constant (float, optional): Torsion constant of the cross section.
+            inertia_y (float, optional): Inertia of the cross section with respect to the local y-axis.
+            inertia_z (float, optional): Inertia of the cross section with respect to the local z-axis.
+
+        Returns:
+            Section: Cross section.
         """
         # cross section properties
         A = area
@@ -209,19 +141,16 @@ class Structure:
     def add_rectangular_section(self, name, base, height):
         """Add a rectangular cross section to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the rectangular cross section.
-        base : float
-            Base of the rectangular cross section.
-        height : float
-            Height of the rectangular cross section.
+        Creates and adds a new rectangular cross section object to the model's section dictionary,
+        calculating its area, torsion constant, and moments of inertia based on base and height.
 
-        Returns
-        -------
-        rect_sect : RectangularSection
-            Rectangular cross section.
+        Args:
+            name (str): Name of the rectangular cross section.
+            base (float): Base of the rectangular cross section.
+            height (float): Height of the rectangular cross section.
+
+        Returns:
+            RectangularSection: Rectangular cross section.
         """
         # create a rectangular cross section object
         rect_sect = RectangularSection(self, name, base, height)
@@ -234,21 +163,16 @@ class Structure:
     def add_joint(self, name, x=None, y=None, z=None):
         """Add a joint to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the joint.
-        x : float, optional
-            Coordinate X of the joint.
-        y : float, optional
-            Coordinate Y of the joint.
-        z : float, optional
-            Coordinate Z of the joint.
+        Creates and adds a new joint object to the model's joint dictionary.
 
-        Returns
-        -------
-        joint : Joint
-            Joint.
+        Args:
+            name (str): Name of the joint.
+            x (float, optional): Coordinate X of the joint.
+            y (float, optional): Coordinate Y of the joint.
+            z (float, optional): Coordinate Z of the joint.
+
+        Returns:
+            Joint: Joint object.
         """
         # add a joint object to the dictionary of joints
         joint = self.joints[name] = Joint(self, name, x, y, z)
@@ -258,23 +182,18 @@ class Structure:
     def add_truss(self, name, joint_j, joint_k, material, section):
         """Add a truss element to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the truss.
-        joint_j : str
-            Name of the near joint of the truss.
-        joint_k : str
-            Name of the far joint of the truss.
-        material : str
-            Name of the material of the truss.
-        section : str
-            Name of the section of the truss.
+        Creates and adds a new truss element object to the model's element dictionary, connecting two
+        specified joints with a given material and cross section.
 
-        Returns
-        -------
-        truss : Truss
-            Truss element.
+        Args:
+            name (str): Name of the truss.
+            joint_j (str): Name of the near joint of the truss.
+            joint_k (str): Name of the far joint of the truss.
+            material (str): Name of the material of the truss.
+            section (str): Name of the section of the truss.
+
+        Returns:
+            Truss: Truss element.
         """
         # create a truss object
         truss = Truss(self, name, joint_j, joint_k, material, section)
@@ -287,23 +206,18 @@ class Structure:
     def add_frame(self, name, joint_j, joint_k, material, section):
         """Add a frame element to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the frame.
-        joint_j : str
-            Name of the near joint of the frame.
-        joint_k : str
-            Name of the far joint of the frame.
-        material : str
-            Name of the material of the frame.
-        section : str
-            Name of the section of the frame.
+        Creates and adds a new frame element object to the model's element dictionary, connecting two
+        specified joints with a given material and cross section.
 
-        Returns
-        -------
-        element : Frame
-            Frame element.
+        Args:
+            name (str): Name of the frame.
+            joint_j (str): Name of the near joint of the frame.
+            joint_k (str): Name of the far joint of the frame.
+            material (str): Name of the material of the frame.
+            section (str): Name of the section of the frame.
+
+        Returns:
+            Frame: Frame element.
         """
         # create a frame object
         element = Frame(self, name, joint_j, joint_k, material, section)
@@ -315,29 +229,22 @@ class Structure:
 
     def add_support(self, joint, r_ux=None, r_uy=None, r_uz=None, r_rx=None,
                     r_ry=None, r_rz=None):
-        """Add a joint support to the model.
+        """Add a joint support (restrain) to the model.
 
-        Parameters
-        ----------
-        joint : str
-            Name of the joint.
-        r_ux : bool, optional
-            Indicates whether the global x-axis translation is restrained.
-        r_uy : bool, optional
-            Indicates whether the global y-axis translation is restrained.
-        r_uz : bool, optional
-            Indicates whether the global z-axis translation is restrained.
-        r_rx : bool, optional
-            Indicates whether the global x-axis rotation is restrained.
-        r_ry : bool, optional
-            Indicates whether the global y-axis rotation is restrained.
-        r_rz : bool, optional
-            Indicates whether the global z-axis rotation is restrained.
-        
-        Returns
-        -------
-        support : Support
-            Joint support.
+        Creates and adds a new support object to the model's support dictionary for a specified joint,
+        defining which degrees of freedom are restrained.
+
+        Args:
+            joint (str): Name of the joint.
+            r_ux (bool, optional): Whether the global x-axis translation is restrained.
+            r_uy (bool, optional): Whether the global y-axis translation is restrained.
+            r_uz (bool, optional): Whether the global z-axis translation is restrained.
+            r_rx (bool, optional): Whether the global x-axis rotation is restrained.
+            r_ry (bool, optional): Whether the global y-axis rotation is restrained.
+            r_rz (bool, optional): Whether the global z-axis rotation is restrained.
+
+        Returns:
+            Support: Joint support.
         """
         # create a joint support object
         support = Support(self, joint, r_ux, r_uy, r_uz, r_rx, r_ry, r_rz)
@@ -350,15 +257,13 @@ class Structure:
     def add_load_pattern(self, name):
         """Add a load pattern to the model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the load pattern.
+        Creates and adds a new load pattern object to the model's load pattern dictionary.
 
-        Returns
-        -------
-        loadPattern : LoadPattern.
-            Load pattern.
+        Args:
+            name (str): Name of the load pattern.
+
+        Returns:
+            LoadPattern: Load pattern.
         """
         # add a load pattern object to the dictionary of load patterns
         loadPattern = self.load_patterns[name] = LoadPattern(self, name)
@@ -369,29 +274,20 @@ class Structure:
                              fz=None, mx=None, my=None, mz=None):
         """Add a joint point load to the model.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Name of the load pattern.
-        joint : str
-            Name of the joint.
-        fx : float, optional
-            Intensity of the point load along the global x-axis.
-        fy : float, optional
-            Intensity of the point load along the global y-axis.
-        fz : float, optional
-            Intensity of the point load along the global z-axis.
-        mx : float, optional
-            Intensity of the point load around the global x-axis.
-        my : float, optional
-            Intensity of the point load around the global y-axis.
-        mz : float, optional
-            Intensity of the point load around the global z-axis.
+        Adds a point load or moment to a specific joint as part of a given load pattern.
 
-        Returns
-        -------
-        pointLoad : PointLoad
-            Point load.
+        Args:
+            load_pattern (str): Name of the load pattern.
+            joint (str): Name of the joint.
+            fx (float, optional): Intensity of the point load along the global x-axis.
+            fy (float, optional): Intensity of the point load along the global y-axis.
+            fz (float, optional): Intensity of the point load along the global z-axis.
+            mx (float, optional): Intensity of the point load around the global x-axis.
+            my (float, optional): Intensity of the point load around the global y-axis.
+            mz (float, optional): Intensity of the point load around the global z-axis.
+
+        Returns:
+            PointLoad: Point load.
         """
         # get the load pattern object from the dictionary of load patterns
         lP = self.load_patterns[load_pattern]
@@ -402,33 +298,24 @@ class Structure:
 
     def add_element_point_load(self, load_pattern, element, dist, fx=None,
                                fy=None, fz=None, mx=None, my=None, mz=None):
-        """Add a element point load to the model.
+        """Add an element point load to the model.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Name of the load pattern.
-        element : str
-            Name of the element.
-        dist : float
-            Distance of the point load from the near joint.
-        fx : float, optional
-            Intensity of the point load along the local x-axis.
-        fy : float, optional
-            Intensity of the point load along the local y-axis.
-        fz : float, optional
-            Intensity of the point load along the local z-axis.
-        mx : float, optional
-            Intensity of the point load around the local x-axis.
-        my : float, optional
-            Intensity of the point load around the local y-axis.
-        mz : float, optional
-            Intensity of the point load around the local z-axis.
+        Adds a point load or moment to a specific element at a given distance from its near joint, as part of
+        a given load pattern.
 
-        Returns
-        -------
-        pL : ElementPointLoad
-            Element point load.
+        Args:
+            load_pattern (str): Name of the load pattern.
+            element (str): Name of the element.
+            dist (float): Distance of the point load from the near joint.
+            fx (float, optional): Intensity of the point load along the local x-axis.
+            fy (float, optional): Intensity of the point load along the local y-axis.
+            fz (float, optional): Intensity of the point load along the local z-axis.
+            mx (float, optional): Intensity of the point load around the local x-axis.
+            my (float, optional): Intensity of the point load around the local y-axis.
+            mz (float, optional): Intensity of the point load around the local z-axis.
+
+        Returns:
+            ElementPointLoad: Element point load.
         """
         # get the load pattern object from the dictionary of load patterns
         lP = self.load_patterns[load_pattern]
@@ -439,31 +326,22 @@ class Structure:
 
     def add_distributed_load(self, load_pattern, element, fx=None, fy=None,
                              fz=None, mx=None, my=None, mz=None):
-        """Add a element uniformly distributed load to the model.
+        """Add an element uniformly distributed load to the model.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Name of the load pattern.
-        element : str
-            Name of the element.
-        fx : float, optional
-            Intensity of the distributed load along the local x-axis.
-        fy : float, optional
-            Intensity of the distributed load along the local y-axis.
-        fz : float, optional
-            Intensity of the distributed load along the local z-axis.
-        mx : float, optional
-            Intensity of the distributed load around the local x-axis.
-        my : float, optional
-            Intensity of the distributed load around the local y-axis.
-        mz : float, optional
-            Intensity of the distributed load around the local z-axis.
-        
-        Returns
-        -------
-        dL : DistributedLoad
-            Uniformly distributed load.
+        Adds a uniformly distributed load or moment to a specific element as part of a given load pattern.
+
+        Args:
+            load_pattern (str): Name of the load pattern.
+            element (str): Name of the element.
+            fx (float, optional): Intensity of the distributed load along the local x-axis.
+            fy (float, optional): Intensity of the distributed load along the local y-axis.
+            fz (float, optional): Intensity of the distributed load along the local z-axis.
+            mx (float, optional): Intensity of the distributed load around the local x-axis.
+            my (float, optional): Intensity of the distributed load around the local y-axis.
+            mz (float, optional): Intensity of the distributed load around the local z-axis.
+
+        Returns:
+            DistributedLoad: Uniformly distributed load.
         """
         # get the load pattern object from the dictionary of load patterns
         lP = self.load_patterns[load_pattern]
@@ -473,17 +351,22 @@ class Structure:
         return dL
 
     def get_degrees_freedom(self):
-        """Returns the degrees of freedom of the model.
+        """Return the degrees of freedom of the model.
 
-        Returns
-        -------
-        ndarray
-            Degrees of freedom of the model.
+        Returns:
+            ndarray: Degrees of freedom of the model.
         """
         return self._dof
 
     def set_degrees_freedom(self):
-        """Set the degrees of freedom of the model."""
+        """Set the degrees of freedom of the model.
+
+        This method configures the active translational and rotational degrees of freedom (ux, uy, uz, rx,
+        ry, rz) according to the `type` attribute of the structure (e.g., '3D', '3D truss', 'beam').
+
+        Raises:
+            ValueError: If an invalid structure type is specified.
+        """
         # types of structures
         type_str = ['3D', '3D truss', 'beam']
 
@@ -506,28 +389,27 @@ class Structure:
         self._dof = np.array([ux, uy, uz, rx, ry, rz])
 
     def number_active_degrees_freedom(self):
-        """
-        Get the number of active degrees of freedom of the model.
+        """Get the number of active degrees of freedom of the model.
 
-        Returns
-        -------
-        int
-            Number of active degrees of freedom of the model.
+        Returns:
+            int: Number of active degrees of freedom of the model.
         """
         return np.count_nonzero(self.get_degrees_freedom())
 
     def get_joint_indices(self):
-        """Returns the joint indices of the model.
+        """Return the joint indices of the model.
 
-        Returns
-        -------
-        dict
-            Joint indices of the model.
+        Returns:
+            dict: Joint indices of the model.
         """
         return self._j_i
 
     def set_joint_indices(self):
-        """Set the joint indices of the model."""
+        """Set the joint indices of the model.
+
+        This method assigns unique, contiguous global indices to each active degree of freedom for every
+        joint in the model, storing them in the `_j_i` dictionary.
+        """
         # number of joints
         n_j = len(self.joints)
         # number of active degrees of freedom
@@ -539,17 +421,20 @@ class Structure:
         self._j_i = {j: i for j, i in zip(self.joints, joint_indices)}
 
     def get_stiffness_matrix(self):
-        """Returns the stiffness matrix of the model.
+        """Return the stiffness matrix of the model.
 
-        Returns
-        -------
-        ndarray
-            Stiffness matrix of the model.
+        Returns:
+            ndarray: Stiffness matrix of the model.
         """
         return self._k
 
     def set_stiffness_matrix(self):
-        """Set the stiffness matrix of the structure."""
+        """Set the stiffness matrix of the structure.
+
+        This method calculates the local stiffness matrices for all elements, transforms them to the global
+        coordinate system, and assembles them into the global stiffness matrix of the structure. It also
+        applies modifications due to supports.
+        """
         # number of joints
         n_j = len(self.joints)
         # number of elements
@@ -618,13 +503,13 @@ class Structure:
         self._k = k_s
 
     def analyse_load_pattern(self, load_pattern):
-        """
-        Analyse the model subjected to a load pattern.
+        """Analyse the model subjected to a load pattern.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Load pattern name.
+        This method calculates the joint displacements, element end actions, support reactions, and internal forces
+        and displacements for a given load pattern.
+
+        Args:
+            load_pattern (str): Load pattern name.
         """
         # degrees of freedom of the joints
         dof_joints = self.get_degrees_freedom()
@@ -746,7 +631,12 @@ class Structure:
         self.internal_displacements[load_pattern] = load_pattern_internal_displacements
 
     def run_analysis(self):
-        """Analyse the structure subjected to the load patterns."""
+        """Analyse the structure subjected to all load patterns.
+
+        This method first sets up the degrees of freedom, joint indices, and the global stiffness matrix, then
+        proceeds to analyze the structure for each load pattern sequentially.
+
+        """
         # set the flags of the degrees of freedom
         self.set_degrees_freedom()
 
@@ -761,13 +651,14 @@ class Structure:
             self.analyse_load_pattern(load_pattern)
 
     def export(self, filename):
-        """
-        Save the structure to a file in json format.
+        """Save the structure data to a file in JSON format.
 
-        Parameters
-        ----------
-        filename : string
-            Filename
+        This method serializes the model's materials, sections, joints, elements, supports, load patterns (including
+        their applied loads), and analysis results (displacements, reactions, end actions, internal forces, and
+        internal displacements) into a JSON format.
+
+        Args:
+            filename (str): Filename.
         """
         data = {}
 
