@@ -325,7 +325,8 @@ class Frame(Truss):
         rotation_transformation_matrix(): Return the rotation transformation matrix of the frame.
         local_stiffness_matrix(): Return the local stiffness matrix of the frame.
         global_stiffness_matrix(): Return the global stiffness matrix of the frame.
-        TODO get_internal_forces(load_pattern[, no_div]): Return the internal forces of the frame.
+        get_internal_forces(): Return the internal forces of the frame.
+        get_internal_displacements(): Return the internal displacements of the frame.
     """
 
     def __init__(self, parent, name, joint_j, joint_k, material, section):
