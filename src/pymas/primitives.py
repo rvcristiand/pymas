@@ -1220,18 +1220,18 @@ class EndActions(AttrDisplay):
             parent (Structure): Parent structure object.
             load_pattern (str): Load pattern name.
             element (str): Frame name.
-            fx_j (float, optional): Force along the x-axis at joint_j. Defaults to 0.0.
-            fy_j (float, optional): Force along the y-axis at joint_j. Defaults to 0.0.
-            fz_j (float, optional): Force along the z-axis at joint_j. Defaults to 0.0.
-            mx_j (float, optional): Moment around the x-axis at joint_j. Defaults to 0.0.
-            my_j (float, optional): Moment around the y-axis at joint_j. Defaults to 0.0.
-            mz_j (float, optional): Moment around the z-axis at joint_j. Defaults to 0.0.
-            fx_k (float, optional): Force along the x-axis at joint_k. Defaults to 0.0.
-            fy_k (float, optional): Force along the y-axis at joint_k. Defaults to 0.0.
-            fz_k (float, optional): Force along the z-axis at joint_k. Defaults to 0.0.
-            mx_k (float, optional): Moment around the x-axis at joint_k. Defaults to 0.0.
-            my_k (float, optional): Moment around the y-axis at joint_k. Defaults to 0.0.
-            mz_k (float, optional): Moment around the z-axis at joint_k. Defaults to 0.0.
+            fx_j (float, optional): Force along the x-axis at joint_j. Defaults to None.
+            fy_j (float, optional): Force along the y-axis at joint_j. Defaults to None.
+            fz_j (float, optional): Force along the z-axis at joint_j. Defaults to None.
+            mx_j (float, optional): Moment around the x-axis at joint_j. Defaults to None.
+            my_j (float, optional): Moment around the y-axis at joint_j. Defaults to None.
+            mz_j (float, optional): Moment around the z-axis at joint_j. Defaults to None.
+            fx_k (float, optional): Force along the x-axis at joint_k. Defaults to None.
+            fy_k (float, optional): Force along the y-axis at joint_k. Defaults to None.
+            fz_k (float, optional): Force along the z-axis at joint_k. Defaults to None.
+            mx_k (float, optional): Moment around the x-axis at joint_k. Defaults to None.
+            my_k (float, optional): Moment around the y-axis at joint_k. Defaults to None.
+            mz_k (float, optional): Moment around the z-axis at joint_k. Defaults to None.
         """
         self._parent = parent
         self.element = element
@@ -1298,12 +1298,12 @@ class Reaction(AttrDisplay):
             parent (Structure): Structure object.
             load_pattern (str): Load pattern name.
             joint (str): Joint name.
-            fx (float, optional): Force along the x-axis. Defaults to 0.0.
-            fy (float, optional): Force along the y-axis. Defaults to 0.0.
-            fz (float, optional): Force along the z-axis. Defaults to 0.0.
-            mx (float, optional): Moment around the x-axis. Defaults to 0.0.
-            my (float, optional): Moment around the y-axis. Defaults to 0.0.
-            mz (float, optional): Moment around the z-axis. Defaults to 0.0.
+            fx (float, optional): Force along the x-axis. Defaults to None.
+            fy (float, optional): Force along the y-axis. Defaults to None.
+            fz (float, optional): Force along the z-axis. Defaults to None.
+            mx (float, optional): Moment around the x-axis. Defaults to None.
+            my (float, optional): Moment around the y-axis. Defaults to None.
+            mz (float, optional): Moment around the z-axis. Defaults to None.
         """
         self._parent = parent
         self.load_pattern = load_pattern
