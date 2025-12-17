@@ -8,30 +8,23 @@ from pymas.classtools import AttrDisplay
 class Material(AttrDisplay):
     """Linear elastic material.
 
-    Attributes
-    ----------
-    name : str
-        Name of the material.
-    E : float
-        Modulus of elasticity of the material.
-    G : float
-        Modulus of elasticity in shear of the material.
+    This class stores the fundamental properties of a material used in the structural model.
+
+    Attributes:
+        name (str): Name of the material.
+        E (float): Modulus of elasticity of the material.
+        G (float): Modulus of elasticity in shear of the material.
     """
 
     def __init__(self, parent, name, modulus_elasticity=None,
                  modulus_elasticity_shear=None):
         """Instantiate a Material object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the material.
-        modulus_elasticity : float
-            Modulus of elasticity of the material.
-        modulus_elasticity_shear : float
-            Modulus of elasticity in shear of the material.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the material.
+            modulus_elasticity (float): Modulus of elasticity of the material.
+            modulus_elasticity_shear (float): Modulus of elasticity in shear of the material.
         """
         self._parent = parent
         self.name = name
@@ -42,38 +35,27 @@ class Material(AttrDisplay):
 class Section(AttrDisplay):
     """Cross section.
 
-    Attributes
-    ----------
-    name : str
-        Name of the cross section.
-    A : float
-        Area of the cross section.
-    J : float
-        Torsion constant of the cross section.
-    Iy : float
-        Inertia of the cross section with respect to the local y-axis.
-    Iz : float
-        Inertia of the cross section with respect to the local z-axis.
+    This class defines the geometric properties of a cross section used for structural elements.
+
+    Attributes:
+        name (str): Name of the cross section.
+        A (float): Area of the cross section.
+        J (float): Torsion constant of the cross section.
+        Iy (float): Inertia of the cross section with respect to the local y-axis.
+        Iz (float): Inertia of the cross section with respect to the local z-axis.
     """
 
     def __init__(self, parent, name, area=None, torsion_constant=None,
                  inertia_y=None, inertia_z=None):
         """Instantiate a Section object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the cross section.
-        area : float
-            Area of the cross section.
-        torsion : float
-            Torsion constant of the cross section.
-        inertia_y : float
-            Inertia of the cross section with respect to the local y-axis.
-        inertia_z : float
-            Inertia of the cross section with respect to the local z-axis.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the cross section.
+            area (float): Area of the cross section.
+            torsion (float): Torsion constant of the cross section.
+            inertia_y (float): Inertia of the cross section with respect to the local y-axis.
+            inertia_z (float): Inertia of the cross section with respect to the local z-axis.
         """
         self._parent = parent
         self.name = name
@@ -86,37 +68,27 @@ class Section(AttrDisplay):
 class RectangularSection(Section):
     """Rectangular cross section.
 
-    Attributes
-    ----------
-    name : str
-        Name of the cross section.
-    base : float
-        Base of the cross section.
-    height : float
-        Height of the cross section.
-    A : float
-        Area of the cross section.
-    J : float
-        Torsion constant of the cross section.
-    Iy : float
-        Inertia of the cross section with respect to the local y-axis.
-    Iz : float
-        Inertia of the cross section with respect to the local z-axis.
+    This class extends the generic `Section` class to automatically calculate geometric properties for a rectangular
+    shape based on its base and height.
+
+    Attributes:
+        name (str): Name of the cross section.
+        base (float): Base of the cross section.
+        height (float): Height of the cross section.
+        A (float): Area of the cross section.
+        J (float): Torsion constant of the cross section.
+        Iy (float): Inertia of the cross section with respect to the local y-axis.
+        Iz (float): Inertia of the cross section with respect to the local z-axis.
     """
 
     def __init__(self, parent, name, base, height):
         """Instantiate a RectangularSection object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the rectangular cross section.
-        base : float
-            Base of the rectangular cross section.
-        height : float
-            Height of the rectangular cross section.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the rectangular cross section.
+            base (float): Base of the rectangular cross section.
+            height (float): Height of the rectangular cross section.
         """
         a, b = sorted((base, height))
 
@@ -134,38 +106,27 @@ class RectangularSection(Section):
 class Joint(AttrDisplay):
     """End of elements.
 
-    Attributes
-    ----------
-    name : str
-        Name of the joint.
-    x : float
-        Coordinate X of the joint.
-    y : float
-        Coordinate Y of the joint.
-    z : float
-        Coordinate Z of the joint.
+    A joint defines a node in the structural model with specific spatial coordinates.
 
-    Methods
-    -------
-    coordinate_vector()
-        Returns the coordinate vector of the joint.
+    Attributes:
+        name (str): Name of the joint.
+        x (float): Coordinate X of the joint.
+        y (float): Coordinate Y of the joint.
+        z (float): Coordinate Z of the joint.
+
+    Methods:
+        coordinate_vector(): Return the coordinate vector of the joint.
     """
 
     def __init__(self, parent, name, x=None, y=None, z=None):
         """Instantiate a Joint object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the joint.
-        x : float, optional
-            Coordinate X of the joint.
-        y : float, optional
-            Coordinate Y of the joint.
-        z : float, optional
-            Coordinate Z of the joint.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the joint.
+            x (float, optional): Coordinate X of the joint.
+            y (float, optional): Coordinate Y of the joint.
+            z (float, optional): Coordinate Z of the joint.
         """
         self._parent = parent
         self.name = name
@@ -174,12 +135,10 @@ class Joint(AttrDisplay):
         self.z = z
 
     def coordinate_vector(self):
-        """Returns the coordinate vector of the joint.
+        """Return the coordinate vector of the joint.
 
-        Returns
-        -------
-        ndarray
-            Coordinate vector of the joint.
+        Returns:
+            ndarray: Coordinate vector of the joint.
         """
         x = self.x if self.x is not None else 0
         y = self.y if self.y is not None else 0
@@ -191,53 +150,35 @@ class Joint(AttrDisplay):
 class Truss(AttrDisplay):
     """Long elements interconnected at hinged joints.
 
-    Attributes
-    ----------
-    name : str
-        Name of the truss.
-    joint_j : str
-        Name of the near joint of the truss.
-    joint_k : str
-        Name of the far joint of the truss.
-    material : str
-        Name of the material of the truss.
-    section : str
-        Name of the cross section of the truss.
+    This class models a truss element with axial stiffness only.
 
-    Methods
-    -------
-    length()
-        Returns the length of the truss.
-    direction_cosines_vector()
-        Returns the direction cosines vector of the truss.
-    rotation_matrix()
-        Returns the rotation matrix of the truss.
-    rotation_transformation_matrix()
-        Returns the rotation transformation matrix of the truss.
-    local_stiffness_matrix()
-        Returns the local stiffness matrix of the truss.
-    global_stiffness_matrix()
-        Returns the global stiffness matrix of the truss.
-    TODO get_internal_forces(load_pattern[, no_div])
-        Returns the internal forces of the truss.
+    Attributes:
+        name (str): Name of the truss.
+        joint_j (str): Name of the near joint of the truss.
+        joint_k (str): Name of the far joint of the truss.
+        material (str): Name of the material of the truss.
+        section (str): Name of the cross section of the truss.
+
+    Methods:
+        length(): Return the length of the truss.
+        direction_cosines_vector(): Return the direction cosines vector of the truss.
+        rotation_matrix(): Return the rotation matrix of the truss.
+        rotation_transformation_matrix(): Return the rotation transformation matrix of the truss.
+        local_stiffness_matrix(): Return the local stiffness matrix of the truss.
+        global_stiffness_matrix(): Return the global stiffness matrix of the truss.
+        TODO get_internal_forces(load_pattern[, no_div]): Return the internal forces of the truss.
     """
+
     def __init__(self, parent, name, joint_j, joint_k, material, section):
         """Instantiate a Truss object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the truss.
-        joint_j : str
-            Name of the near joint of the truss.
-        joint_k : str
-            Name of the far joint of the truss.
-        material : str
-            Name of the material of the truss.
-        section : str
-            Name of the cross section of the truss.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the truss.
+            joint_j (str): Name of the near joint of the truss.
+            joint_k (str): Name of the far joint of the truss.
+            material (str): Name of the material of the truss.
+            section (str): Name of the cross section of the truss.
         """
         self._parent = parent
         self.name = name
@@ -247,12 +188,12 @@ class Truss(AttrDisplay):
         self.section = section
 
     def length(self):
-        """Returns the length of the truss.
+        """Return the length of the truss.
 
-        Returns
-        -------
-        float
-            Length of the truss.
+        Calculates the Euclidean distance between the near and far joints.
+
+        Returns:
+            float: Length of the truss.
         """
         j = self._parent.joints[self.joint_j].coordinate_vector()
         k = self._parent.joints[self.joint_k].coordinate_vector()
@@ -260,26 +201,27 @@ class Truss(AttrDisplay):
         return np.linalg.norm(k - j)
 
     def direction_cosines_vector(self):
-        """Returns the direction cosines of the truss.
+        """Return the direction cosines of the truss.
 
-        Returns
-        -------
-        ndarray
-            Direction cosines of the truss.
+        Calculates the unit vector along the truss's length in the global coordinate system.
+
+        Returns:
+            ndarray: Direction cosines of the truss.
         """
         j  = self._parent.joints[self.joint_j].coordinate_vector()
         k = self._parent.joints[self.joint_k].coordinate_vector()
-        vector = k - j 
+        vector = k - j
 
         return vector / np.linalg.norm(vector)
 
     def rotation_matrix(self):
-        """Returns the rotation matrix of the truss.
+        """Return the rotation matrix of the truss.
 
-        Returns
-        -------
-        ndarray
-            Rotation matrix of the truss.
+        This matrix transforms vectors from the local coordinate system of the truss to the global coordinate
+        system.
+
+        Returns:
+            ndarray: Rotation matrix of the truss.
         """
         v_from = np.array([1, 0, 0])
         v_to = self.direction_cosines_vector()
@@ -299,12 +241,14 @@ class Truss(AttrDisplay):
         return Rotation.from_quat(quaternion).as_matrix()
 
     def rotation_transformation_matrix(self):
-        """Returns the rotation transformation matrix of the truss.
+        """Return the rotation transformation matrix of the truss.
 
-        Returns
-        -------
-        ndarray
-            Rotation transformation matrix of the truss.
+
+        This matrix transforms displacement and force vectors between the local and global coordinate systems for an
+        element with 6 degrees of freedom at each end.
+
+        Returns:
+            ndarray: Rotation transformation matrix of the truss.
         """
         indptr = np.array([0, 1, 2, 3, 4])
         indices = np.array([0, 1, 2, 3])
@@ -313,12 +257,13 @@ class Truss(AttrDisplay):
         return bsr_matrix((data, indices, indptr), shape=(12, 12)).toarray()
 
     def local_stiffness_matrix(self):
-        """Returns the local stiffness matrix of the truss.
+        """Return the local stiffness matrix of the truss.
 
-        Returns
-        -------
-        ndarray
-            Local stiffness matrix of the truss.
+        Calculates the 12x12 stiffness matrix for the truss element in its local coordinate system, considering only
+        axial deformation.
+
+        Returns:
+            ndarray: Local stiffness matrix of the truss.
         """
         L = self.length()
 
@@ -338,12 +283,13 @@ class Truss(AttrDisplay):
         return coo_matrix((data, (rows, cols)), (12, 12)).toarray()
 
     def global_stiffness_matrix(self):
-        """Returns the global stiffness matrix of the truss.
+        """Return the global stiffness matrix of the truss.
 
-        Returns
-        -------
-        k_global : ndarray
-            Global stiffness matrix of the truss.
+        Transforms the local stiffness matrix of the truss into the global coordinate system and filters it based on
+        the active degrees of freedom of the structure.
+
+        Returns:
+            ndarray: Global stiffness matrix of the truss.
         """
         # degrees of freedom
         dof = self._parent.get_degrees_freedom()
@@ -363,64 +309,47 @@ class Truss(AttrDisplay):
 class Frame(Truss):
     """Long elements interconnected at rigid joints.
 
-    Attributes
-    ----------
-    name : str
-        Name of the frame.
-    joint_j : str
-        Name of the near joint of the frame.
-    joint_k : str
-        Name of the far joint of the frame.
-    material : str
-        Name of the material of the frame.
-    section : str
-        Name of the cross section of the frame.
+    This class extends the `Truss` class to model frame elements, which include axial, shear, and bending stiffness.
 
-    Methods
-    -------
-    length()
-        Returns the length of the frame.
-    direction_cosines_vector()
-        Returns the direction cosines of the frame.
-    rotation_matrix()
-        Returns the rotation matrix of the frame.
-    rotation_transformation_matrix()
-        Returns the rotation transformation matrix of the frame.
-    local_stiffness_matrix()
-        Returns the local stiffness matrix of the frame.
-    global_stiffness_matrix()
-        Returns the global stiffness matrix of the frame.
-    TODO get_internal_forces(load_pattern[, no_div])
-        Returns the internal forces of the frame.
+    Attributes:
+        name (str): Name of the frame.
+        joint_j (str): Name of the near joint of the frame.
+        joint_k (str): Name of the far joint of the frame.
+        material (str): Name of the material of the frame.
+        section (str): Name of the cross section of the frame.
+
+    Methods:
+        length(): Return the length of the frame.
+        direction_cosines_vector(): Return the direction cosines of the frame.
+        rotation_matrix(): Return the rotation matrix of the frame.
+        rotation_transformation_matrix(): Return the rotation transformation matrix of the frame.
+        local_stiffness_matrix(): Return the local stiffness matrix of the frame.
+        global_stiffness_matrix(): Return the global stiffness matrix of the frame.
+        get_internal_forces(): Return the internal forces of the frame.
+        get_internal_displacements(): Return the internal displacements of the frame.
     """
 
     def __init__(self, parent, name, joint_j, joint_k, material, section):
         """Instantiate a Frame object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the frame.
-        joint_j : str
-            Name of the near joint of the frame.
-        joint_k : str
-            Name of the far joint of the frame.
-        material : str
-            Name of the material of the frame.
-        section : str
-            Name of the cross section of the frame.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the frame.
+            joint_j (str): Name of the near joint of the frame.
+            joint_k (str): Name of the far joint of the frame.
+            material (str): Name of the material of the frame.
+            section (str): Name of the cross section of the frame.
         """
         super().__init__(parent, name, joint_j, joint_k, material, section)
 
     def local_stiffness_matrix(self):
-        """Returns the local stiffness matrix of the frame.
+        """Return the local stiffness matrix of the frame.
 
-        Returns
-        -------
-        ndarray
-            Local stiffness matrix of the frame.
+        Calculates the 12x12 stiffness matrix for the frame element in its local coordinate system, considering
+        axial, shear, and bending deformations.
+
+        Returns:
+            ndarray: Local stiffness matrix of the frame.
         """
         L = self.length()
 
@@ -499,17 +428,15 @@ class Frame(Truss):
     def get_internal_forces(self, load_pattern, no_div=100):
         """Get the internal forces of the element.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Name of the load pattern.
-        no_div : float, optional
-            Number of divisions.
+        Calculates the axial forces (fx), shear forces (fy, fz), and bending moments (mx, my, mz) at various
+        divisions along the element's length for a specified load pattern.
 
-        Returns
-        -------
-        internal_forces : dict
-            Internal forces of the element.
+        Args:
+            load_pattern (str): Name of the load pattern.
+            no_div (float, optional): Number of divisions.
+
+        Returns:
+            dict: Internal forces of the element.
         """
         loadPattern = self._parent.load_patterns[load_pattern]
         endActions = self._parent.end_actions[load_pattern][self.name]
@@ -571,17 +498,15 @@ class Frame(Truss):
     def get_internal_displacements(self, load_pattern, no_div=100):
         """Get the internal displacements.
 
-        Parameters
-        ----------
-        load_pattern : str
-            Name of the load pattern.
-        np_div : float, optional
-            Number divisions.
+        Calculates the axial (ux), shear (uy, uz), and rotational (rx, ry, rz) displacements at various divisions
+        along the element's length for a specified load pattern.
 
-        Returns
-        -------
-        internal_displacements : dict
-            Internal displacements of the element.
+        Args:
+            load_pattern (str): Name of the load pattern.
+            np_div (float, optional): Number of divisions.
+
+        Returns:
+            dict: Internal displacements of the element.
         """
         material = self._parent.materials[self.material]
         section = self._parent.sections[self.section]
@@ -662,63 +587,34 @@ class Frame(Truss):
 class Support(AttrDisplay):
     """Point of support.
 
-    Attributes
-    ----------
-    joint : str
-        Name of the joint.
-    r_ux : bool
-        Indicates whether the support restrains the displacement of the joint
-        along the global x-axis.
-    r_uy : bool
-        Indicates whether the support restrains the displacement of the joint
-        along the global y-axis.
-    r_uz : bool
-        Indicates whether the support restrains the displacement of the joint
-        along the global z-axis.
-    r_rx : bool
-        Indicates whether the support restrains the displacement of the joint
-        around the global x-axis.
-    r_ry : bool
-        Indicates whether the support restrains the displacement of the joint
-        around the global y-axis.
-    r_rz : bool
-        Indicates whether the support restrains the displacement of the joint
-        around the global z-axis.
+    This class defines the boundary conditions for a joint, specifying which degrees of freedom are restrained.
 
-    Methods
-    -------
-    restrain_vector()
-        Returns the restrain vector of the support.
+    Attributes:
+        joint (str): Name of the joint.
+        r_ux (bool): Indicates whether the support restrains the displacement of the joint along the global x-axis.
+        r_uy (bool): Indicates whether the support restrains the displacement of the joint along the global y-axis.
+        r_uz (bool): Indicates whether the support restrains the displacement of the joint along the global z-axis.
+        r_rx (bool): Indicates whether the support restrains the rotation of the joint around the global x-axis.
+        r_ry (bool): Indicates whether the support restrains the rotation of the joint around the global y-axis.
+        r_rz (bool): Indicates whether the support restrains the rotation of the joint around the global z-axis.
+
+    Methods:
+        restrain_vector(): Returns the restrain vector of the support.
     """
 
     def __init__(self, parent, joint, r_ux=None, r_uy=None, r_uz=None,
                  r_rx=None, r_ry=None, r_rz=None):
         """Instantiate a Support object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        joint : str
-            Name of the joint of the support.
-        r_ux : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global x-axis.
-        r_uy : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global y-axis.
-        r_uz : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint along the global z-axis.
-        r_rx : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global x-axis.
-        r_ry : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global y-axis.
-        r_rz : bool, optional
-            Indicates whether the support restrains the displacement of the
-            joint around the global z-axis.
+        Args:
+            parent (Structure): Structure object.
+            joint (str): Name of the joint of the support.
+            r_ux (bool, optional): Whether the support restrains displacement of the joint along the global x-axis.
+            r_uy (bool, optional): Whether the support restrains displacement of the joint along the global y-axis.
+            r_uz (bool, optional): Whether the support restrains displacement of the joint along the global z-axis.
+            r_rx (bool, optional): Whether the support restrains displacement of the joint around the global x-axis.
+            r_ry (bool, optional): Whether the support restrains displacement of the joint around the global y-axis.
+            r_rz (bool, optional): Whether the support restrains displacement of the joint around the global z-axis.
         """
         self._parent = parent
         self.joint = joint
@@ -730,12 +626,12 @@ class Support(AttrDisplay):
         self.r_rz = r_rz
 
     def restrain_vector(self):
-        """Returns the restrain vector of the support.
+        """Return the restrain vector of the support.
 
-        Returns
-        -------
-        restrains : ndarray
-            Restrain vector.
+        This vector is filtered to include only the active degrees of freedom of the parent structure.
+
+        Returns:
+            ndarray: Restrain vector.
         """
         # degrees of freedom
         dof = self._parent.get_degrees_freedom()
@@ -755,43 +651,30 @@ class Support(AttrDisplay):
 class LoadPattern(AttrDisplay):
     """Load pattern.
 
-    Attributes
-    ----------
-    name : str
-        Name of the load pattern.
-    joint_point_loads : dict
-        Joint point loads of the load pattern.
-    element_point_loads : dict
-        Element point loads of the load pattern.
-    element_distributed_loads : dict
-        Element uniformly distributed loads of the load pattern.
+    A load pattern groups different types of loads (joint point loads, element point loads, element distributed loads)
+    that are applied simultaneously.
 
-    Methods
-    -------
-    add_joint_point_load(joint, [fx, fy, fz, mx, my, mz])
-        Add a joint point load to the dictionary of joint point loads.
-    add_element_point_load(joint, dist, [fx, fy, fz, mx, my, mz])
-        Add a element point load to the dictionary of element point loads.
-    add_element_distributed_load(element, [fx, fy, fz, mx, my, mz])
-        Add a element distributed load to the dictionary of uniformly
-        distributed loads at elements.
-    load_vector()
-        Returns the load vector of the load pattern.
-    actual_load_vector()
-        Returns the actual load vector of the load pattern.
-    fixed_load_vector()
-        Returns the fixed-end load vector of the load pattern.
+    Attributes:
+        name (str): Name of the load pattern.
+        joint_point_loads (dict): Joint point loads of the load pattern.
+        element_point_loads (dict): Element point loads of the load pattern.
+        element_distributed_loads (dict): Element uniformly distributed loads of the load pattern.
+
+    Methods:
+        add_joint_point_load(): Adds a joint point load to the dictionary of joint point loads.
+        add_element_point_load(): Adds an element point load to the dictionary of element point loads.
+        add_element_distributed_load(): Adds an element distributed load to the dictionary of uniformly distributed loads at elements.
+        load_vector(): Returns the load vector of the load pattern.
+        actual_load_vector(): Returns the actual load vector of the load pattern.
+        fixed_load_vector(): Returns the fixed-end load vector of the load pattern.
     """
 
     def __init__(self, parent, name):
         """Instantiate a LoadPattern object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        name : str
-            Name of the load pattern.
+        Args:
+            parent (Structure): Structure object.
+            name (str): Name of the load pattern.
         """
         self._parent = parent
         self.name = name
@@ -803,27 +686,17 @@ class LoadPattern(AttrDisplay):
                              my=None, mz=None):
         """Add a joint point load to the dictionary of joint point loads.
 
-        Parameters
-        ----------
-        joint : str
-            Name of the joint.
-        fx : float, optional
-            Intensity of the point load along the global x-axis.
-        fy : float, optional
-            Intensity of the point load along the global y-axis.
-        fz : float, optional
-            Intensity of the point load along the global z-axis.
-        mx : float, optional
-            Intensity of the point load around the global x-axis.
-        my : float, optional
-            Intensity of the point load around the global y-axis.
-        mz : float, optional
-            Intensity of the point load around the global z-axis.
+        Args:
+            joint (str): Name of the joint.
+            fx (float, optional): Intensity of the point load along the global x-axis.
+            fy (float, optional): Intensity of the point load along the global y-axis.
+            fz (float, optional): Intensity of the point load along the global z-axis.
+            mx (float, optional): Intensity of the point load around the global x-axis.
+            my (float, optional): Intensity of the point load around the global y-axis.
+            mz (float, optional): Intensity of the point load around the global z-axis.
 
-        Returns
-        -------
-        pointLoad : JointPointLoad
-            Joint point load.
+        Returns:
+            JointPointLoad: Joint point load.
         """
         pointLoad = JointPointLoad(self._parent, self.name, joint, fx, fy, fz,
                                    mx, my, mz)
@@ -837,32 +710,20 @@ class LoadPattern(AttrDisplay):
 
     def add_element_point_load(self, element, dist, fx=None, fy=None, fz=None,
                                mx=None, my=None, mz=None):
-        """Add a element point load to the dictionary of element point loads.
+        """Add an element point load to the dictionary of element point loads.
 
-        Parameters
-        ----------
-        element : str
-            Name of the element.
-        dist : float
-            Distance of the point load from the near joint along the local
-            x-axis.
-        fx : float, optional
-            Intensity of the point load along the local x-axis.
-        fy : float, optional
-            Intensity of the point load along the local y-axis.
-        fz : float, optional
-            Intensity of the point load along the local z-axis.
-        mx : float, optional
-            Intensity of the point load around the local x-axis.
-        my : float, optional
-            Intensity of the point load around the local y-axis.
-        mz : float, optional
-            Intensity of the point load around the local z-axis.
+        Args:
+            element (str): Name of the element.
+            dist (float): Distance of the point load from the near joint along the local x-axis.
+            fx (float, optional): Intensity of the point load along the local x-axis.
+            fy (float, optional): Intensity of the point load along the local y-axis.
+            fz (float, optional): Intensity of the point load along the local z-axis.
+            mx (float, optional): Intensity of the point load around the local x-axis.
+            my (float, optional): Intensity of the point load around the local y-axis.
+            mz (float, optional): Intensity of the point load around the local z-axis.
 
-        Returns
-        -------
-        pointLoad : ElementPointLoad
-            Element point load.
+        Returns:
+            ElementPointLoad: Element point load.
         """
         pointLoad = ElementPointLoad(self._parent, self.name, element, fx, fy,
                                      fz, mx, my, mz)
@@ -876,36 +737,19 @@ class LoadPattern(AttrDisplay):
 
     def add_element_distributed_load(self, element, fx=None, fy=None, fz=None,
                              mx=None, my=None, mz=None):
-        """Add a element uniformly distributed load to the dictionary of
-        element uniformly distributed loads.
+        """Add an element uniformly distributed load to the dictionary of element uniformly distributed loads.
 
-        Parameters
-        ----------
-        element : str
-            Name of the element.
-        fx : float, optional
-            Intensity of the uniformly distributed load along the local
-            x-axis.
-        fy : float, optional
-            Intensity of the uniformly distributed load along the local
-            y-axis.
-        fz : float, optional
-            Intensity of the uniformly distributed load along the local
-            z-axis.
-        mx : float, optional
-            Intensity of the uniformly distributed load around the local
-            x-axis.
-        my : float, optional
-            Intensity of the uniformly distributed load around the local
-            y-axis.
-        mz : float, optional
-            Intensity of the uniformly distributed load around the local
-            z-axis.
+        Args:
+            element (str): Name of the element.
+            fx (float, optional): Intensity of the uniformly distributed load along the local x-axis.
+            fy (float, optional): Intensity of the uniformly distributed load along the local y-axis.
+            fz (float, optional): Intensity of the uniformly distributed load along the local z-axis.
+            mx (float, optional): Intensity of the uniformly distributed load around the local x-axis.
+            my (float, optional): Intensity of the uniformly distributed load around the local y-axis.
+            mz (float, optional): Intensity of the uniformly distributed load around the local z-axis.
 
-        Returns
-        -------
-        distributedLoad : DistributedLoad
-            DistributedLoad object.
+        Returns:
+            DistributedLoad: DistributedLoad object.
         """
         distributedLoad = DistributedLoad(self._parent, self.name, element, fx,
                                           fy, fz, mx, my, mz)
@@ -918,23 +762,23 @@ class LoadPattern(AttrDisplay):
         return distributedLoad
 
     def load_vector(self):
-        """
-        Returns the load vector of the load pattern.
+        """ Returns the load vector of the load pattern.
 
-        Returns
-        -------
-        ndarray
-            Load vector of the load pattern.
+        This vector is calculated as the actual load vector minus the fixed-end load vector.
+
+        Returns:
+            ndarray: Load vector of the load pattern.
         """
         return self.actual_load_vector() - self.fixed_load_vector()
 
     def actual_load_vector(self):
         """Returns the actual load vector of the load pattern.
 
-        Returns
-        -------
-        ndarray
-            Actual load vector of the load pattern.
+        This vector contains the applied forces and moments at each joint due to point loads, considering only the
+        active degrees of freedom.
+
+        Returns:
+            ndarray: Actual load vector of the load pattern.
         """
         # number of joints
         n_j = len(self._parent.joints)
@@ -967,10 +811,11 @@ class LoadPattern(AttrDisplay):
     def fixed_load_vector(self):
         """Returns the fixed-end load vector of the load pattern.
 
-        Returns
-        -------
-        ndarray
-            Fixed-end load vector.
+        This vector represents the forces and moments that would develop at the element ends if all joints were
+        fully restrained, due to element loads.
+
+        Returns:
+            ndarray: Fixed-end load vector.
         """
         # number of joints
         n_j = len(self._parent.joints)
@@ -1013,55 +858,36 @@ class LoadPattern(AttrDisplay):
 class JointPointLoad(AttrDisplay):
     """Joint point load.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Name of the load pattern.
-    joint : str
-        Name of the joint.
-    fx : float
-        Intensity of the point load along the global x-axis.
-    fy : float
-        Intensity of the point load along the global y-axis.
-    fz : float
-        Intensity of the point load along the global z-axis.
-    mx : float
-        Intensity of the point load around the global x-axis.
-    my : float
-        Intensity of the point load around the global y-axis.
-    mz : float
-        Intensity of the point load around the global z-axis.
+    Represents a point load or moment applied directly to a joint.
 
-    Methods
-    -------
-    load_vector()
-        Returns the load vector of the joint point load.
+    Attributes:
+        load_pattern (str): Name of the load pattern.
+        joint (str): Name of the joint.
+        fx (float): Intensity of the point load along the global x-axis.
+        fy (float): Intensity of the point load along the global y-axis.
+        fz (float): Intensity of the point load along the global z-axis.
+        mx (float): Intensity of the point load around the global x-axis.
+        my (float): Intensity of the point load around the global y-axis.
+        mz (float): Intensity of the point load around the global z-axis.
+
+    Methods:
+        load_vector(): Returns the load vector of the joint point load.
     """
 
     def __init__(self, parent, load_pattern, joint, fx=None, fy=None,
                  fz=None, mx=None, my=None, mz=None):
         """Instantiate a JointPointLoad object.
 
-        Parameters
-        ----------
-        parent : Structure.
-            Structure object.
-        load_pattern : str
-            Name of the load pattern.
-        joint : str
-            Name of the joint.
-        fx : float, optional
-            Intensity of the joint point load along the global x-axis.
-        fy : float, optional
-            Intensity of the joint point load along the global y-axis.
-        fz : float, optional
-            Intensity of the joint point load along the global z-axis.
-        mx : float, optional
-            Intensity of the joint point load around the global x-axis.
-        my : float, optional
-            Intensity of the joint point load around the global y-axis.
-        mz : float, optional
-            Intensity of the joint point load around the global z-axis.
+        Args:
+            parent (Structure): Structure object.
+            load_pattern (str): Name of the load pattern.
+            joint (str): Name of the joint.
+            fx (float, optional): Intensity of the joint point load along the global x-axis.
+            fy (float, optional): Intensity of the joint point load along the global y-axis.
+            fz (float, optional): Intensity of the joint point load along the global z-axis.
+            mx (float, optional): Intensity of the joint point load around the global x-axis.
+            my (float, optional): Intensity of the joint point load around the global y-axis.
+            mz (float, optional): Intensity of the joint point load around the global z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1076,10 +902,11 @@ class JointPointLoad(AttrDisplay):
     def load_vector(self):
         """Returns the load vector of the joint point load.
 
-        Returns
-        -------
-        ndarray
-            Load vector.
+        This vector contains the forces and moments applied by this specific point load, filtered to include only
+        the active degrees of freedom of the parent structure.
+
+        Returns:
+            ndarray: Load vector.
         """
         # degrees of freedom
         dof = self._parent.get_degrees_freedom()
@@ -1097,61 +924,38 @@ class JointPointLoad(AttrDisplay):
 class ElementPointLoad(AttrDisplay):
     """Element point load.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Name of the load pattern.
-    element : str
-        Name of the element.
-    dist : float
-        Distance of the point load from the near joint along the local
-        x-axis.
-    fx : float
-        Intensity of the point load along the local x-axis.
-    fy : float
-        Intensity of the point load along the local y-axis.
-    fz : float
-        Intensity of the point load along the local z-axis.
-    mx : float
-        Intensity of the point load around the local x-axis.
-    my : float
-        Intensity of the point load around the local y-axis.
-    mz : float
-        Intensity of the point load around the local z-axis.
+    This load is defined in the element's local coordinate system.
 
-    Methods
-    -------
-    fixed_load_vector()
-        Returns the fixed-end load vector of the element point load.
+    Attributes:
+        load_pattern (str): Name of the load pattern.
+        element (str): Name of the element.
+        dist (float): Distance of the point load from the near joint along the local x-axis.
+        fx (float): Intensity of the point load along the local x-axis.
+        fy (float): Intensity of the point load along the local y-axis.
+        fz (float): Intensity of the point load along the local z-axis.
+        mx (float): Intensity of the point load around the local x-axis.
+        my (float): Intensity of the point load around the local y-axis.
+        mz (float): Intensity of the point load around the local z-axis.
+
+    Methods:
+        fixed_load_vector(): Returns the fixed-end load vector of the element point load.
     """
 
     def __init__(self, parent, load_pattern, element, dist, fx=None, fy=None,
                  fz=None, mx=None, my=None, mz=None):
-        """Instantiate a ElementPointLoad object.
+        """Instantiate an ElementPointLoad object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        load_pattern : str
-            Name of the load pattern.
-        element : str
-            Name of the element.
-        dist : float
-            Distance of the point load from the near joint along the local
-            x-axis.
-        fx : float, optional
-            Intensity of the point load along the local x-axis.
-        fy : float, optional
-            Intensity of the point load along the local y-axis.
-        fz : float, optional
-            Intensity of the point load along the local z-axis.
-        mx : float, optional
-            Intensity of the point load around the local x-axis.
-        my : float, optional
-            Intensity of the point load around the local y-axis.
-        mz : float, optional
-            Intensity of the point load around the local z-axis.
+        Args:
+            parent (Structure): Structure object.
+            load_pattern (str): Name of the load pattern.
+            element (str): Name of the element.
+            dist (float): Distance of the point load from the near joint along the local x-axis.
+            fx (float, optional): Intensity of the point load along the local x-axis.
+            fy (float, optional): Intensity of the point load along the local y-axis.
+            fz (float, optional): Intensity of the point load along the local z-axis.
+            mx (float, optional): Intensity of the point load around the local x-axis.
+            my (float, optional): Intensity of the point load around the local y-axis.
+            mz (float, optional): Intensity of the point load around the local z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1167,10 +971,11 @@ class ElementPointLoad(AttrDisplay):
     def fixed_load_vector(self):
         """Returns the fixed-end load vector of the element point load.
 
-        Returns
-        -------
-        ndarray
-            Fixed-end load vector.
+        This vector represents the forces and moments that would develop at the element ends if all joints were
+        fully restrained, due to this specific point load.
+
+        Returns:
+            ndarray: Fixed-end load vector.
         """
         # uniformly distributed forces
         fx = self.fx if self.fx is not None else 0
@@ -1229,61 +1034,36 @@ class ElementPointLoad(AttrDisplay):
 class DistributedLoad(AttrDisplay):
     """Element uniformly distributed load.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Name of the load pattern.
-    element : str
-        Name of the element.
-    fx : float
-        Intensity of the uniformly distributed load along the local x-axis.
-    fy : float
-        Intensity of the uniformly distributed load along the local y-axis.
-    fz : float
-        Intensity of the uniformly distributed load along the local z-axis.
-    mx : float
-        Intensity of the uniformly distributed load around the local x-axis.
-    my : float
-        Intensity of the uniformly distributed load around the local y-axis.
-    mz : float
-        Intensity of the uniformly distributed load around the local z-axis.
+    This load is defined in the element's local coordinate system.
 
-    Methods
-    -------
-    fixed_load_vector()
-        Returns the fixed-end load vector of the distributed load.
+    Attributes:
+        load_pattern (str): Name of the load pattern.
+        element (str): Name of the element.
+        fx (float): Intensity of the uniformly distributed load along the local x-axis.
+        fy (float): Intensity of the uniformly distributed load along the local y-axis.
+        fz (float): Intensity of the uniformly distributed load along the local z-axis.
+        mx (float): Intensity of the uniformly distributed load around the local x-axis.
+        my (float): Intensity of the uniformly distributed load around the local y-axis.
+        mz (float): Intensity of the uniformly distributed load around the local z-axis.
+
+    Methods:
+        fixed_load_vector(): Returns the fixed-end load vector of the distributed load.
     """
 
     def __init__(self, parent, load_pattern, element, fx=None, fy=None,
                  fz=None, mx=None, my=None, mz=None):
         """Instantiate a DistributedLoad object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure object.
-        load_pattern : str
-            Name of the load pattern.
-        element : str
-            Name of the element.
-        fx : float, optional
-            Intensity of the uniformly distributed load along the local
-            x-axis.
-        fy : float, optional
-            Intensity of the uniformly distributed load along the local
-            y-axis.
-        fz : float, optional
-            Intensity of the uniformly distributed load along the local
-            z-axis.
-        mx : float, optional
-            Intensity of the uniformly distributed load around the local
-            x-axis.
-        my : float, optional
-            Intensity of the uniformly distributed load around the local
-            y-axis.
-        mz : float, optional
-            Intensity of the uniformly distributed load around the local
-            z-axis.
+        Args:
+            parent (Structure): Structure object.
+            load_pattern (str): Name of the load pattern.
+            element (str): Name of the element.
+            fx (float, optional): Intensity of the uniformly distributed load along the local x-axis.
+            fy (float, optional): Intensity of the uniformly distributed load along the local y-axis.
+            fz (float, optional): Intensity of the uniformly distributed load along the local z-axis.
+            mx (float, optional): Intensity of the uniformly distributed load around the local x-axis.
+            my (float, optional): Intensity of the uniformly distributed load around the local y-axis.
+            mz (float, optional): Intensity of the uniformly distributed load around the local z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1298,16 +1078,14 @@ class DistributedLoad(AttrDisplay):
     def fixed_load_vector(self):
         """Returns the fixed-end load vector of the distributed load.
 
-        Returns
-        -------
-        load_vector[flags_dof_element] : ndarray
-            Fixed-end load vector.
+        This vector represents the forces and moments that would develop at the element ends if all joints were
+        fully restrained, due to this specific distributed load.
 
-        Raises
-        ------
-        NotImplementedError
-            If uniformly distributed moments around the y- or z-axis (my, mz)
-            are set.
+        Returns:
+            ndarray: Fixed-end load vector (load_vector[flags_dof_element]).
+
+        Raises:
+            NotImplementedError: If uniformly distributed moments around the y- or z-axis (my, mz) are set.
         """
         # degrees of freedom
         dof_joints = self._parent.get_degrees_freedom()
@@ -1319,9 +1097,9 @@ class DistributedLoad(AttrDisplay):
         fz = self.fz if self.fz is not None else 0
         mx = self.mx if self.mx is not None else 0
         my = self.my if self.my is not None else 0
-        mz = self.mz if self.mz is not None else 0 
+        mz = self.mz if self.mz is not None else 0
 
-        L = self._parent.elements[self.element].length() 
+        L = self._parent.elements[self.element].length()
         load_vector = np.empty((2 * 6, 1))
 
         # fx
@@ -1352,55 +1130,34 @@ class DistributedLoad(AttrDisplay):
 class Displacement(AttrDisplay):
     """Joint displacements.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Name of the load pattern.
-    joint : str
-        Name of the joint.
-    ux : float
-        Displacement along x-axis.
-    uy : float
-        Displacement along y-axis.
-    uz : float
-        Displacement along z-axis.
-    rx : float
-        Displacement around x-axis.
-    ry : float
-        Displacement around y-axis.
-    rz : float
-        Displacement around z-axis.
+    Attributes:
+        load_pattern (str): Name of the load pattern.
+        joint (str): Name of the joint.
+        ux (float): Displacement along x-axis.
+        uy (float): Displacement along y-axis.
+        uz (float): Displacement along z-axis.
+        rx (float): Displacement around x-axis.
+        ry (float): Displacement around y-axis.
+        rz (float): Displacement around z-axis.
 
-    Methods
-    -------
-    displacement_vector()
-        Returns the displacement vector.
+    Methods:
+        displacement_vector(): Returns the displacement vector.
     """
 
     def __init__(self, parent, load_pattern, joint, ux=None, uy=None, uz=None,
                  rx=None, ry=None, rz=None):
         """Instantiate a Displacements object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure.
-        load_pattern : str
-            Name of the load pattern.
-        joint : str
-            Name of the joint.
-        ux : float, optional
-            Displacement along x-axis.
-        uy : float, optional
-            Displacement along y-axis.
-        uz : float, optional
-            Displacement along z-axis.
-        rx : float, optional
-            Displacement around x-axis.
-        ry : float, optional
-            Displacement around y-axis.
-        rz : float, optional
-            Displacement around z-axis.
+        Args:
+            parent (Structure): Structure.
+            load_pattern (str): Name of the load pattern.
+            joint (str): Name of the joint.
+            ux (float, optional): Displacement along x-axis.
+            uy (float, optional): Displacement along y-axis.
+            uz (float, optional): Displacement along z-axis.
+            rx (float, optional): Displacement around x-axis.
+            ry (float, optional): Displacement around y-axis.
+            rz (float, optional): Displacement around z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1415,10 +1172,8 @@ class Displacement(AttrDisplay):
     def displacement_vector(self):
         """Returns the displacement vector.
 
-        Returns
-        -------
-        ndarray
-            Displacement vector.
+        Returns:
+            ndarray: Displacement vector.
         """
 
         ux = self.ux if self.ux is not None else 0
@@ -1432,84 +1187,51 @@ class Displacement(AttrDisplay):
 
 
 class EndActions(AttrDisplay):
-    """
-    End actions.
+    """End actions.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Load pattern name.
-    element : str
-        Frame name.
-    fx_j : float
-        Force along x-axis at near joint.
-    fy_j : float
-        Force along y-axis at near joint.
-    fz_j : float
-        Force along z-axis at near joint.
-    mx_j : float
-        Moment around x-axis at near joint.
-    my_j : float
-        Moment around y-axis at near joint.
-    mz_j : float
-        Moment around z-axis at near joint.
-    fx_k : float
-        Force along x-axis at far joint.
-    fy_k : float
-        Force along y-axis at far joint.
-    fz_k : float
-        Force along z-axis at far joint.
-    mx_k : float
-        Moment around x-axis at far joint.
-    my_k : float
-        Moment around y-axis at far joint.
-    mz_k : float
-        Moment around z-axis at far joint.
+    These are typically calculated in the element's local coordinate system.
 
-    Methods
-    -------
-    get_end_actions()
-        Get the end actions vector.
+    Attributes:
+        load_pattern (str): Load pattern name.
+        element (str): Frame name.
+        fx_j (float): Force along x-axis at near joint.
+        fy_j (float): Force along y-axis at near joint.
+        fz_j (float): Force along z-axis at near joint.
+        mx_j (float): Moment around x-axis at near joint.
+        my_j (float): Moment around y-axis at near joint.
+        mz_j (float): Moment around z-axis at near joint.
+        fx_k (float): Force along x-axis at far joint.
+        fy_k (float): Force along y-axis at far joint.
+        fz_k (float): Force along z-axis at far joint.
+        mx_k (float): Moment around x-axis at far joint.
+        my_k (float): Moment around y-axis at far joint.
+        mz_k (float): Moment around z-axis at far joint.
+
+    Methods:
+        get_end_actions(): Get the end actions vector.
     """
 
     def __init__(self, parent, load_pattern, element, fx_j=None, fy_j=None,
                  fz_j=None, mx_j=None, my_j=None, mz_j=None, fx_k=None,
                  fy_k=None, fz_k=None, mx_k=None, my_k=None, mz_k=None):
-        """
-        Instantiate a EndActions object.
+        """ Initialize a EndActions object.
 
-        Parameters
-        ----------
-        parent : Structure 
-            Structure
-        load_pattern : str
-            Load pattern name.
-        element : str
-            Frame name.
-        fx_j : float, optional
-            Force along x-axis at joint_j.
-        fy_j : float, optional
-            Force along y-axis at joint_j.
-        fz_j : float, optional
-            Force along z-axis at joint_j.
-        mx_j : float, optionl
-            Moment around xaxis at joint_j.
-        my_j : float, optional
-            Moment around y-axis at joint_j.
-        mz_j : float, optional
-            Moment around z-axis at joint_j.
-        fx_k : float, optional
-            Force along x-axis at joint_k.
-        fy_k : float, optional
-            Force along y-axis at joint_k.
-        fz_k : float, optional
-            Force along z-axis at joint_k.
-        mx_k : float, optional
-            Moment around x-axis at joint_k.
-        my_k : float, optional
-            Moment around y-axis at joint_k.
-        mz_k : float, optional
-            Moment around z-axis at joint_k.
+        Args:
+            parent (Structure): Parent structure object.
+            load_pattern (str): Load pattern name.
+            element (str): Frame name.
+            fx_j (float, optional): Force along the x-axis at joint_j. Defaults to None.
+            fy_j (float, optional): Force along the y-axis at joint_j. Defaults to None.
+            fz_j (float, optional): Force along the z-axis at joint_j. Defaults to None.
+            mx_j (float, optional): Moment around the x-axis at joint_j. Defaults to None.
+            my_j (float, optional): Moment around the y-axis at joint_j. Defaults to None.
+            mz_j (float, optional): Moment around the z-axis at joint_j. Defaults to None.
+            fx_k (float, optional): Force along the x-axis at joint_k. Defaults to None.
+            fy_k (float, optional): Force along the y-axis at joint_k. Defaults to None.
+            fz_k (float, optional): Force along the z-axis at joint_k. Defaults to None.
+            mx_k (float, optional): Moment around the x-axis at joint_k. Defaults to None.
+            my_k (float, optional): Moment around the y-axis at joint_k. Defaults to None.
+            mz_k (float, optional): Moment around the z-axis at joint_k. Defaults to None.
         """
         self._parent = parent
         self.element = element
@@ -1528,7 +1250,11 @@ class EndActions(AttrDisplay):
         self.mz_k = mz_k
 
     def get_end_actions(self):
-        """Get end actions"""
+        """ Returns the vector of end actions for the element.
+
+        Returns:
+            ndarray: Forces and moments at both ends.
+        """
 
         fx_j = self.fx_j if self.fx_j is not None else 0
         fy_j = self.fy_j if self.fy_j is not None else 0
@@ -1548,59 +1274,36 @@ class EndActions(AttrDisplay):
 
 
 class Reaction(AttrDisplay):
-    """
-    Reaction.
+    """ Reaction forces and moments at a joint.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Load pattern name.
-    joint : str
-        Joint name.
-    fx : float
-        Force along x-axis.
-    fy : float
-        Force along y-axis.
-    fz : float
-        Force along z-axis.
-    mx : float
-        Moment around x-axis.
-    my : float
-        Moment around y-axis.
-    mz : float
-        Moment around z-axis.
+    Attributes:
+        load_pattern (str): Load pattern name.
+        joint (str): Joint name.
+        fx (float): Force along the x-axis.
+        fy (float): Force along the y-axis.
+        fz (float): Force along the z-axis.
+        mx (float): Moment around the x-axis.
+        my (float): Moment around the y-axis.
+        mz (float): Moment around the z-axis.
 
-    Methods
-    -------
-    get_reactions()
-        Get the load vector.
+    Methods:
+        get_reactions(): Return the reaction load vector.
     """
 
     def __init__(self, parent, load_pattern, joint, fx=None, fy=None, fz=None,
                  mx=None, my=None, mz=None):
-        """
-        Instantiate a Reaction.
+        """ Instantiate a Reaction object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure.
-        load_pattern : str
-            Load pattern name.
-        joint : str
-            Joint name.
-        fx : float, optional
-            Force along 'x' axis.
-        fy : float, optional
-            Force along 'y' axis.
-        fz : float, optional
-            Force along 'z' axis.
-        mx : float, optional
-            Moment around 'x' axis.
-        my : float, optional
-            Moment around 'y' axis.
-        mz : float, optional
-            Moment around 'z' axis.
+        Args:
+            parent (Structure): Structure object.
+            load_pattern (str): Load pattern name.
+            joint (str): Joint name.
+            fx (float, optional): Force along the x-axis. Defaults to None.
+            fy (float, optional): Force along the y-axis. Defaults to None.
+            fz (float, optional): Force along the z-axis. Defaults to None.
+            mx (float, optional): Moment around the x-axis. Defaults to None.
+            my (float, optional): Moment around the y-axis. Defaults to None.
+            mz (float, optional): Moment around the z-axis. Defaults to None.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1613,60 +1316,43 @@ class Reaction(AttrDisplay):
         self.mz = mz
 
     def get_reactions(self):
-        """Get reactions"""
+        """ Get reactions.
+
+        Returns:
+            ndarray: Forces and moments at a joint.
+        """
         return np.array([self.fx, self.fy, self.fz, self.mx, self.my,
                          self.mz])
 
 
 class InternalForces(AttrDisplay):
-    """
-    Internal forces.
+    """ Internal forces of an element.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Load pattern name.
-    element : str
-        Frame name.
-    fx : list, optional
-        Internal forces along x-axis. 
-    fy : list, optional
-        Internal forces along y-axis.
-    fz : list, optional
-        Internal forces along z-axis.
-    mx : list, optional
-        Interntal forces around x-axis.
-    my : list, optional
-        Interntal forces around y-axis.
-    mz : list, optional
-        Interntal forces around z-axis.
+    Attributes:
+        load_pattern (str): Load pattern name.
+        element (str): Element name.
+        fx (list[float], optional): Internal forces along the x-axis.
+        fy (list[float], optional): Internal forces along the y-axis.
+        fz (list[float], optional): Internal forces along the z-axis.
+        mx (list[float], optional): Internal moments around the x-axis.
+        my (list[float], optional): Internal moments around the y-axis.
+        mz (list[float], optional): Internal moments around the z-axis.
     """
 
     def __init__(self, parent, load_pattern, element, fx=None, fy=None, fz=None,
                  mx=None, my=None, mz=None):
-        """
-        Instantiate a InternalForces object.
+        """ Instantiate an InternalForces object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure.
-        load_pattern : str
-            Load pattern name
-        element : str
-            Frame name.
-        fx : list, optional
-            Internal forces along x-axis. 
-        fy : list, optional
-            Internal forces along y-axis.
-        fz : list, optional
-            Internal forces along z-axis.
-        mx : list, optional
-            Interntal forces around x-axis.
-        my : list, optional
-            Interntal forces around y-axis.
-        mz : list, optional
-            Interntal forces around z-axis.
+        Args:
+            parent (Structure): Structure object.
+            load_pattern (str): Load pattern name.
+            element (str): Element name.
+            fx (list[float], optional): Internal forces along the x-axis.
+            fy (list[float], optional): Internal forces along the y-axis.
+            fz (list[float], optional): Internal forces along the z-axis.
+            mx (list[float], optional): Internal moments around the x-axis.
+            my (list[float], optional): Internal moments around the y-axis.
+            mz (list[float], optional): Internal moments around the z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
@@ -1680,54 +1366,33 @@ class InternalForces(AttrDisplay):
 
 
 class InternalDisplacements(AttrDisplay):
-    """
-    Internal displacement.
+    """ Internal displacement.
 
-    Attributes
-    ----------
-    load_pattern : str
-        Load pattern name.
-    element : str
-        Frame name.
-    ux : list, optional
-        Internal displacements along x-axis.
-    uy : list, optional
-        Internal displacements along y-axis.
-    uz : list, optional
-        Internal displacements along z-axis.
-    rx : list, optional
-        Internal displacements around x-axis.
-    ry : list, optional
-        Internal displacements around y-axis.
-    rz : list, optional
-        Internal displacements around z-axis.
+    Attributes:
+        load_pattern (str): Load pattern name.
+        element (str): Element name.
+        ux (list[float], optional): Internal displacements along the x-axis.
+        uy (list[float], optional): Internal displacements along the y-axis.
+        uz (list[float], optional): Internal displacements along the z-axis.
+        rx (list[float], optional): Internal displacements around the x-axis.
+        ry (list[float], optional): Internal displacements around the y-axis.
+        rz (list[float], optional): Internal displacements around the z-axis.
     """
 
     def __init__(self, parent, load_pattern, element, ux=None, uy=None, uz=None,
                  rx=None, ry=None, rz=None):
-        """
-        Instantiate a InternalDisplacements object.
+        """ Instantiate an InternalDisplacements object.
 
-        Parameters
-        ----------
-        parent : Structure
-            Structure
-        load_pattern : str
-            Load pattern name.
-        frane : str
-            Frame name.
-        ux : list, optional
-            Internal displacements along x-axis.
-        uy : list, optional
-            Internal displacements along y-axis.
-        uz : list, optional
-            Internal displacements along z-axis.
-        rx : list, optional
-            Internal displacements around x-axis.
-        ry : list, optional
-            Internal displacements around y-axis.
-        rz : list, optional
-            Internal displacements around z-axis.
+        Args:
+            parent (Structure): Structure.
+            load_pattern (str): Load pattern name.
+            frame (str): Frame name.
+            ux (list[float], optional): Internal displacements along the x-axis.
+            uy (list[float], optional): Internal displacements along the y-axis.
+            uz (list[float], optional): Internal displacements along the z-axis.
+            rx (list[float], optional): Internal displacements around the x-axis.
+            ry (list[float], optional): Internal displacements around the y-axis.
+            rz (list[float], optional): Internal displacements around the z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
