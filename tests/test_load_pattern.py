@@ -61,25 +61,28 @@ class TestJointPointLoad:
     The load is specified in global coordinates.
     """
 
-    def test_add_joint_point_load(self, structure_with_loads):
+    def test_add_joint_point_load(self, structure):
         """Verify joint point load can be added.
 
-        Adds fy=-10kN to joint N2.
+        Adds fy=-10kN to joint N1.
         """
-        load_pattern = structure_with_loads.load_patterns['dead']
-        point_load = load_pattern.add_joint_point_load('N2', fy=-10e3)
-        assert point_load.joint == 'N2'
+        structure.add_joint('N1', x=0)
+        load_pattern = structure.add_load_pattern('load1')
+        point_load = load_pattern.add_joint_point_load('N1', fy=-10e3)
+        assert point_load.joint == 'N1'
         assert point_load.fy == -10e3
 
-    def test_joint_point_load_vector(self, structure_with_loads):
+    def test_joint_point_load_vector(self, structure):
         """Verify load vector has correct values.
 
-        For 3D truss: load vector has 3 components (ux, uy, uz).
         For 3D: load vector has 6 components (ux, uy, uz, rx, ry, rz).
         """
-        structure_with_loads.set_degrees_freedom()
-        load_pattern = structure_with_loads.load_patterns['dead']
-        joint = 'N2'
+        structure.add_joint('N1', x=0, y=0, z=0)
+        structure.set_degrees_freedom()
+        structure.add_load_pattern('load1')
+        structure.add_joint_point_load('load1', 'N1', fy=-10e3)
+        load_pattern = structure.load_patterns['load1']
+        joint = 'N1'
         point_load = load_pattern.joint_point_loads[joint][0]
         load_vector = point_load.load_vector()
         # 6 DOF for 3D type

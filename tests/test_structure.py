@@ -134,25 +134,25 @@ class TestJointIndices:
     Each joint gets n_dof consecutive indices starting from 0.
     """
 
-    def test_set_joint_indices(self, simple_structure):
+    def test_set_joint_indices(self, simple_frame_structure):
         """Verify joint indices can be assigned to all joints.
 
         Creates indices for N1 and N2.
         """
-        simple_structure.set_degrees_freedom()
-        simple_structure.set_joint_indices()
-        indices = simple_structure.get_joint_indices()
+        simple_frame_structure.set_degrees_freedom()
+        simple_frame_structure.set_joint_indices()
+        indices = simple_frame_structure.get_joint_indices()
         assert 'N1' in indices
         assert 'N2' in indices
 
-    def test_joint_indices_shape(self, simple_structure):
+    def test_joint_indices_shape(self, simple_frame_structure):
         """Verify indices array has correct shape.
 
         Each joint gets n_dof indices (6 for 3D).
         """
-        simple_structure.set_degrees_freedom()
-        simple_structure.set_joint_indices()
-        indices = simple_structure.get_joint_indices()
+        simple_frame_structure.set_degrees_freedom()
+        simple_frame_structure.set_joint_indices()
+        indices = simple_frame_structure.get_joint_indices()
         assert indices['N1'].shape == (6,)
 
 
@@ -163,16 +163,16 @@ class TestStiffnessMatrix:
     It's a sparse matrix stored as dense numpy array.
     """
 
-    def test_set_stiffness_matrix(self, simple_structure):
+    def test_set_stiffness_matrix(self, simple_frame_structure):
         """Verify stiffness matrix can be assembled.
 
         Matrix size = n_joints * n_dof per joint.
         For 2 joints in 3D: 2 * 6 = 12
         """
-        simple_structure.set_degrees_freedom()
-        simple_structure.set_joint_indices()
-        simple_structure.set_stiffness_matrix()
-        k = simple_structure.get_stiffness_matrix()
+        simple_frame_structure.set_degrees_freedom()
+        simple_frame_structure.set_joint_indices()
+        simple_frame_structure.set_stiffness_matrix()
+        k = simple_frame_structure.get_stiffness_matrix()
         assert k.shape == (12, 12)
 
 
@@ -191,15 +191,15 @@ class TestAnalysis:
     """
 
     @pytest.mark.skip(reason="Truss elements don't have get_internal_forces method")
-    def test_run_analysis_simple(self, simple_structure):
+    def test_run_analysis_simple(self, simple_frame_structure):
         """Verify simple analysis can run.
 
         Run analysis and check displacements are computed.
         """
-        simple_structure.add_load_pattern('dead')
-        simple_structure.add_joint_point_load('dead', 'N2', fy=-10e3)
-        simple_structure.run_analysis()
-        assert 'dead' in simple_structure.displacements
+        simple_frame_structure.add_load_pattern('dead')
+        simple_frame_structure.add_joint_point_load('dead', 'N2', fy=-10e3)
+        simple_frame_structure.run_analysis()
+        assert 'dead' in simple_frame_structure.displacements
 
     @pytest.mark.skip(reason="structure_with_loads fixture has singular matrix issue")
     def test_displacements_results(self, structure_with_loads):
@@ -225,13 +225,13 @@ class TestExport:
     Includes: materials, sections, joints, elements, supports, loads, results.
     """
 
-    def test_export_json(self, simple_structure, tmp_path):
+    def test_export_json(self, simple_frame_structure, tmp_path):
         """Verify structure can be exported to JSON file.
 
         Export creates a valid JSON file with structure data.
         """
-        simple_structure.set_degrees_freedom()
-        simple_structure.set_joint_indices()
+        simple_frame_structure.set_degrees_freedom()
+        simple_frame_structure.set_joint_indices()
         filename = tmp_path / "test_export.json"
-        simple_structure.export(str(filename))
+        simple_frame_structure.export(str(filename))
         assert filename.exists()

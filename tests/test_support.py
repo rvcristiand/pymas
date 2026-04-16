@@ -29,35 +29,35 @@ class TestSupport:
     A Support restrains specific degrees of freedom at a joint.
     """
 
-    def test_add_support(self, simple_structure):
+    def test_add_support(self, simple_frame_structure):
         """Verify that a support can be added with correct properties.
 
         Creates support at N1 with full restraints.
         """
-        support = simple_structure.supports['N1']
+        support = simple_frame_structure.supports['N1']
         assert support.joint == 'N1'
         assert support.r_ux is True
         assert support.r_uy is True
         assert support.r_uz is True
 
-    def test_restrain_vector_3d(self, simple_structure):
+    def test_restrain_vector_3d(self, simple_frame_structure):
         """Verify restrain vector for 3D structure.
 
         For fully restrained support, all 6 DOFs should be True.
         """
-        simple_structure.set_degrees_freedom()
-        support = simple_structure.supports['N1']
+        simple_frame_structure.set_degrees_freedom()
+        support = simple_frame_structure.supports['N1']
         restrains = support.restrain_vector()
         expected = np.array([True, True, True, True, True, True])
         np.testing.assert_array_equal(restrains, expected)
 
-    def test_restrain_vector_partial(self, simple_structure):
+    def test_restrain_vector_partial(self, simple_frame_structure):
         """Verify restrain vector when only some DOFs are restrained.
 
         For support with only uy and rz restrained: [False, True, False, False, False, True]
         """
-        simple_structure.set_degrees_freedom()
-        support = simple_structure.supports['N2']
+        simple_frame_structure.set_degrees_freedom()
+        support = simple_frame_structure.supports['N2']
         restrains = support.restrain_vector()
         expected = np.array([False, True, False, False, False, True])
         np.testing.assert_array_equal(restrains, expected)
@@ -72,14 +72,14 @@ class TestSupport:
         assert support.r_ux is None
         assert support.r_uy is None
 
-    def test_support_restrain_vector_defaults(self, simple_structure):
+    def test_support_restrain_vector_defaults(self, simple_frame_structure):
         """Verify None restraints are treated as False.
 
         When restrain value is None, it should become False in vector.
         """
-        simple_structure.set_degrees_freedom()
-        simple_structure.add_support('N1', r_uy=True)
-        support = simple_structure.supports['N1']
+        simple_frame_structure.set_degrees_freedom()
+        simple_frame_structure.add_support('N1', r_uy=True)
+        support = simple_frame_structure.supports['N1']
         restrains = support.restrain_vector()
         expected = np.array([False, True, False, False, False, False])
         np.testing.assert_array_equal(restrains, expected)
