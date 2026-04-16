@@ -235,7 +235,7 @@ class TestIntegration3DTruss:
         Support configuration (to avoid singular matrix):
         - Node a: fully restrained (ux, uy, uz)
         - Node b: partially restrained (uy, uz)
-        - Node c: restrained in z (uz) to prevent vertical movement
+        - Node c: restrained in z (uz) to stay stable
 
         Note: Truss elements don't have internal_forces method,
         so only displacements and reactions are verified.
