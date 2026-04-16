@@ -23,6 +23,14 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 keywords = ["structural analysis", "direct sfiffness method", "matrix analysis"]
 
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+test = [
+  "pytest",
+]
+
 [project.urls]
 Homepage = "https://github.com/rvcristiand/pymas"
 Issues = "https://github.com/rvcristiand/pymas/issues"
