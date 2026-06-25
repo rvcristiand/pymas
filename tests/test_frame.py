@@ -70,22 +70,87 @@ class TestFrame:
         np.testing.assert_array_almost_equal(frame.direction_cosines_vector(), expected)
 
     def test_frame_local_stiffness_matrix(self, simple_frame_structure):
-        """Verify local stiffness matrix includes bending terms.
+        """Verify each component of the 12x12 local stiffness matrix.
 
-        Local stiffness is 12x12 with non-zero terms for:
-        - Axial (indices 0,6)
-        - Torsion (index 3)
-        - Shear/bending (indices 1,2,4,5,7,8,10,11)
+        This test explicitly calculates and verifies the theoretical stiffness values
+        for all degrees of freedom of the frame element, ensuring that each of the
+        individual stiffness components is correctly formulated:
+        - Axial stiffness (degrees of freedom 0 and 6, along local x-axis)
+        - Torsional stiffness (degrees of freedom 3 and 9, about local x-axis)
+        - Bending and shear stiffness in the x-y plane (degrees of freedom 1, 5, 7, 11, about local z-axis)
+        - Bending and shear stiffness in the x-z plane (degrees of freedom 2, 4, 8, 10, about local y-axis)
         """
         simple_frame_structure.set_degrees_freedom()
         frame = simple_frame_structure.elements['F1']
         k_local = frame.local_stiffness_matrix()
-        assert k_local.shape == (12, 12)
-        # Torsion stiffness at diagonal
-        assert k_local[3, 3] > 0
-        # Bending stiffness at diagonals
-        assert k_local[4, 4] > 0
-        assert k_local[10, 10] > 0
+
+        material = simple_frame_structure.materials[frame.material]
+        section = simple_frame_structure.sections[frame.section]
+
+        E = material.E
+        G = material.G
+        A = section.A
+        Iy = section.Iy
+        Iz = section.Iz
+        J = section.J
+        L = frame.length()
+
+        k_expected = np.zeros((12, 12))
+
+        # 1. Axial stiffness terms (local x-direction)
+        k_axial = E * A / L
+        k_expected[0, 0] = k_expected[6, 6] = k_axial
+        k_expected[0, 6] = k_expected[6, 0] = -k_axial
+
+        # 2. Torsional stiffness terms (about local x-axis)
+        k_torsion = G * J / L
+        k_expected[3, 3] = k_expected[9, 9] = k_torsion
+        k_expected[3, 9] = k_expected[9, 3] = -k_torsion
+
+        # 3. Bending and shear stiffness in x-y plane (about local z-axis)
+        k_expected[1, 1] = 12 * E * Iz / L**3
+        k_expected[1, 5] = 6 * E * Iz / L**2
+        k_expected[1, 7] = -12 * E * Iz / L**3
+        k_expected[1, 11] = 6 * E * Iz / L**2
+
+        k_expected[5, 1] = 6 * E * Iz / L**2
+        k_expected[5, 5] = 4 * E * Iz / L
+        k_expected[5, 7] = -6 * E * Iz / L**2
+        k_expected[5, 11] = 2 * E * Iz / L
+
+        k_expected[7, 1] = -12 * E * Iz / L**3
+        k_expected[7, 5] = -6 * E * Iz / L**2
+        k_expected[7, 7] = 12 * E * Iz / L**3
+        k_expected[7, 11] = -6 * E * Iz / L**2
+
+        k_expected[11, 1] = 6 * E * Iz / L**2
+        k_expected[11, 5] = 2 * E * Iz / L
+        k_expected[11, 7] = -6 * E * Iz / L**2
+        k_expected[11, 11] = 4 * E * Iz / L
+
+        # 4. Bending and shear stiffness in x-z plane (about local y-axis)
+        k_expected[2, 2] = 12 * E * Iy / L**3
+        k_expected[2, 4] = -6 * E * Iy / L**2
+        k_expected[2, 8] = -12 * E * Iy / L**3
+        k_expected[2, 10] = -6 * E * Iy / L**2
+
+        k_expected[4, 2] = -6 * E * Iy / L**2
+        k_expected[4, 4] = 4 * E * Iy / L
+        k_expected[4, 8] = 6 * E * Iy / L**2
+        k_expected[4, 10] = 2 * E * Iy / L
+
+        k_expected[8, 2] = -12 * E * Iy / L**3
+        k_expected[8, 4] = 6 * E * Iy / L**2
+        k_expected[8, 8] = 12 * E * Iy / L**3
+        k_expected[8, 10] = 6 * E * Iy / L**2
+
+        k_expected[10, 2] = -6 * E * Iy / L**2
+        k_expected[10, 4] = 2 * E * Iy / L
+        k_expected[10, 8] = 6 * E * Iy / L**2
+        k_expected[10, 10] = 4 * E * Iy / L
+
+        # Perform comprehensive assertion of the entire local stiffness matrix
+        np.testing.assert_array_almost_equal(k_local, k_expected, decimal=5)
 
     def test_frame_axial_stiffness_contribution(self, simple_frame_structure):
         """Verify axial stiffness terms exist.
