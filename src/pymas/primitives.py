@@ -147,169 +147,10 @@ class Joint(AttrDisplay):
         return np.array([x, y, z])
 
 
-class Truss(AttrDisplay):
-    """Long elements interconnected at hinged joints.
-
-    This class models a truss element with axial stiffness only.
-
-    Attributes:
-        name (str): Name of the truss.
-        joint_j (str): Name of the near joint of the truss.
-        joint_k (str): Name of the far joint of the truss.
-        material (str): Name of the material of the truss.
-        section (str): Name of the cross section of the truss.
-
-    Methods:
-        length(): Return the length of the truss.
-        direction_cosines_vector(): Return the direction cosines vector of the truss.
-        rotation_matrix(): Return the rotation matrix of the truss.
-        rotation_transformation_matrix(): Return the rotation transformation matrix of the truss.
-        local_stiffness_matrix(): Return the local stiffness matrix of the truss.
-        global_stiffness_matrix(): Return the global stiffness matrix of the truss.
-        TODO get_internal_forces(load_pattern[, no_div]): Return the internal forces of the truss.
-    """
-
-    def __init__(self, parent, name, joint_j, joint_k, material, section):
-        """Instantiate a Truss object.
-
-        Args:
-            parent (Structure): Structure object.
-            name (str): Name of the truss.
-            joint_j (str): Name of the near joint of the truss.
-            joint_k (str): Name of the far joint of the truss.
-            material (str): Name of the material of the truss.
-            section (str): Name of the cross section of the truss.
-        """
-        self._parent = parent
-        self.name = name
-        self.joint_j = joint_j
-        self.joint_k = joint_k
-        self.material = material
-        self.section = section
-
-    def length(self):
-        """Return the length of the truss.
-
-        Calculates the Euclidean distance between the near and far joints.
-
-        Returns:
-            float: Length of the truss.
-        """
-        j = self._parent.joints[self.joint_j].coordinate_vector()
-        k = self._parent.joints[self.joint_k].coordinate_vector()
-
-        return np.linalg.norm(k - j)
-
-    def direction_cosines_vector(self):
-        """Return the direction cosines of the truss.
-
-        Calculates the unit vector along the truss's length in the global coordinate system.
-
-        Returns:
-            ndarray: Direction cosines of the truss.
-        """
-        j  = self._parent.joints[self.joint_j].coordinate_vector()
-        k = self._parent.joints[self.joint_k].coordinate_vector()
-        vector = k - j
-
-        return vector / np.linalg.norm(vector)
-
-    def rotation_matrix(self):
-        """Return the rotation matrix of the truss.
-
-        This matrix transforms vectors from the local coordinate system of the truss to the global coordinate
-        system.
-
-        Returns:
-            ndarray: Rotation matrix of the truss.
-        """
-        v_from = np.array([1, 0, 0])
-        v_to = self.direction_cosines_vector()
-
-        if np.all(v_from == v_to):
-            return Rotation.from_quat([0, 0, 0, 1]).as_matrix()
-
-        elif np.all(v_from == -v_to):
-            return Rotation.from_quat([0, 0, 1, 0]).as_matrix()
-
-        else:
-            w = np.cross(v_from, v_to)
-            w /= np.linalg.norm(w)
-            theta = np.arccos(np.dot(v_from, v_to))
-            quaternion = np.hstack((w * np.sin(theta/2), np.cos(theta/2)))
-
-        return Rotation.from_quat(quaternion).as_matrix()
-
-    def rotation_transformation_matrix(self):
-        """Return the rotation transformation matrix of the truss.
-
-
-        This matrix transforms displacement and force vectors between the local and global coordinate systems for an
-        element with 6 degrees of freedom at each end.
-
-        Returns:
-            ndarray: Rotation transformation matrix of the truss.
-        """
-        indptr = np.array([0, 1, 2, 3, 4])
-        indices = np.array([0, 1, 2, 3])
-        data = np.tile(self.rotation_matrix(), (4, 1, 1))
-
-        return bsr_matrix((data, indices, indptr), shape=(12, 12)).toarray()
-
-    def local_stiffness_matrix(self):
-        """Return the local stiffness matrix of the truss.
-
-        Calculates the 12x12 stiffness matrix for the truss element in its local coordinate system, considering only
-        axial deformation.
-
-        Returns:
-            ndarray: Local stiffness matrix of the truss.
-        """
-        L = self.length()
-
-        material = self._parent.materials[self.material]
-        E = material.E if material.E is not None else 0
-
-        section = self._parent.sections[self.section]
-        A = section.A if section.A is not None else 0
-
-        ael = A * E / L
-
-        # AE / L
-        rows = np.array([0, 6, 0, 6])
-        cols = np.array([0, 6, 6, 0])
-        data = np.array(2 * [ael] + 2 * [-ael])
-
-        return coo_matrix((data, (rows, cols)), (12, 12)).toarray()
-
-    def global_stiffness_matrix(self):
-        """Return the global stiffness matrix of the truss.
-
-        Transforms the local stiffness matrix of the truss into the global coordinate system and filters it based on
-        the active degrees of freedom of the structure.
-
-        Returns:
-            ndarray: Global stiffness matrix of the truss.
-        """
-        # degrees of freedom
-        dof = self._parent.get_degrees_freedom()
-        # degrees of freedom of the truss
-        dof_truss = np.nonzero(np.tile(dof, 2))[0]
-
-        # local siffness matrix of the truss
-        k_local = self.local_stiffness_matrix()
-        # rotation transformation matrix of the truss
-        t = self.rotation_transformation_matrix()
-        # global matrix sfiffness of the truss
-        k_global = np.dot(np.dot(t, k_local), np.transpose(t))
-
-        return k_global[dof_truss[:, None], dof_truss]
-
-
-class Frame(Truss):
+class Frame(AttrDisplay):
     """Long elements interconnected at rigid joints.
 
-    This class extends the `Truss` class to model frame elements, which include axial, shear, and bending stiffness.
+    This class models frame elements, which include axial, shear, and bending stiffness.
 
     Attributes:
         name (str): Name of the frame.
@@ -340,7 +181,80 @@ class Frame(Truss):
             material (str): Name of the material of the frame.
             section (str): Name of the cross section of the frame.
         """
-        super().__init__(parent, name, joint_j, joint_k, material, section)
+        self._parent = parent
+        self.name = name
+        self.joint_j = joint_j
+        self.joint_k = joint_k
+        self.material = material
+        self.section = section
+
+    def length(self):
+        """Return the length of the frame.
+
+        Calculates the Euclidean distance between the near and far joints.
+
+        Returns:
+            float: Length of the frame.
+        """
+        j = self._parent.joints[self.joint_j].coordinate_vector()
+        k = self._parent.joints[self.joint_k].coordinate_vector()
+
+        return np.linalg.norm(k - j)
+
+    def direction_cosines_vector(self):
+        """Return the direction cosines of the frame.
+
+        Calculates the unit vector along the frame's length in the global coordinate system.
+
+        Returns:
+            ndarray: Direction cosines of the frame.
+        """
+        j = self._parent.joints[self.joint_j].coordinate_vector()
+        k = self._parent.joints[self.joint_k].coordinate_vector()
+        vector = k - j
+
+        return vector / np.linalg.norm(vector)
+
+    def rotation_matrix(self):
+        """Return the rotation matrix of the frame.
+
+        This matrix transforms vectors from the local coordinate system of the frame to the global coordinate
+        system.
+
+        Returns:
+            ndarray: Rotation matrix of the frame.
+        """
+        v_from = np.array([1, 0, 0])
+        v_to = self.direction_cosines_vector()
+
+        if np.all(v_from == v_to):
+            return Rotation.from_quat([0, 0, 0, 1]).as_matrix()
+
+        elif np.all(v_from == -v_to):
+            return Rotation.from_quat([0, 0, 1, 0]).as_matrix()
+
+        else:
+            w = np.cross(v_from, v_to)
+            w /= np.linalg.norm(w)
+            theta = np.arccos(np.dot(v_from, v_to))
+            quaternion = np.hstack((w * np.sin(theta/2), np.cos(theta/2)))
+
+        return Rotation.from_quat(quaternion).as_matrix()
+
+    def rotation_transformation_matrix(self):
+        """Return the rotation transformation matrix of the frame.
+
+        This matrix transforms displacement and force vectors between the local and global coordinate systems for an
+        element with 6 degrees of freedom at each end.
+
+        Returns:
+            ndarray: Rotation transformation matrix of the frame.
+        """
+        indptr = np.array([0, 1, 2, 3, 4])
+        indices = np.array([0, 1, 2, 3])
+        data = np.tile(self.rotation_matrix(), (4, 1, 1))
+
+        return bsr_matrix((data, indices, indptr), shape=(12, 12)).toarray()
 
     def local_stiffness_matrix(self):
         """Return the local stiffness matrix of the frame.
@@ -358,15 +272,17 @@ class Frame(Truss):
         G = material.G if material.G is not None else 0
 
         section = self._parent.sections[self.section]
+        A = section.A if section.A is not None else 0
         J = section.J if section.J is not None else 0
         Iy = section.Iy if section.Iy is not None else 0
         Iz = section.Iz if section.Iz is not None else 0
 
+        ael = A * E / L
         el = E / L
         el2 = E / L ** 2
         el3 = E / L ** 3
 
-        gjl = J * G / L
+        gjl = G * J / L
 
         e_iy_l = Iy * el
         e_iz_l = Iz * el
@@ -377,53 +293,79 @@ class Frame(Truss):
         e_iy_l3 = 12 * Iy * el3
         e_iz_l3 = 12 * Iz * el3
 
-        rows = np.empty(36, dtype=int)
-        cols = np.empty(36, dtype=int)
-        data = np.empty(36)
+        rows = np.empty(40, dtype=int)
+        cols = np.empty(40, dtype=int)
+        data = np.empty(40)
+
+        # AE / L
+        rows[:4] = np.array([0, 6, 0, 6])
+        cols[:4] = np.array([0, 6, 6, 0])
+        data[:4] = np.array([ael, ael, -ael, -ael])
 
         # GJ / L
-        rows[:4] = np.array([3, 9, 3, 9])
-        cols[:4] = np.array([3, 9, 9, 3])
-        data[:4] = np.array(2 * [gjl] + 2 * [-gjl])
+        rows[4:8] = np.array([3, 9, 3, 9])
+        cols[4:8] = np.array([3, 9, 9, 3])
+        data[4:8] = np.array([gjl, gjl, -gjl, -gjl])
 
         # 12EI / L^3
-        rows[4:8] = np.array([1, 7, 1, 7])
-        cols[4:8] = np.array([1, 7, 7, 1])
-        data[4:8] = np.array(2 * [e_iz_l3] + 2 * [-e_iz_l3])
+        rows[8:12] = np.array([1, 7, 1, 7])
+        cols[8:12] = np.array([1, 7, 7, 1])
+        data[8:12] = np.array([e_iz_l3, e_iz_l3, -e_iz_l3, -e_iz_l3])
 
-        rows[8:12] = np.array([2, 8, 2, 8])
-        cols[8:12] = np.array([2, 8, 8, 2])
-        data[8:12] = np.array(2 * [e_iy_l3] + 2 * [-e_iy_l3])
+        rows[12:16] = np.array([2, 8, 2, 8])
+        cols[12:16] = np.array([2, 8, 8, 2])
+        data[12:16] = np.array([e_iy_l3, e_iy_l3, -e_iy_l3, -e_iy_l3])
 
         # 6EI / L^2
-        rows[12:16] = np.array([1, 5, 1, 11])
-        cols[12:16] = np.array([5, 1, 11, 1])
-        data[12:16] = np.array(4 * [e_iz_l2])
+        rows[16:20] = np.array([1, 5, 1, 11])
+        cols[16:20] = np.array([5, 1, 11, 1])
+        data[16:20] = np.array([e_iz_l2, e_iz_l2, e_iz_l2, e_iz_l2])
 
-        rows[16:20] = np.array([5, 7, 7, 11])
-        cols[16:20] = np.array([7, 5, 11, 7])
-        data[16:20] = np.array(4 * [-e_iz_l2])
+        rows[20:24] = np.array([5, 7, 7, 11])
+        cols[20:24] = np.array([7, 5, 11, 7])
+        data[20:24] = np.array([-e_iz_l2, -e_iz_l2, -e_iz_l2, -e_iz_l2])
 
-        rows[20:24] = np.array([2, 4, 2, 10])
-        cols[20:24] = np.array([4, 2, 10, 2])
-        data[20:24] = np.array(4 * [-e_iy_l2])
+        rows[24:28] = np.array([2, 4, 2, 10])
+        cols[24:28] = np.array([4, 2, 10, 2])
+        data[24:28] = np.array([-e_iy_l2, -e_iy_l2, -e_iy_l2, -e_iy_l2])
 
-        rows[24:28] = np.array([4, 8, 8, 10])
-        cols[24:28] = np.array([8, 4, 10, 8])
-        data[24:28] = np.array(4 * [e_iy_l2])
+        rows[28:32] = np.array([4, 8, 8, 10])
+        cols[28:32] = np.array([8, 4, 10, 8])
+        data[28:32] = np.array([e_iy_l2, e_iy_l2, e_iy_l2, e_iy_l2])
 
         # 4EI / L
-        rows[28:32] = np.array([4, 10, 5, 11])
-        cols[28:32] = np.array([4, 10, 5, 11])
-        data[28:32] = np.array(2 * [4 * e_iy_l] + 2 * [4 * e_iz_l])
+        rows[32:36] = np.array([4, 10, 5, 11])
+        cols[32:36] = np.array([4, 10, 5, 11])
+        data[32:36] = np.array([4 * e_iy_l, 4 * e_iy_l, 4 * e_iz_l, 4 * e_iz_l])
 
-        rows[32:] = np.array([10, 4, 11, 5])
-        cols[32:] = np.array([4, 10, 5, 11])
-        data[32:] = np.array(2 * [2 * e_iy_l] + 2 * [2 * e_iz_l])
+        rows[36:] = np.array([10, 4, 11, 5])
+        cols[36:] = np.array([4, 10, 5, 11])
+        data[36:] = np.array([2 * e_iy_l, 2 * e_iy_l, 2 * e_iz_l, 2 * e_iz_l])
 
-        k_truss = super().local_stiffness_matrix()
+        return coo_matrix((data, (rows, cols)), (12, 12)).toarray()
 
-        return k_truss + coo_matrix((data, (rows, cols)), (12, 12)).toarray()
+    def global_stiffness_matrix(self):
+        """Return the global stiffness matrix of the frame.
+
+        Transforms the local stiffness matrix of the frame into the global coordinate system and filters it based on
+        the active degrees of freedom of the structure.
+
+        Returns:
+            ndarray: Global stiffness matrix of the frame.
+        """
+        # degrees of freedom
+        dof = self._parent.get_degrees_freedom()
+        # degrees of freedom of the frame
+        dof_frame = np.nonzero(np.tile(dof, 2))[0]
+
+        # local stiffness matrix of the frame
+        k_local = self.local_stiffness_matrix()
+        # rotation transformation matrix of the frame
+        t = self.rotation_transformation_matrix()
+        # global matrix stiffness of the frame
+        k_global = np.dot(np.dot(t, k_local), np.transpose(t))
+
+        return k_global[dof_frame[:, None], dof_frame]
 
     def get_internal_forces(self, load_pattern, no_div=100):
         """Get the internal forces of the element.
