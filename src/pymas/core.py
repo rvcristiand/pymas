@@ -29,8 +29,8 @@ class Structure:
     - 'beam': Beam, with 2 degrees of freedom (uy, rz).
     - 'plane_truss': Plane truss, with 2 degrees of freedom (ux, uy).
     - 'plane_frame': Plane frame, with 3 degrees of freedom (ux, uy, rz).
-    - 'space_truss': Space truss, with 3 degrees of freedom (ux, uy, uz).
     - 'grid': Grid structure, with 3 degrees of freedom (uy, uz, rx).
+    - 'space_truss': Space truss, with 3 degrees of freedom (ux, uy, uz).
     - 'space_frame': Space frame, with 6 degrees of freedom (ux, uy, uz, rx,
        ry, rz).
 
@@ -141,8 +141,7 @@ class Structure:
         self.internal_forces = {}
         self.internal_displacements = {}
 
-    def add_material(self, name, modulus_elasticity=None,
-                     modulus_elasticity_shear=None):
+    def add_material(self, name, E=None, G=None):
         """Add a material to the model.
 
         Creates and adds a new material object to the model's material
@@ -150,25 +149,18 @@ class Structure:
 
         Args:
             name (str): Name of the material.
-            modulus_elasticity (float, optional): Elastic modulus of the
-                material.
-            modulus_elasticity_shear (float, optional): Shear modulus of the
-                material.
+            E (float, optional): Elastic modulus of the material.
+            G (float, optional): Shear modulus of the material.
 
         Returns:
             Material: Material object.
         """
-        # material properties
-        E = modulus_elasticity
-        G = modulus_elasticity_shear
-
         # add a material object to the dictionary of materials
         material = self.materials[name] = Material(self, name, E, G)
 
         return material
 
-    def add_section(self, name, area=None, torsion_constant=None,
-                    inertia_y=None, inertia_z=None):
+    def add_section(self, name, A=None, J=None, Iy=None, Iz=None):
         """Add a cross section to the model.
 
         Creates and adds a new generic cross section object to the model's
@@ -176,23 +168,16 @@ class Structure:
 
         Args:
             name (str): Name of the cross section.
-            area (float, optional): Area of the cross section.
-            torsion_constant (float, optional): Torsion constant of the cross
-                section.
-            inertia_y (float, optional): Inertia of the cross section with
-                respect to the local y-axis.
-            inertia_z (float, optional): Inertia of the cross section with
-                respect to the local z-axis.
+            A (float, optional): Area of the cross section.
+            J (float, optional): Torsion constant of the cross section.
+            Iy (float, optional): Inertia of the cross section with respect to
+                the local y-axis.
+            Iz (float, optional): Inertia of the cross section with respect to
+                the local z-axis.
 
         Returns:
             Section: Cross section.
         """
-        # cross section properties
-        A = area
-        J = torsion_constant
-        Iy = inertia_y
-        Iz = inertia_z
-
         # add a section object to the dictionary of cross sections
         section = self.sections[name] = Section(self, name, A, J, Iy, Iz)
 

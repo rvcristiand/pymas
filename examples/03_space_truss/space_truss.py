@@ -4,7 +4,7 @@ from pymas import Structure
 Solution to problem 7.2 from 'Microcomputadores en Ingeniería Estructural'
 """
 # create the model
-model = Structure(type='3D truss')
+model = Structure(type='space_truss')
 
 # add material
 model.add_material("2100 t/cm2", 2100e4)
@@ -50,8 +50,12 @@ model.add_joint_point_load("point loads", '1', 10, 15, -12)
 model.add_joint_point_load("point loads", '2',  5, -3, -10)
 model.add_joint_point_load("point loads", '3', -4, -2,  -6)
 
-# solve
+# analyze the model
 model.run_analysis()
-
-# export
 model.export('space_truss.json')
+
+for joint in ['1', '2', '3']:
+    print(f'joint: {joint}')
+    print(f'\tux: {model.displacements["point loads"][joint].ux:.3e} m')
+    print(f'\tux: {model.displacements["point loads"][joint].uy:.3e} m')
+    print(f'\tux: {model.displacements["point loads"][joint].uz:.3e} m')
