@@ -5,7 +5,7 @@ Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'
 """
 
 # structure
-model = Structure()
+model = Structure('space_frame')
 
 # add material
 model.add_material('material1', 220e4, 85e4)
@@ -21,9 +21,16 @@ model.add_joint('3', 0, 0, 3)
 model.add_joint('4', 0, 3, 0)
 
 # add frames
-model.add_frame('1-2', '1', '2', 'material1', 'section1')
-model.add_frame('4-1', '4', '1', 'material1', 'section2')
-model.add_frame('3-1', '3', '1', 'material1', 'section1')
+deformations = {
+    'axial': True,
+    'torsional': True,
+    'bending_y': True,
+    'bending_z': True
+}
+
+model.add_frame('1-2', '1', '2', 'material1', 'section1', **deformations)
+model.add_frame('4-1', '4', '1', 'material1', 'section2', **deformations)
+model.add_frame('3-1', '3', '1', 'material1', 'section1', **deformations)
 
 # add supports
 model.add_support('2', *6 * (True,))
@@ -40,7 +47,7 @@ model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
 # solve
 model.run_analysis()
 
-print(model.displacements)
+print(model.displacements['distributed loads']['1'])
 
 # export
 model.export('space_frame.json')

@@ -1,8 +1,9 @@
 """
 Pytest configuration and fixtures for pymas tests.
 
-This module provides reusable fixtures for testing the pymas structural analysis library.
-Each fixture creates a typical structure scenario for testing different functionalities.
+This module provides reusable fixtures for testing the pymas structural
+analysis library. Each fixture creates a typical structure scenario for testing
+different functionalities.
 
 Fixtures:
     structure: Empty structure ready to be populated.
@@ -14,13 +15,13 @@ Fixtures:
 
 Typical usage:
     def test_example(simple_truss_structure):
-        # simple_truss_structure already has materials, sections, joints, elements, supports
+        # simple_truss_structure already has materials, sections, joints,
+        # elements, supports
         simple_truss_structure.run_analysis()
         assert 'dead' in simple_truss_structure.displacements
 """
 
 import pytest
-import numpy as np
 from pymas import Structure
 
 
@@ -59,15 +60,20 @@ def simple_truss_structure():
     """
     s = Structure()
 
-    s.add_material('steel', modulus_elasticity=200e9)
-    s.add_section('circle', area=0.01, torsion_constant=0.0001,
-                 inertia_y=0.0001, inertia_z=0.0001)
-    s.add_joint('N1', x=0, y=0, z=0)
-    s.add_joint('N2', x=5, y=0, z=0)
-    s.add_truss('T1', 'N1', 'N2', 'steel', 'circle')
-    s.add_support('N1', r_ux=True, r_uy=True, r_uz=True,
-                 r_rx=True, r_ry=True, r_rz=True)
-    s.add_support('N2', r_uy=True, r_rz=True)
+    s.add_material("steel", modulus_elasticity=200e9)
+    s.add_section(
+        "circle",
+        area=0.01,
+        torsion_constant=0.0001,
+        inertia_y=0.0001,
+        inertia_z=0.0001)
+    s.add_joint("N1", x=0, y=0, z=0)
+    s.add_joint("N2", x=5, y=0, z=0)
+    s.add_truss("T1", "N1", "N2", "steel", "circle")
+    s.add_support(
+        "N1", r_ux=True, r_uy=True, r_uz=True, r_rx=True, r_ry=True, r_rz=True
+    )
+    s.add_support("N2", r_uy=True, r_rz=True)
 
     return s
 
@@ -96,14 +102,18 @@ def simple_frame_structure():
     """
     s = Structure()
 
-    s.add_material('steel', modulus_elasticity=200e9, modulus_elasticity_shear=77e9)
-    s.add_rectangular_section('rect', 0.3, 0.5)
-    s.add_joint('N1', x=0, y=0, z=0)
-    s.add_joint('N2', x=5, y=0, z=0)
-    s.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-    s.add_support('N1', r_ux=True, r_uy=True, r_uz=True,
-                 r_rx=True, r_ry=True, r_rz=True)
-    s.add_support('N2', r_uy=True, r_rz=True)
+    s.add_material(
+        "steel",
+        modulus_elasticity=200e9,
+        modulus_elasticity_shear=77e9)
+    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_joint("N1", x=0, y=0, z=0)
+    s.add_joint("N2", x=5, y=0, z=0)
+    s.add_frame("F1", "N1", "N2", "steel", "rect")
+    s.add_support(
+        "N1", r_ux=True, r_uy=True, r_uz=True, r_rx=True, r_ry=True, r_rz=True
+    )
+    s.add_support("N2", r_uy=True, r_rz=True)
 
     return s
 
@@ -129,15 +139,15 @@ def simple_beam_structure():
     Returns:
         Structure: A simple beam structure for testing.
     """
-    s = Structure(type='beam')
+    s = Structure(type="beam")
 
-    s.add_material('steel', modulus_elasticity=200e9)
-    s.add_rectangular_section('rect', 0.3, 0.5)
-    s.add_joint('N1', x=0)
-    s.add_joint('N2', x=6)
-    s.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-    s.add_support('N1', r_uy=True)
-    s.add_support('N2', r_uy=True)
+    s.add_material("steel", modulus_elasticity=200e9)
+    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_joint("N1", x=0)
+    s.add_joint("N2", x=6)
+    s.add_frame("F1", "N1", "N2", "steel", "rect")
+    s.add_support("N1", r_uy=True)
+    s.add_support("N2", r_uy=True)
 
     return s
 
@@ -166,21 +176,21 @@ def structure_with_loads():
     Returns:
         Structure: A properly configured multi-span structure.
     """
-    s = Structure(type='beam')
+    s = Structure(type="beam")
 
-    s.add_material('steel', modulus_elasticity=200e9)
-    s.add_rectangular_section('rect', 0.3, 0.5)
-    s.add_joint('N1', x=0)
-    s.add_joint('N2', x=6)
-    s.add_joint('N3', x=12)
-    s.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-    s.add_frame('F2', 'N2', 'N3', 'steel', 'rect')
-    s.add_support('N1', r_uy=True)
-    s.add_support('N2', r_uy=True)
-    s.add_support('N3', r_uy=True)
-    s.add_load_pattern('dead')
-    s.add_distributed_load('dead', 'F1', fy=-5e3)
-    s.add_distributed_load('dead', 'F2', fy=-5e3)
+    s.add_material("steel", modulus_elasticity=200e9)
+    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_joint("N1", x=0)
+    s.add_joint("N2", x=6)
+    s.add_joint("N3", x=12)
+    s.add_frame("F1", "N1", "N2", "steel", "rect")
+    s.add_frame("F2", "N2", "N3", "steel", "rect")
+    s.add_support("N1", r_uy=True)
+    s.add_support("N2", r_uy=True)
+    s.add_support("N3", r_uy=True)
+    s.add_load_pattern("dead")
+    s.add_distributed_load("dead", "F1", fy=-5e3)
+    s.add_distributed_load("dead", "F2", fy=-5e3)
 
     return s
 
@@ -201,42 +211,52 @@ def structure_and_load():
         Structure: Minimal structure without loads applied yet.
     """
     s = Structure()
-    s.add_material('steel', modulus_elasticity=200e9)
-    s.add_rectangular_section('rect', 0.3, 0.5)
-    s.add_joint('N1', x=0)
-    s.add_joint('N2', x=6)
-    s.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
+    s.add_material("steel", modulus_elasticity=200e9)
+    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_joint("N1", x=0)
+    s.add_joint("N2", x=6)
+    s.add_frame("F1", "N1", "N2", "steel", "rect")
     return s
 
 
 # DEPRECATED: Keep for backward compatibility but warn
 @pytest.fixture
 def simple_structure():
-    """DEPRECATED: Use simple_truss_structure or simple_frame_structure instead.
+    """DEPRECATED: Use simple_truss_structure or simple_frame_structure
+    instead.
 
     This fixture is kept for backward compatibility with existing tests.
     It contains both a truss and frame element, which is physically unusual.
     """
     import warnings
+
     warnings.warn(
         "simple_structure fixture is deprecated. "
         "Use simple_truss_structure or simple_frame_structure instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     s = Structure()
 
-    s.add_material('steel', modulus_elasticity=200e9, modulus_elasticity_shear=77e9)
-    s.add_section('circle', area=0.01, torsion_constant=0.0001,
-                 inertia_y=0.0001, inertia_z=0.0001)
-    s.add_rectangular_section('rect', 0.3, 0.5)
-    s.add_joint('N1', x=0, y=0, z=0)
-    s.add_joint('N2', x=5, y=0, z=0)
-    s.add_truss('T1', 'N1', 'N2', 'steel', 'circle')
-    s.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-    s.add_support('N1', r_ux=True, r_uy=True, r_uz=True,
-                 r_rx=True, r_ry=True, r_rz=True)
-    s.add_support('N2', r_uy=True, r_rz=True)
+    s.add_material(
+        "steel",
+        modulus_elasticity=200e9,
+        modulus_elasticity_shear=77e9)
+    s.add_section(
+        "circle",
+        area=0.01,
+        torsion_constant=0.0001,
+        inertia_y=0.0001,
+        inertia_z=0.0001)
+    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_joint("N1", x=0, y=0, z=0)
+    s.add_joint("N2", x=5, y=0, z=0)
+    s.add_truss("T1", "N1", "N2", "steel", "circle")
+    s.add_frame("F1", "N1", "N2", "steel", "rect")
+    s.add_support(
+        "N1", r_ux=True, r_uy=True, r_uz=True, r_rx=True, r_ry=True, r_rz=True
+    )
+    s.add_support("N2", r_uy=True, r_rz=True)
 
     return s
