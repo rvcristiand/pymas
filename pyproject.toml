@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pymas"
-version = "0.0.2a"
+version = "0.0.2b"
 authors = [
   { name = "Cristian Ramírez", email="rvcristiand@unal.edu.co" },
 ]
