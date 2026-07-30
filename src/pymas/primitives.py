@@ -519,7 +519,8 @@ class Frame(AttrDisplay):
         section = self._parent.sections[self.section]
         loadPattern = self._parent.load_patterns[load_pattern]
         end_actions = self._parent.end_actions[load_pattern][self.name]
-        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j]
+        j_joint_displ = \
+            self._parent.displacements[load_pattern][self.joint_j]
 
         length = self.length()
         E = material.E if material.E is not None else 0
@@ -540,11 +541,11 @@ class Frame(AttrDisplay):
         my_j = my_j if self.bending_y else 0
         mz_j = mz_j if self.bending_z else 0
 
-        j_joint_displamcement = self._parent.displacements[load_pattern][self.joint_j].displacement_vector(
-        )
-        j_joint_displamcement = np.dot(np.transpose(
-            self.rotation_transformation_matrix())[:6, :6], j_joint_displamcement)
-        ux_j, uy_j, uz_j, rx_j, ry_j, rz_j = j_joint_displamcement
+        j_joint_displ = \
+            self._parent.displacements[load_pattern][self.joint_j].displacement_vector()
+        j_joint_displ = np.dot(np.transpose(
+            self.rotation_transformation_matrix())[:6, :6], j_joint_displ)
+        ux_j, uy_j, uz_j, rx_j, ry_j, rz_j = j_joint_displ
 
         # Aplicar filtros a los desplazamientos del nodo inicial
         ux_j = ux_j if self.axial else 0
@@ -1217,9 +1218,6 @@ class Displacement(AttrDisplay):
         rx (float): Displacement around x-axis.
         ry (float): Displacement around y-axis.
         rz (float): Displacement around z-axis.
-
-    Methods:
-        displacement_vector(): Returns the displacement vector.
     """
 
     def __init__(self, parent, load_pattern, joint, ux=None, uy=None, uz=None,
@@ -1458,7 +1456,7 @@ class InternalDisplacements(AttrDisplay):
 
     Attributes:
         load_pattern (str): Load pattern name.
-        element (str): Element name.
+        frame (str): Frame name.
         ux (list[float], optional): Internal displacements along the x-axis.
         uy (list[float], optional): Internal displacements along the y-axis.
         uz (list[float], optional): Internal displacements along the z-axis.
@@ -1467,7 +1465,7 @@ class InternalDisplacements(AttrDisplay):
         rz (list[float], optional): Internal displacements around the z-axis.
     """
 
-    def __init__(self, parent, load_pattern, element, ux=None, uy=None,
+    def __init__(self, parent, load_pattern, frame, ux=None, uy=None,
                  uz=None, rx=None, ry=None, rz=None):
         """ Instantiate an InternalDisplacements object.
 
@@ -1475,16 +1473,22 @@ class InternalDisplacements(AttrDisplay):
             parent (Structure): Structure.
             load_pattern (str): Load pattern name.
             frame (str): Frame name.
-            ux (list[float], optional): Internal displacements along the x-axis.
-            uy (list[float], optional): Internal displacements along the y-axis.
-            uz (list[float], optional): Internal displacements along the z-axis.
-            rx (list[float], optional): Internal displacements around the x-axis.
-            ry (list[float], optional): Internal displacements around the y-axis.
-            rz (list[float], optional): Internal displacements around the z-axis.
+            ux (list[float], optional): Internal displacements along the
+                x-axis.
+            uy (list[float], optional): Internal displacements along the
+                y-axis.
+            uz (list[float], optional): Internal displacements along the
+                z-axis.
+            rx (list[float], optional): Internal displacements around the
+                x-axis.
+            ry (list[float], optional): Internal displacements around the
+                y-axis.
+            rz (list[float], optional): Internal displacements around the
+                z-axis.
         """
         self._parent = parent
         self.load_pattern = load_pattern
-        self.element = element
+        self.frame = frame
         self.ux = ux
         self.uy = uy
         self.uz = uz
