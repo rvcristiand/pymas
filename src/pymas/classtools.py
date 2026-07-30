@@ -1,9 +1,9 @@
 class AttrDisplay:
     """Provides a string representation for objects based on their attributes.
 
-    This class offers a `__repr__` method that generates a dictionary-like string
-    representation of an object's public attributes (those not starting with '_')
-    and whose values are not None.
+    This class offers a `__repr__` method that generates a dictionary-like
+    string representation of an object's public attributes (those not starting
+    with '_') and whose values are not None.
     """
 
     def __repr__(self):

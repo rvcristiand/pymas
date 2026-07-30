@@ -44,7 +44,7 @@ class TestFrame:
 
         Creates frame connecting N1 to N2 with material and section.
         """
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         assert frame.name == 'F1'
         assert frame.joint_j == 'N1'
         assert frame.joint_k == 'N2'

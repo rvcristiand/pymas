@@ -38,7 +38,7 @@ class TestTruss:
 
         Creates truss connecting N1 to N2 with material 'steel' and section 'circle'.
         """
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         assert truss.name == 'T1'
         assert truss.joint_j == 'N1'
         assert truss.joint_k == 'N2'

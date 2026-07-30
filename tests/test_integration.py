@@ -18,7 +18,6 @@ Typical usage:
 """
 
 import pytest
-import numpy as np
 from pymas import Structure
 
 
@@ -46,7 +45,7 @@ class TestIntegrationSimpleBeam:
         - θa = -θb (antisymmetric rotations)
         - Both rotations should be non-zero
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 4700 * 28**0.5 * 1000
         b, h = 0.5, 1.0
@@ -58,10 +57,11 @@ class TestIntegrationSimpleBeam:
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section')
-        model.add_support('a', r_uy=True)
+        model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
         model.add_distributed_load('self weight', 'beam', fy=-w)
+
         model.run_analysis()
 
         disp_a = model.displacements['self weight']['a']
@@ -78,7 +78,7 @@ class TestIntegrationSimpleBeam:
         - Ra = Rb = w*L/2 = 60 kN
         Both reactions should be equal (symmetric case).
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 4700 * 28**0.5 * 1000
         b, h = 0.5, 1.0
@@ -90,7 +90,7 @@ class TestIntegrationSimpleBeam:
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section')
-        model.add_support('a', r_uy=True)
+        model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
         model.add_distributed_load('self weight', 'beam', fy=-w)
@@ -110,7 +110,7 @@ class TestIntegrationSimpleBeam:
         - Mmax = w*L²/8 = 150 kN·m at midspan
         - M = 0 at supports
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 4700 * 28**0.5 * 1000
         b, h = 0.5, 1.0
@@ -122,7 +122,7 @@ class TestIntegrationSimpleBeam:
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section')
-        model.add_support('a', r_uy=True)
+        model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
         model.add_distributed_load('self weight', 'beam', fy=-w)
@@ -157,7 +157,7 @@ class TestIntegrationCantilever:
         For cantilever with tip load:
         - Reaction force equals applied load (positive = upward)
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 200e6
         L = 3
@@ -168,7 +168,7 @@ class TestIntegrationCantilever:
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section')
-        model.add_support('fixed', r_uy=True, r_rz=True)
+        model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
         model.add_joint_point_load('tip load', 'tip', fy=-P)
         model.run_analysis()
@@ -185,7 +185,7 @@ class TestIntegrationCantilever:
         - Moment is maximum at fixed end (L=0): M = -P*L = -30 kN·m
         - Moment is zero at tip (L=L): M = 0
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 200e6
         L = 3
@@ -196,7 +196,7 @@ class TestIntegrationCantilever:
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section')
-        model.add_support('fixed', r_uy=True, r_rz=True)
+        model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
         model.add_joint_point_load('tip load', 'tip', fy=-P)
         model.run_analysis()
@@ -240,7 +240,7 @@ class TestIntegration3DTruss:
         Note: Truss elements don't have internal_forces method,
         so only displacements and reactions are verified.
         """
-        model = Structure(type='3D truss')
+        model = Structure('plane_truss')
 
         E = 200e9
         A = 0.01  # 100 cm²
@@ -295,7 +295,7 @@ class TestIntegrationMultiSpan:
         - Analysis should converge
         - Reactions should satisfy equilibrium
         """
-        model = Structure(type='beam')
+        model = Structure('beam')
 
         E = 200e6
         L1, L2 = 5, 5
