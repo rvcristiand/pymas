@@ -1,4 +1,4 @@
-# pymas
+# [pymas](https://github.com/rvcristiand/pymas)
 ![GitHub licence](https://img.shields.io/github/license/rvcristiand/pymas)
 ![GitHub Release](https://img.shields.io/github/v/release/rvcristiand/pymas) <!-- ![GitHub contributors](https://img.shields.io/github/contributors-anon/rvcristiand/pymas) -->
 ![GitHub top language](https://img.shields.io/github/languages/top/rvcristiand/pymas) <!-- ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/rvcristiand/pymas) -->
