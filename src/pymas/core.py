@@ -245,7 +245,8 @@ class Structure:
         return joint
 
     def add_frame(self, name, joint_j, joint_k, material, section,
-                  axial=None, torsional=None, bending_y=None, bending_z=None):
+                  axial=None, torsional=None, bending_y=None, bending_z=None,
+                  roll=None):
         """Add a frame to the model.
 
         Creates and adds a new frame object to the model's frame dictionary,
@@ -266,6 +267,10 @@ class Structure:
                 local y-axis of the frame. Defaults to None.
             bending_z (bool, optional): Consideration of bending around the
                 local z-axis of the frame. Defaults to None.
+            roll (float, optional): Rotation of the cross section about the
+                local x-axis, in radians, following the right-hand rule with
+                the thumb pointing from the near to the far joint. Defaults to
+                None, which means 0.
 
         Returns:
             Frame: Frame object.
@@ -273,7 +278,7 @@ class Structure:
         # create a frame object
         frame = Frame(self, name, joint_j, joint_k, material, section,
                       axial=axial, torsional=torsional, bending_y=bending_y,
-                      bending_z=bending_z)
+                      bending_z=bending_z, roll=roll)
 
         # add the frame object to the dictionary of frames
         self.frames[name] = frame

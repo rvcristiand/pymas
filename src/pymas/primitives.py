@@ -211,10 +211,14 @@ class Frame(AttrDisplay):
             local y-axis of the frame.
         bending_z (bool): Whether to consider bending deformation around the
             local z-axis of the frame.
+        roll (float): Rotation of the cross section about the local x-axis,
+            in radians, following the right-hand rule with the thumb pointing
+            from the near to the far joint. None means 0.
     """
 
     def __init__(self, parent, name, joint_j, joint_k, material, section,
-                 axial=None, torsional=None, bending_y=None, bending_z=None):
+                 axial=None, torsional=None, bending_y=None, bending_z=None,
+                 roll=None):
         """Instantiate a Frame object.
 
         Args:
@@ -232,6 +236,10 @@ class Frame(AttrDisplay):
                 local y-axis of the frame. Defaults to None.
             bending_z (bool, optional): Consideration of bending around the
                 local z-axis of the frame. Defaults to None.
+            roll (float, optional): Rotation of the cross section about the
+                local x-axis, in radians, following the right-hand rule with
+                the thumb pointing from the near to the far joint. Defaults to
+                None, which means 0.
         """
         self._parent = parent
         self.name = name
@@ -243,6 +251,7 @@ class Frame(AttrDisplay):
         self.torsional = torsional
         self.bending_y = bending_y
         self.bending_z = bending_z
+        self.roll = roll
 
     def length(self):
         """Return the length of the frame.
@@ -272,23 +281,23 @@ class Frame(AttrDisplay):
 
         return vector / np.linalg.norm(vector)
 
-    def rotation_matrix(self):
-        """Return the rotation matrix of the frame.
+    def _minimal_rotation(self):
+        """Return the minimal rotation of the frame.
 
-        This matrix transforms vectors from the local coordinate system of the
-        frame to the global coordinate system.
+        This is the smallest rotation that takes the global x-axis onto the
+        frame direction, before applying the roll.
 
         Returns:
-            ndarray: Rotation matrix of the frame.
+            Rotation: Minimal rotation of the frame.
         """
         v_from = np.array([1, 0, 0])
         v_to = self.direction_cosines_vector()
 
         if np.all(v_from == v_to):
-            return Rotation.from_quat([0, 0, 0, 1]).as_matrix()
+            quaternion = [0, 0, 0, 1]
 
         elif np.all(v_from == -v_to):
-            return Rotation.from_quat([0, 0, 1, 0]).as_matrix()
+            quaternion = [0, 0, 1, 0]
 
         else:
             w = np.cross(v_from, v_to)
@@ -296,7 +305,59 @@ class Frame(AttrDisplay):
             theta = np.arccos(np.dot(v_from, v_to))
             quaternion = np.hstack((w * np.sin(theta/2), np.cos(theta/2)))
 
-        return Rotation.from_quat(quaternion).as_matrix()
+        return Rotation.from_quat(quaternion)
+
+    def rotation_matrix(self):
+        """Return the rotation matrix of the frame.
+
+        This matrix transforms vectors from the local coordinate system of the
+        frame to the global coordinate system. The roll is applied first,
+        about the local x-axis, followed by the minimal rotation that takes
+        the global x-axis onto the frame direction.
+
+        Returns:
+            ndarray: Rotation matrix of the frame.
+        """
+        roll = self.roll if self.roll is not None else 0
+        # scalar-last quaternion of the roll about the local x-axis
+        r_roll = Rotation.from_quat([np.sin(roll/2), 0, 0, np.cos(roll/2)])
+
+        return (self._minimal_rotation() * r_roll).as_matrix()
+
+    def roll_to_align(self, wanted, axis='y'):
+        """Return the roll that aligns a local axis with a global direction.
+
+        The local axis points as close as possible to `wanted`, that is, along
+        the projection of `wanted` on the plane normal to the frame.
+
+        Args:
+            wanted (array_like): Global direction to align with.
+            axis (str, optional): Local axis to align, 'y' or 'z'. Defaults
+                to 'y'.
+
+        Returns:
+            float: Roll of the frame, in radians.
+
+        Raises:
+            ValueError: If `axis` is not 'y' or 'z', or if `wanted` is
+                parallel to the frame.
+        """
+        if axis not in ('y', 'z'):
+            raise ValueError(f"axis must be 'y' or 'z', not {axis!r}")
+
+        w = np.asarray(wanted, dtype=float)
+        r_min = self._minimal_rotation().as_matrix()
+        # local y- and z-axes at roll 0
+        y0, z0 = r_min[:, 1], r_min[:, 2]
+        w_y, w_z = np.dot(w, y0), np.dot(w, z0)
+
+        if np.hypot(w_y, w_z) <= 1e-12 * np.linalg.norm(w):
+            raise ValueError('wanted direction is parallel to the frame')
+
+        if axis == 'y':
+            return np.arctan2(w_z, w_y)
+
+        return np.arctan2(-w_y, w_z)
 
     def rotation_transformation_matrix(self):
         """Return the rotation transformation matrix of the frame.
