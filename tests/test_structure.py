@@ -90,14 +90,14 @@ class TestDegreesOfFreedom:
     """
 
     @pytest.mark.parametrize('type, expected', [
-        ('bar',         [True, False, False, False, False, False]),
-        ('axle',        [False, False, False, True, False, False]),
-        ('beam',        [False, True, False, False, False, True]),
-        ('plane_truss', [True, True, False, False, False, False]),
-        ('plane_frame', [True, True, False, False, False, True]),
-        ('grid',        [False, True, True, True, False, False]),
-        ('space_truss', [True, True, True, False, False, False]),
-        ('space_frame', [True, True, True, True, True, True]),
+        ('bar',            [True, False, False, False, False, False]),
+        ('torsional_bar',  [False, False, False, True, False, False]),
+        ('beam',           [False, True, False, False, False, True]),
+        ('plane_truss',    [True, True, False, False, False, False]),
+        ('plane_frame',    [True, True, False, False, False, True]),
+        ('grid',           [False, True, True, True, False, False]),
+        ('space_truss',    [True, True, True, False, False, False]),
+        ('space_frame',    [True, True, True, True, True, True]),
     ])
     def test_degrees_freedom(self, type, expected):
         """Verify the active DoF of every predefined structure type."""
