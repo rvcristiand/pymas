@@ -69,10 +69,23 @@ class TestStructure:
             structure.get_degrees_freedom(),
             np.array([True, True, False, False, False, False]))
 
-    def test_custom_type_without_flags(self):
-        """Verify a custom type without flags has no active DoF."""
-        structure = Structure('custom')
-        assert structure.number_active_degrees_freedom() == 0
+    @pytest.mark.parametrize('flags', [{}, {'ux': False, 'rz': False}])
+    def test_custom_type_without_active_dof_raises(self, flags):
+        """Verify a custom type without any active DoF raises ValueError.
+
+        Omitted flags are False, so a misspelled type such as 'plane_frme'
+        (or the former 'axle') is reported instead of giving a structure
+        with no DoF.
+        """
+        with pytest.raises(ValueError, match='torsional_bar'):
+            Structure('custom', **flags)
+
+    def test_custom_type_omitted_flags_are_false(self):
+        """Verify the omitted flags of a custom type are False."""
+        structure = Structure('custom', rx=True)
+        np.testing.assert_array_equal(
+            structure.get_degrees_freedom(),
+            np.array([False, False, False, True, False, False]))
 
     def test_flags_ignored_for_known_type(self):
         """Verify the flags do not override a type in _DOF_MAP."""
