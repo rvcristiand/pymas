@@ -90,6 +90,10 @@ class Structure:
                 active degree of freedom.
             rz (bool, optional): Defines if rotation about the z-axis is an
                 active degree of freedom.
+
+        Raises:
+            ValueError: If `type` is not in `_DOF_MAP` and no degree of
+                freedom is set to True.
         """
         # type of structure and degrees of freedom
         self.type = type
@@ -113,6 +117,15 @@ class Structure:
 
         # set the degrees of freedom of the model
         self._dof = np.array([ux, uy, uz, rx, ry, rz])
+
+        # a structure without degrees of freedom cannot be analysed
+        if not self._dof.any():
+            types = ', '.join(repr(t) for t in self._DOF_MAP)
+            raise ValueError(
+                f"{type!r} is not a predefined structure type and no degree "
+                f"of freedom is active. Use one of {types}, or set at least "
+                f"one of ux, uy, uz, rx, ry, rz to True."
+            )
 
         # dictionary of joint indices
         self._j_i = {}
