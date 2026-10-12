@@ -157,8 +157,7 @@ class Structure:
     def add_material(self, name, E=None, G=None):
         """Add a material to the model.
 
-        Creates and adds a new material object to the model's material
-        dictionary.
+        Adds a new material object to the model's material dictionary.
 
         Args:
             name (str): Name of the material.

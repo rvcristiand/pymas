@@ -21,7 +21,7 @@ classifiers = [
 ]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-keywords = ["structural analysis", "direct sfiffness method", "matrix analysis"]
+keywords = ["structural analysis", "framed structures", "direct stiffness method"]
 
 [project.optional-dependencies]
 dev = [
