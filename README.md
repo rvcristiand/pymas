@@ -79,7 +79,7 @@ model = Structure(type='beam')
 model.add_material('concrete 28 MPa', E)
 
 # add sections
-model.add_rectangular_section('0.5x1.0', base=b, height=h)
+model.add_rectangular_section('0.5x1.0', dy=h, dz=b)
 
 # add joints
 model.add_joint('a', x=0)

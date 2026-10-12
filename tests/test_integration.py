@@ -53,7 +53,7 @@ class TestIntegrationSimpleBeam:
         w = 24 * b * h
 
         model.add_material('concrete', E)
-        model.add_rectangular_section('section', b, h)
+        model.add_rectangular_section('section', dy=h, dz=b)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
@@ -86,7 +86,7 @@ class TestIntegrationSimpleBeam:
         w = 24 * b * h
 
         model.add_material('concrete', E)
-        model.add_rectangular_section('section', b, h)
+        model.add_rectangular_section('section', dy=h, dz=b)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
@@ -118,7 +118,7 @@ class TestIntegrationSimpleBeam:
         w = 24 * b * h
 
         model.add_material('concrete', E)
-        model.add_rectangular_section('section', b, h)
+        model.add_rectangular_section('section', dy=h, dz=b)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
@@ -164,7 +164,7 @@ class TestIntegrationCantilever:
         P = 10
 
         model.add_material('steel', E)
-        model.add_rectangular_section('section', 0.1, 0.2)
+        model.add_rectangular_section('section', dy=0.2, dz=0.1)
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
@@ -192,7 +192,7 @@ class TestIntegrationCantilever:
         P = 10
 
         model.add_material('steel', E)
-        model.add_rectangular_section('section', 0.1, 0.2)
+        model.add_rectangular_section('section', dy=0.2, dz=0.1)
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
@@ -302,7 +302,7 @@ class TestIntegrationMultiSpan:
         w = 5  # kN/m on each span
 
         model.add_material('steel', E)
-        model.add_rectangular_section('section', 0.15, 0.3)
+        model.add_rectangular_section('section', dy=0.3, dz=0.15)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L1)
         model.add_joint('c', x=L1 + L2)
@@ -350,7 +350,7 @@ class TestIntegrationFramePointLoad:
         P = 10
 
         model.add_material('steel', E)
-        model.add_rectangular_section('section', b, h)
+        model.add_rectangular_section('section', dy=h, dz=b)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
         model.add_frame('beam', 'a', 'b', 'steel', 'section', bending_z=True)
