@@ -111,12 +111,13 @@ class RectangularSection(Section):
     """Rectangular cross section.
 
     This class extends the generic `Section` class to automatically calculate
-    geometric properties for a rectangular shape based on its base and height.
+    geometric properties for a rectangular shape based on its dimensions
+    along the local y- and z-axes.
 
     Attributes:
         name (str): Name of the cross section.
-        base (float): Base of the cross section.
-        height (float): Height of the cross section.
+        dy (float): Dimension of the cross section along the local y-axis.
+        dz (float): Dimension of the cross section along the local z-axis.
         A (float): Area of the cross section.
         J (float): Torsion constant of the cross section.
         Iy (float): Inertia of the cross section with respect to the local
@@ -125,25 +126,27 @@ class RectangularSection(Section):
             z-axis.
     """
 
-    def __init__(self, parent, name, base, height):
+    def __init__(self, parent, name, *, dy, dz):
         """Instantiate a RectangularSection object.
 
         Args:
             parent (Structure): Structure object.
             name (str): Name of the rectangular cross section.
-            base (float): Base of the rectangular cross section.
-            height (float): Height of the rectangular cross section.
+            dy (float): Dimension of the rectangular cross section along the
+                local y-axis.
+            dz (float): Dimension of the rectangular cross section along the
+                local z-axis.
         """
-        a, b = sorted((base, height))
+        a, b = sorted((dy, dz))
 
-        A = base * height
+        A = dy * dz
         J = (1/3 - 0.21 * (a/b) * (1 - (1/12) * (a/b)**4)) * b * a**3
-        Iy = (1 / 12) * height * base ** 3
-        Iz = (1 / 12) * base * height ** 3
+        Iy = (1 / 12) * dy * dz ** 3
+        Iz = (1 / 12) * dz * dy ** 3
 
         self._parent = parent
-        self.base = base
-        self.height = height
+        self.dy = dy
+        self.dz = dz
         super().__init__(parent, name, A, J, Iy, Iz)
 
 

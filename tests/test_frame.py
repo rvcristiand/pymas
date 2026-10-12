@@ -19,7 +19,7 @@ Other methods:
 Typical usage:
     structure = Structure('space_frame')
     structure.add_material('steel', E=200e9)
-    structure.add_rectangular_section('rect', 0.3, 0.5)
+    structure.add_rectangular_section('rect', dy=0.5, dz=0.3)
     structure.add_joint('N1', x=0)
     structure.add_joint('N2', x=6)
     structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect', bending_z=True)

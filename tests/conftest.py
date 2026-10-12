@@ -85,7 +85,7 @@ def simple_frame_structure():
 
     Contains:
         - Material 'steel': E=200e9, G=77e9
-        - RectangularSection 'rect': base=0.3, height=0.5
+        - RectangularSection 'rect': dy=0.5, dz=0.3
         - Joint N1 at origin (0,0,0)
         - Joint N2 at (5,0,0)
         - Frame F1 connecting N1-N2 (axial, torsion and both bendings)
@@ -98,7 +98,7 @@ def simple_frame_structure():
     s = Structure('space_frame')
 
     s.add_material("steel", E=200e9, G=77e9)
-    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_rectangular_section("rect", dy=0.5, dz=0.3)
     s.add_joint("N1", x=0, y=0, z=0)
     s.add_joint("N2", x=5, y=0, z=0)
     s.add_frame("F1", "N1", "N2", "steel", "rect", axial=True,
@@ -123,7 +123,7 @@ def simple_beam_structure():
 
     Contains:
         - Material 'steel': E=200e9
-        - RectangularSection 'rect': base=0.3, height=0.5
+        - RectangularSection 'rect': dy=0.5, dz=0.3
         - Joints N1(0), N2(6)
         - Frame F1 connecting N1-N2 (bending about local z)
         - Support at N1: uy restrained
@@ -135,7 +135,7 @@ def simple_beam_structure():
     s = Structure('beam')
 
     s.add_material("steel", E=200e9)
-    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_rectangular_section("rect", dy=0.5, dz=0.3)
     s.add_joint("N1", x=0)
     s.add_joint("N2", x=6)
     s.add_frame("F1", "N1", "N2", "steel", "rect", bending_z=True)
@@ -157,7 +157,7 @@ def structure_with_loads():
 
     Contains:
         - Material 'steel': E=200e9
-        - RectangularSection 'rect': base=0.3, height=0.5
+        - RectangularSection 'rect': dy=0.5, dz=0.3
         - Joints N1(0), N2(6), N3(12)
         - Frames F1 (N1-N2) and F2 (N2-N3), bending about local z
         - Supports at N1, N2 and N3: uy restrained
@@ -169,7 +169,7 @@ def structure_with_loads():
     s = Structure('beam')
 
     s.add_material("steel", E=200e9)
-    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_rectangular_section("rect", dy=0.5, dz=0.3)
     s.add_joint("N1", x=0)
     s.add_joint("N2", x=6)
     s.add_joint("N3", x=12)
@@ -193,7 +193,7 @@ def structure_and_load():
 
     Contains:
         - Material 'steel': E=200e9
-        - RectangularSection 'rect': base=0.3, height=0.5
+        - RectangularSection 'rect': dy=0.5, dz=0.3
         - Joints N1(0), N2(6)
         - Frame F1 connecting N1-N2, bending about local z
 
@@ -202,7 +202,7 @@ def structure_and_load():
     """
     s = Structure('beam')
     s.add_material("steel", E=200e9)
-    s.add_rectangular_section("rect", 0.3, 0.5)
+    s.add_rectangular_section("rect", dy=0.5, dz=0.3)
     s.add_joint("N1", x=0)
     s.add_joint("N2", x=6)
     s.add_frame("F1", "N1", "N2", "steel", "rect", bending_z=True)

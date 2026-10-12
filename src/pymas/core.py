@@ -202,23 +202,25 @@ class Structure:
 
         return circ_sect
 
-    def add_rectangular_section(self, name, base, height):
+    def add_rectangular_section(self, name, *, dy, dz):
         """Add a rectangular cross section to the model.
 
         Creates and adds a new rectangular cross section object to the model's
         section dictionary, calculating its area, torsion constant, and moments
-        of inertia based on base and height.
+        of inertia based on its dimensions along the local y- and z-axes.
 
         Args:
             name (str): Name of the rectangular cross section.
-            base (float): Base of the rectangular cross section.
-            height (float): Height of the rectangular cross section.
+            dy (float): Dimension of the rectangular cross section along the
+                local y-axis. Bending about the local z-axis uses it as depth.
+            dz (float): Dimension of the rectangular cross section along the
+                local z-axis. Bending about the local y-axis uses it as depth.
 
         Returns:
             RectangularSection: Rectangular cross section.
         """
         # create a rectangular cross section object
-        rect_sect = RectangularSection(self, name, base, height)
+        rect_sect = RectangularSection(self, name, dy=dy, dz=dz)
 
         # add the rect cross section object to the dict of cross sections
         self.sections[name] = rect_sect
