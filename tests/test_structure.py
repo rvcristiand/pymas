@@ -222,3 +222,24 @@ class TestExport:
         filename = tmp_path / "test_export.json"
         simple_frame_structure.export(str(filename))
         assert filename.exists()
+    def test_export_frame_loads(self, structure_and_load, tmp_path):
+        """Verify frame point and distributed loads are exported.
+
+        Both kinds of load are listed under the frame, with their class name
+        as type.
+        """
+        import json
+
+        structure_and_load.add_load_pattern('live')
+        structure_and_load.add_frame_point_load('live', 'F1', 2, fy=-10e3)
+        structure_and_load.add_distributed_load('live', 'F1', fy=-5e3)
+        filename = tmp_path / "test_export.json"
+        structure_and_load.export(str(filename))
+
+        with open(filename) as f:
+            loads = json.load(f)['load_patterns']['live']['frames']['F1']
+
+        assert [load['type'] for load in loads] == \
+            ['FramePointLoad', 'DistributedLoad']
+        assert loads[0]['dist'] == 2
+        assert loads[0]['fy'] == -10e3

@@ -628,7 +628,7 @@ class Structure:
             f_fixed = np.zeros((12, 1))
 
             if key in loadPattern.frame_point_loads:
-                for pLoad in loadPattern.element_point_loads[key]:
+                for pLoad in loadPattern.frame_point_loads[key]:
                     f_fixed += pLoad.fixed_load_vector()
 
             if key in loadPattern.frame_distributed_loads:
@@ -788,20 +788,20 @@ class Structure:
                                          None})
 
                 # save loads at frames
-                # loadPattern.point_loads_at_frames or
-                if loadPattern.frame_distributed_loads:
+                if loadPattern.frame_point_loads or \
+                        loadPattern.frame_distributed_loads:
 
                     data['load_patterns'][key]['frames'] = {}
 
-                    for _frame, distributed_loads in \
-                            loadPattern.frame_distributed_loads.items():
+                    for _frame, frame_loads in \
+                            list(loadPattern.frame_point_loads.items()) + \
+                            list(loadPattern.frame_distributed_loads.items()):
                         if _frame not in data['load_patterns'][key]['frames']:
                             data['load_patterns'][key]['frames'][_frame] = []
-                        for distributedLoad in distributed_loads:
-                            _data = {
-                                'type': distributedLoad.__class__.__name__}
+                        for frameLoad in frame_loads:
+                            _data = {'type': frameLoad.__class__.__name__}
                             _data.update({attr: value for attr, value in
-                                          distributedLoad.__dict__.items(
+                                          frameLoad.__dict__.items(
                                           ) if not attr.startswith('_') and
                                           value is not None})
                             data['load_patterns'][key]['frames'][_frame].\

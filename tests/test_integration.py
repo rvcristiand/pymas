@@ -322,3 +322,162 @@ class TestIntegrationMultiSpan:
         total_load = w * (L1 + L2)
 
         assert total_reaction == pytest.approx(total_load, rel=0.01)
+
+
+class TestIntegrationFramePointLoad:
+    """Integration tests for frame point loads.
+
+    Problem setup:
+        - Simple beam with a point load at midspan (analytical solution)
+        - Space frame cantilever with a point load of six components, compared
+          with the same model split at the load into two frames carrying an
+          equivalent joint load
+
+    Analytical solutions (simple beam):
+        - Ra = Rb = P/2
+        - Mmax = P*L/4 at midspan
+        - vmax = P*L^3/(48*E*I) at midspan
+    """
+
+    def test_simple_beam_midspan_point_load(self):
+        """Verify reactions, moment and deflection of a simple beam."""
+        model = Structure('beam')
+
+        E = 200e6
+        b, h = 0.2, 0.4
+        I = b * h**3 / 12
+        L = 6
+        P = 10
+
+        model.add_material('steel', E)
+        model.add_rectangular_section('section', b, h)
+        model.add_joint('a', x=0)
+        model.add_joint('b', x=L)
+        model.add_frame('beam', 'a', 'b', 'steel', 'section', bending_z=True)
+        model.add_support('a', r_uy=True)
+        model.add_support('b', r_uy=True)
+        model.add_load_pattern('point')
+        model.add_frame_point_load('point', 'beam', L / 2, fy=-P)
+        model.run_analysis()
+
+        reactions = model.reactions['point']
+        assert reactions['a'].fy == pytest.approx(P / 2)
+        assert reactions['b'].fy == pytest.approx(P / 2)
+
+        mz = model.internal_forces['point']['beam'].mz
+        assert max(mz) == pytest.approx(P * L / 4)
+        assert mz[0] == pytest.approx(0, abs=1e-9)
+        assert mz[-1] == pytest.approx(0, abs=1e-9)
+
+        uy = model.internal_displacements['point']['beam'].uy
+        assert min(uy) == pytest.approx(-P * L**3 / (48 * E * I))
+        assert uy[-1] == pytest.approx(0, abs=1e-12)
+
+    @staticmethod
+    def _cantilever(split, direction, dist, load):
+        """Build and analyse a space frame cantilever along `direction`.
+
+        Args:
+            split (bool): Whether to split the frame at the load, applying the
+                load to the new joint instead of to the frame.
+            direction (tuple): Vector from the fixed to the free end.
+            dist (float): Distance of the load from the fixed end.
+            load (dict): Local components of the load (fx, ..., mz).
+
+        Returns:
+            Structure: Analysed model.
+        """
+        import numpy as np
+
+        model = Structure('space_frame')
+        model.add_material('steel', E=200e6, G=80e6)
+        model.add_section('section', A=0.01, J=1e-5, Iy=2e-5, Iz=8e-5)
+
+        u = np.array(direction, dtype=float)
+        L = np.linalg.norm(u)
+        u /= L
+        flags = dict(axial=True, torsional=True, bending_y=True,
+                     bending_z=True)
+
+        model.add_joint('a', *(0 * u))
+        model.add_joint('b', *(L * u))
+        model.add_support('a', r_ux=True, r_uy=True, r_uz=True, r_rx=True,
+                          r_ry=True, r_rz=True)
+        model.add_load_pattern('point')
+
+        if not split:
+            model.add_frame('ab', 'a', 'b', 'steel', 'section', **flags)
+            model.add_frame_point_load('point', 'ab', dist, **load)
+        else:
+            model.add_joint('m', *(dist * u))
+            model.add_frame('am', 'a', 'm', 'steel', 'section', **flags)
+            model.add_frame('mb', 'm', 'b', 'steel', 'section', **flags)
+
+            # local load components to global
+            r = model.frames['am'].rotation_matrix()
+            f = r @ [load.get(k, 0) for k in ('fx', 'fy', 'fz')]
+            m = r @ [load.get(k, 0) for k in ('mx', 'my', 'mz')]
+            model.add_joint_point_load('point', 'm', *f, *m)
+
+        model.run_analysis()
+
+        return model
+
+    @pytest.mark.parametrize('direction', [(5, 0, 0), (3, 4, 5)])
+    @pytest.mark.parametrize('load', [
+        {'fx': 7}, {'fy': -10}, {'fz': 4}, {'mx': 3}, {'my': -6}, {'mz': 5},
+        {'fx': 7, 'fy': -10, 'fz': 4, 'mx': 3, 'my': -6, 'mz': 5},
+    ])
+    def test_point_load_equals_split_frame(self, direction, load):
+        """Verify a frame point load matches the equivalent split model.
+
+        The reactions, the displacements of the free end, and the internal
+        forces and displacements at both ends and at the load must agree.
+        """
+        import numpy as np
+
+        L = np.linalg.norm(direction)
+        dist = 0.3 * L
+        whole = self._cantilever(False, direction, dist, load)
+        split = self._cantilever(True, direction, dist, load)
+
+        components = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+        for c in components:
+            assert getattr(whole.reactions['point']['a'], c) == \
+                pytest.approx(getattr(split.reactions['point']['a'], c),
+                              abs=1e-9)
+
+        for c in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz'):
+            assert getattr(whole.displacements['point']['b'], c) == \
+                pytest.approx(getattr(split.displacements['point']['b'], c),
+                              abs=1e-12)
+
+        # index 30 is the section at the load, on the side of the fixed end
+        f_whole = whole.internal_forces['point']['ab']
+        f_am = split.internal_forces['point']['am']
+        f_mb = split.internal_forces['point']['mb']
+        for c in components:
+            values = getattr(f_whole, c)
+            assert values[0] == pytest.approx(getattr(f_am, c)[0], abs=1e-9)
+            assert values[30] == pytest.approx(getattr(f_am, c)[-1],
+                                               abs=1e-9)
+            assert values[-1] == pytest.approx(getattr(f_mb, c)[-1],
+                                               abs=1e-9)
+
+        d_whole = whole.internal_displacements['point']['ab']
+        d_am = split.internal_displacements['point']['am']
+        d_mb = split.internal_displacements['point']['mb']
+        for c in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz'):
+            values = getattr(d_whole, c)
+            assert values[30] == pytest.approx(getattr(d_am, c)[-1],
+                                               abs=1e-12)
+            assert values[-1] == pytest.approx(getattr(d_mb, c)[-1],
+                                               abs=1e-12)
+
+        # internal displacements at the free end match the joint, in local
+        # axes
+        r = whole.frames['ab'].rotation_matrix()
+        d_b = whole.displacements['point']['b'].displacement_vector()
+        local = np.concatenate((r.T @ d_b[:3], r.T @ d_b[3:]))
+        for value, c in zip(local, ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')):
+            assert getattr(d_whole, c)[-1] == pytest.approx(value, abs=1e-12)

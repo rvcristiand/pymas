@@ -492,6 +492,36 @@ class Frame(AttrDisplay):
                         internal_forces['fz'][i] += fz * x
                         internal_forces['my'][i] += fz * x ** 2 / 2
 
+        if self.name in loadPattern.frame_point_loads:
+            for point_load in loadPattern.frame_point_loads[self.name]:
+                fx = point_load.fx if (
+                    point_load.fx is not None and self.axial) else 0
+                fy = point_load.fy if (
+                    point_load.fy is not None and self.bending_z) else 0
+                fz = point_load.fz if (
+                    point_load.fz is not None and self.bending_y) else 0
+                mx = point_load.mx if (
+                    point_load.mx is not None and self.torsional) else 0
+                my = point_load.my if (
+                    point_load.my is not None and self.bending_y) else 0
+                mz = point_load.mz if (
+                    point_load.mz is not None and self.bending_z) else 0
+
+                for i in range(no_div+1):
+                    x = (i / no_div) * length
+                    # the load acts on the sections beyond its position
+                    if x <= point_load.dist:
+                        continue
+                    a = x - point_load.dist
+                    internal_forces['fx'][i] -= fx
+                    internal_forces['mx'][i] -= mx
+                    if self.bending_z:
+                        internal_forces['fy'][i] += fy
+                        internal_forces['mz'][i] += fy * a - mz
+                    if self.bending_y:
+                        internal_forces['fz'][i] += fz
+                        internal_forces['my'][i] += fz * a + my
+
         internal_forces['fx'] = internal_forces['fx'].tolist()
         internal_forces['fy'] = internal_forces['fy'].tolist()
         internal_forces['fz'] = internal_forces['fz'].tolist()
@@ -577,13 +607,12 @@ class Frame(AttrDisplay):
                 internal_displacements['uz'][i] -= ry_j * x
             if self.torsional and G * J != 0:
                 internal_displacements['rx'][i] -= mx_j * x / (G * J)
-            if self.bending_y and E * Iz != 0:
-                internal_displacements['ry'][i] -= fz_j * x ** 2 / (2 * E * Iz)
-                internal_displacements['ry'][i] -= my_j * x / (E * Iz)
+            if self.bending_y and E * Iy != 0:
+                internal_displacements['ry'][i] -= fz_j * x ** 2 / (2 * E * Iy)
+                internal_displacements['ry'][i] -= my_j * x / (E * Iy)
             if self.bending_z and E * Iz != 0:
                 internal_displacements['rz'][i] += fy_j * x ** 2 / (2 * E * Iz)
-            if self.bending_z and E * Iy != 0:
-                internal_displacements['rz'][i] += mz_j * x / (E * Iy)
+                internal_displacements['rz'][i] -= mz_j * x / (E * Iz)
 
         if self.name in loadPattern.frame_distributed_loads:
             for distributed_load in loadPattern.frame_distributed_loads[self.name]:
@@ -605,12 +634,48 @@ class Frame(AttrDisplay):
                     if self.bending_y and E * Iy != 0:
                         internal_displacements['uz'][i] += fz * \
                             x ** 4 / (24 * E * Iy)
-                    if self.bending_y and E * Iz != 0:
+                    if self.bending_y and E * Iy != 0:
                         internal_displacements['ry'][i] -= fz * \
-                            x ** 3 / (6 * E * Iz)
+                            x ** 3 / (6 * E * Iy)
                     if self.bending_z and E * Iz != 0:
                         internal_displacements['rz'][i] += fy * \
                             x ** 3 / (6 * E * Iz)
+
+        if self.name in loadPattern.frame_point_loads:
+            for point_load in loadPattern.frame_point_loads[self.name]:
+                fx = point_load.fx if (
+                    point_load.fx is not None and self.axial) else 0
+                fy = point_load.fy if (
+                    point_load.fy is not None and self.bending_z) else 0
+                fz = point_load.fz if (
+                    point_load.fz is not None and self.bending_y) else 0
+                mx = point_load.mx if (
+                    point_load.mx is not None and self.torsional) else 0
+                my = point_load.my if (
+                    point_load.my is not None and self.bending_y) else 0
+                mz = point_load.mz if (
+                    point_load.mz is not None and self.bending_z) else 0
+
+                for i in range(no_div+1):
+                    x = (i / no_div) * length
+                    # the load acts on the sections beyond its position
+                    if x <= point_load.dist:
+                        continue
+                    a = x - point_load.dist
+                    if self.axial and E * A != 0:
+                        internal_displacements['ux'][i] -= fx * a / (E * A)
+                    if self.torsional and G * J != 0:
+                        internal_displacements['rx'][i] -= mx * a / (G * J)
+                    if self.bending_z and E * Iz != 0:
+                        internal_displacements['uy'][i] += \
+                            (fy * a ** 3 / 6 - mz * a ** 2 / 2) / (E * Iz)
+                        internal_displacements['rz'][i] += \
+                            (fy * a ** 2 / 2 - mz * a) / (E * Iz)
+                    if self.bending_y and E * Iy != 0:
+                        internal_displacements['uz'][i] += \
+                            (fz * a ** 3 / 6 + my * a ** 2 / 2) / (E * Iy)
+                        internal_displacements['ry'][i] -= \
+                            (fz * a ** 2 / 2 + my * a) / (E * Iy)
 
         internal_displacements['ux'] = internal_displacements['ux'].tolist()
         internal_displacements['uy'] = internal_displacements['uy'].tolist()
@@ -874,7 +939,7 @@ class LoadPattern(AttrDisplay):
 
         This vector represents the forces and moments that would develop at
         the element ends if all joints were fully restrained, due to frame
-        loads.
+        point loads and frame uniformly distributed loads.
 
         Returns:
             ndarray: Fixed-end load vector.
@@ -886,19 +951,20 @@ class LoadPattern(AttrDisplay):
         dof_frame = np.tile(dof_joints, 2)
         # number active degrees of freedom
         n_dof = self._parent.number_active_degrees_freedom()
-        # number of frame distributed loads
-        n_distributed_loads = len(self.frame_distributed_loads)
+        # frame loads, grouped by frame
+        frame_loads = list(self.frame_point_loads.items()) + \
+            list(self.frame_distributed_loads.items())
         # joint indices of the structure
         j_i = self._parent.get_joint_indices()
 
-        # row positions of the load vectors items of the distributed loads
-        rows = np.empty(2 * n_dof * n_distributed_loads, dtype=int)
+        # row positions of the load vectors items of the frame loads
+        rows = np.empty(2 * n_dof * len(frame_loads), dtype=int)
         cols = np.zeros_like(rows)
-        # items of the load vector of the distributed loads
+        # items of the load vector of the frame loads
         data = np.zeros_like(rows, dtype=float)
 
-        # assembly the distributed load vector
-        for i, (frame, d_l) in enumerate(self.frame_distributed_loads.items()):
+        # assembly the frame load vector
+        for i, (frame, loads) in enumerate(frame_loads):
             start = 2 * i * n_dof
             end = 2 * (i + 1) * n_dof
 
@@ -907,12 +973,12 @@ class LoadPattern(AttrDisplay):
             joint_j, joint_k = frame.joint_j, frame.joint_k
             t = frame.rotation_transformation_matrix()
 
-            # row positions of the elements of the distributed load at frame
+            # row positions of the elements of the loads at frame
             rows[start:end] = np.concatenate((j_i[joint_j], j_i[joint_k]))
 
             # data of the elements
-            for dL in d_l:
-                data[start:end] += np.dot(t, dL.fixed_load_vector()
+            for load in loads:
+                data[start:end] += np.dot(t, load.fixed_load_vector()
                                           ).flatten()[dof_frame]
 
         return coo_matrix((data, (rows, cols)), (n_dof * n_j, 1)).toarray()
