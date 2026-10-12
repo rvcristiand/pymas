@@ -10,9 +10,9 @@ class Structure:
     """Analyzes linear elastic framed structures subjected to static loads.
 
     This class provides functionality to define, analyze, and export bars,
-    axles, beams, plane trusses, plane frames, space trusses, grids and space
-    frames. Users can add materials, cross sections, joints, frames, supports,
-    and load patterns to build a complete structural model.
+    torsional bars, beams, plane trusses, plane frames, space trusses, grids
+    and space frames. Users can add materials, cross sections, joints, frames,
+    supports, and load patterns to build a complete structural model.
 
     The type of structure and its global degrees of freedom (DoF) are defined
     during instantiation. The class utilizes an internal `_DOF_MAP` to
@@ -25,7 +25,7 @@ class Structure:
     are:
 
     - 'bar': Axial bar, with 1 degree of freedom (ux).
-    - 'axle': Torsional axle, with 1 degree of freedom (rx).
+    - 'torsional_bar': Torsional bar, with 1 degree of freedom (rx).
     - 'beam': Beam, with 2 degrees of freedom (uy, rz).
     - 'plane_truss': Plane truss, with 2 degrees of freedom (ux, uy).
     - 'plane_frame': Plane frame, with 3 degrees of freedom (ux, uy, rz).
@@ -55,15 +55,15 @@ class Structure:
     """
 
     _DOF_MAP = {
-        'bar':         {'ux': True},
-        'axle':        {'rx': True},
-        'beam':        {'uy': True, 'rz': True},
-        'plane_truss': {'ux': True, 'uy': True},
-        'plane_frame': {'ux': True, 'uy': True, 'rz': True},
-        'space_truss': {'ux': True, 'uy': True, 'uz': True},
-        'grid':        {'uy': True, 'uz': True, 'rx': True},
-        'space_frame': {'ux': True, 'uy': True, 'uz': True,
-                        'rx': True, 'ry': True, 'rz': True},
+        'bar':           {'ux': True},
+        'torsional_bar': {'rx': True},
+        'beam':          {'uy': True, 'rz': True},
+        'plane_truss':   {'ux': True, 'uy': True},
+        'plane_frame':   {'ux': True, 'uy': True, 'rz': True},
+        'space_truss':   {'ux': True, 'uy': True, 'uz': True},
+        'grid':          {'uy': True, 'uz': True, 'rx': True},
+        'space_frame':   {'ux': True, 'uy': True, 'uz': True,
+                          'rx': True, 'ry': True, 'rz': True},
     }
 
     def __init__(self, type, *, ux=None, uy=None, uz=None, rx=None, ry=None,
