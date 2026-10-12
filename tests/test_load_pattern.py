@@ -4,7 +4,7 @@ Tests for load-related classes.
 This module tests:
     - LoadPattern: Groups loads that act simultaneously
     - JointPointLoad: Force/moment applied directly to a joint
-    - ElementPointLoad: Force/moment applied to an element at a specific distance
+    - FramePointLoad: Force/moment applied to a frame at a specific distance
     - DistributedLoad: Uniformly distributed load along an element
 
 Load Pattern:
@@ -13,14 +13,14 @@ Load Pattern:
 
 Load Types:
     - Joint point loads: Applied directly to joints
-    - Element point loads: Applied to elements at a distance from near joint
+    - Frame point loads: Applied to frames at a distance from near joint
     - Distributed loads: Uniformly distributed along element length
 
 Each load type has a load_vector() method that returns forces/moments
 in the structure's global coordinate system.
 
 Typical usage:
-    structure = Structure()
+    structure = Structure('space_frame')
     structure.add_load_pattern('dead')
     structure.add_joint_point_load('dead', 'N2', fy=-10e3)
     structure.add_distributed_load('dead', 'F1', fy=-5e3)
@@ -50,8 +50,8 @@ class TestLoadPattern:
         """
         load_pattern = structure.add_load_pattern('dead')
         assert load_pattern.joint_point_loads == {}
-        assert load_pattern.element_point_loads == {}
-        assert load_pattern.element_distributed_loads == {}
+        assert load_pattern.frame_point_loads == {}
+        assert load_pattern.frame_distributed_loads == {}
 
 
 class TestJointPointLoad:
@@ -78,7 +78,6 @@ class TestJointPointLoad:
         For 3D: load vector has 6 components (ux, uy, uz, rx, ry, rz).
         """
         structure.add_joint('N1', x=0, y=0, z=0)
-        structure.set_degrees_freedom()
         structure.add_load_pattern('load1')
         structure.add_joint_point_load('load1', 'N1', fy=-10e3)
         load_pattern = structure.load_patterns['load1']
@@ -103,8 +102,8 @@ class TestDistributedLoad:
         Adds fy=-5kN/m to frame F1.
         """
         load_pattern = structure_with_loads.load_patterns['dead']
-        distributed_load = load_pattern.add_element_distributed_load('F1', fy=-5e3)
-        assert distributed_load.element == 'F1'
+        distributed_load = load_pattern.add_frame_distributed_load('F1', fy=-5e3)
+        assert distributed_load.frame == 'F1'
         assert distributed_load.fy == -5e3
 
     def test_distributed_load_fixed_load_vector(self, structure_with_loads):
@@ -114,7 +113,7 @@ class TestDistributedLoad:
         if the element were fully restrained.
         """
         load_pattern = structure_with_loads.load_patterns['dead']
-        distributed_load = load_pattern.element_distributed_loads['F1'][0]
+        distributed_load = load_pattern.frame_distributed_loads['F1'][0]
         fixed_vector = distributed_load.fixed_load_vector()
         assert fixed_vector.shape == (12, 1)
         # fy: q*L/2 = 5000*6/2 = 15000 (both ends)
@@ -122,26 +121,23 @@ class TestDistributedLoad:
         assert fixed_vector[7, 0] == pytest.approx(5e3 * 6 / 2)
 
 
-class TestElementPointLoad:
-    """Tests for ElementPointLoad class.
+class TestFramePointLoad:
+    """Tests for FramePointLoad class.
 
-    ElementPointLoad applies a force/moment to an element at a specific
+    FramePointLoad applies a force/moment to a frame at a specific
     distance from the near joint (joint_j). The load is specified in
-    the element's local coordinate system.
+    the frame's local coordinate system.
     """
 
-    @pytest.mark.skip(reason="ElementPointLoad requires element length for fixed_load_vector")
-    def test_add_element_point_load(self, structure):
-        """Verify element point load can be added.
+    def test_add_frame_point_load(self, structure_and_load):
+        """Verify frame point load can be added.
 
         Adds fy=-10kN at distance=3m from near joint on frame F1.
         """
-        material = structure.add_material('steel', modulus_elasticity=200e9)
-        section = structure.add_rectangular_section('rect', 0.3, 0.5)
-        structure.add_joint('N1', x=0)
-        structure.add_joint('N2', x=6)
-        structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-        load_pattern = structure.add_load_pattern('test')
-        point_load = load_pattern.add_element_point_load('F1', 3, fy=-10e3)
-        assert point_load.element == 'F1'
+        load_pattern = structure_and_load.add_load_pattern('test')
+        point_load = load_pattern.add_frame_point_load('F1', 3, fy=-10e3)
+        assert point_load.frame == 'F1'
+        assert point_load.dist == 3
         assert point_load.fy == -10e3
+        assert structure_and_load.load_patterns['test'] \
+            .frame_point_loads['F1'] == [point_load]

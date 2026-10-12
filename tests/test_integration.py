@@ -7,7 +7,7 @@ with analytical solutions from mechanics of materials.
 Test cases:
     - Simple beam with uniform load (cantilever)
     - Simple beam with point load at midspan
-    - 3D truss analysis
+    - Plane truss analysis
     - Multi-span beam
 
 Each test creates a complete model, runs analysis, and verifies results
@@ -56,7 +56,7 @@ class TestIntegrationSimpleBeam:
         model.add_rectangular_section('section', b, h)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
-        model.add_frame('beam', 'a', 'b', 'concrete', 'section')
+        model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
@@ -89,7 +89,7 @@ class TestIntegrationSimpleBeam:
         model.add_rectangular_section('section', b, h)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
-        model.add_frame('beam', 'a', 'b', 'concrete', 'section')
+        model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
@@ -121,7 +121,7 @@ class TestIntegrationSimpleBeam:
         model.add_rectangular_section('section', b, h)
         model.add_joint('a', x=0)
         model.add_joint('b', x=L)
-        model.add_frame('beam', 'a', 'b', 'concrete', 'section')
+        model.add_frame('beam', 'a', 'b', 'concrete', 'section', bending_z=True)
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
@@ -167,7 +167,7 @@ class TestIntegrationCantilever:
         model.add_rectangular_section('section', 0.1, 0.2)
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
-        model.add_frame('beam', 'fixed', 'tip', 'steel', 'section')
+        model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
         model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
         model.add_joint_point_load('tip load', 'tip', fy=-P)
@@ -195,7 +195,7 @@ class TestIntegrationCantilever:
         model.add_rectangular_section('section', 0.1, 0.2)
         model.add_joint('fixed', x=0)
         model.add_joint('tip', x=L)
-        model.add_frame('beam', 'fixed', 'tip', 'steel', 'section')
+        model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
         model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
         model.add_joint_point_load('tip load', 'tip', fy=-P)
@@ -211,34 +211,31 @@ class TestIntegrationCantilever:
         assert moment_at_tip == pytest.approx(0, abs=0.01)
 
 
-class TestIntegration3DTruss:
-    """Integration test for 3D truss structure.
+class TestIntegrationPlaneTruss:
+    """Integration test for plane truss structure.
 
     Problem setup:
-        - Type: 3D truss (3 DOF per node: ux, uy, uz)
-        - Two trusses forming a V-shape
+        - Type: plane truss (2 DOF per node: ux, uy)
+        - Three axial-only frames forming a triangle
         - Point load at apex
 
     Tests verify:
-        - Axial forces in each truss member
-        - Equilibrium at joints
+        - Displacements and reactions are computed
+        - Global equilibrium of the reactions
     """
 
-    @pytest.mark.skip(reason="Truss elements don't have get_internal_forces method in library")
-    def test_3d_truss_equilibrium(self):
-        """Verify truss analysis completes and compute results.
+    def test_plane_truss_equilibrium(self):
+        """Verify truss analysis completes and reactions balance the load.
 
         For a statically determinate truss:
         - Analysis should complete without singular matrix error
         - Displacements and reactions should be computed
+        - Reactions should balance the applied load
 
-        Support configuration (to avoid singular matrix):
-        - Node a: fully restrained (ux, uy, uz)
-        - Node b: partially restrained (uy, uz)
-        - Node c: restrained in z (uz) to stay stable
-
-        Note: Truss elements don't have internal_forces method,
-        so only displacements and reactions are verified.
+        Support configuration (r_uz is inactive in a plane truss):
+        - Node a: pinned (ux, uy)
+        - Node b: roller (uy)
+        - Node c: only r_uz, so effectively free
         """
         model = Structure('plane_truss')
 
@@ -246,13 +243,13 @@ class TestIntegration3DTruss:
         A = 0.01  # 100 cm²
 
         model.add_material('steel', E)
-        model.add_section('section', area=A)
+        model.add_section('section', A=A)
         model.add_joint('a', x=0, y=0)
         model.add_joint('b', x=3, y=0)
         model.add_joint('c', x=1.5, y=2.6)
-        model.add_truss('ab', 'a', 'b', 'steel', 'section')
-        model.add_truss('ac', 'a', 'c', 'steel', 'section')
-        model.add_truss('bc', 'b', 'c', 'steel', 'section')
+        model.add_frame('ab', 'a', 'b', 'steel', 'section', axial=True)
+        model.add_frame('ac', 'a', 'c', 'steel', 'section', axial=True)
+        model.add_frame('bc', 'b', 'c', 'steel', 'section', axial=True)
         model.add_support('a', r_ux=True, r_uy=True, r_uz=True)
         model.add_support('b', r_uy=True, r_uz=True)
         model.add_support('c', r_uz=True)
@@ -274,7 +271,10 @@ class TestIntegration3DTruss:
         reactions = model.reactions['gravity']
         assert 'a' in reactions
         assert 'b' in reactions
-        # c has no support, so no reaction
+
+        # global equilibrium
+        assert reactions['a'].fx == pytest.approx(0, abs=1e-6)
+        assert reactions['a'].fy + reactions['b'].fy == pytest.approx(100)
 
 
 class TestIntegrationMultiSpan:
@@ -306,8 +306,8 @@ class TestIntegrationMultiSpan:
         model.add_joint('a', x=0)
         model.add_joint('b', x=L1)
         model.add_joint('c', x=L1 + L2)
-        model.add_frame('ab', 'a', 'b', 'steel', 'section')
-        model.add_frame('bc', 'b', 'c', 'steel', 'section')
+        model.add_frame('ab', 'a', 'b', 'steel', 'section', bending_z=True)
+        model.add_frame('bc', 'b', 'c', 'steel', 'section', bending_z=True)
         model.add_support('a', r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_support('c', r_uy=True)

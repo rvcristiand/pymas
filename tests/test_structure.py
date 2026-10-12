@@ -4,33 +4,33 @@ Tests for the Structure class.
 The Structure class is the main class in pymas for modeling and analyzing
 structural systems using the Direct Stiffness Method.
 
-Structure types:
-    - '3D': 6 DOF per joint (ux, uy, uz, rx, ry, rz)
-    - '3D truss': 3 DOF per joint (ux, uy, uz)
-    - 'beam': 2 DOF per joint (uy, rz)
+Structure types (the type is fixed when the Structure is created):
+    - 'space_frame': 6 DoF per joint (ux, uy, uz, rx, ry, rz)
+    - 'space_truss': 3 DoF per joint (ux, uy, uz)
+    - 'beam': 2 DoF per joint (uy, rz)
+    - any other name: DoF given by the keyword flags ux, uy, uz, rx, ry, rz
 
 Key methods:
     - add_material(), add_section(), add_joint()
-    - add_truss(), add_frame()
+    - add_frame()
     - add_support(), add_load_pattern()
-    - set_degrees_freedom(), set_joint_indices()
+    - get_degrees_freedom(), set_joint_indices()
     - set_stiffness_matrix()
     - run_analysis()
     - export(filename)
 
-Analysis process:
-    1. set_degrees_freedom(): Configure active DOFs based on structure type
-    2. set_joint_indices(): Assign global indices to each DOF
-    3. set_stiffness_matrix(): Assemble global stiffness matrix
-    4. run_analysis(): Solve for each load pattern
+Analysis process (run by run_analysis()):
+    1. set_joint_indices(): Assign global indices to each DoF
+    2. set_stiffness_matrix(): Assemble global stiffness matrix
+    3. analyse_load_pattern(): Solve for each load pattern
 
 Typical usage:
-    structure = Structure()
-    structure.add_material('steel', modulus_elasticity=200e9)
+    structure = Structure('space_frame')
+    structure.add_material('steel', E=200e9)
     structure.add_rectangular_section('rect', 0.3, 0.5)
     structure.add_joint('N1', x=0)
     structure.add_joint('N2', x=6)
-    structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
+    structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect', bending_z=True)
     structure.add_support('N1', r_ux=True, r_uy=True, r_rz=True)
     structure.add_load_pattern('dead')
     structure.add_joint_point_load('dead', 'N2', fy=-10e3)
@@ -40,90 +40,86 @@ Typical usage:
 
 import pytest
 import numpy as np
+from pymas import Structure
 
 
 class TestStructure:
     """Tests for basic Structure class functionality."""
 
-    def test_default_type(self, structure):
-        """Verify default structure type is '3D'.
+    def test_type_is_required(self):
+        """Verify the structure type must be given.
 
-        The default type provides 6 DOF per joint.
+        There is no default type: Structure() raises TypeError.
         """
-        assert structure.type == '3D'
+        with pytest.raises(TypeError):
+            Structure()
 
-    def test_set_type(self, structure):
-        """Verify structure type can be changed.
+    def test_type(self, structure):
+        """Verify the structure type is stored."""
+        assert structure.type == 'space_frame'
 
-        Set type to '3D truss' for 3 DOF analysis.
+    def test_custom_type(self):
+        """Verify a type not in _DOF_MAP takes its DoF from the flags.
+
+        A custom type with ux and uy active behaves like a plane truss.
         """
-        structure.type = '3D truss'
-        assert structure.type == '3D truss'
+        structure = Structure('custom', ux=True, uy=True)
+        assert structure.type == 'custom'
+        np.testing.assert_array_equal(
+            structure.get_degrees_freedom(),
+            np.array([True, True, False, False, False, False]))
 
-    def test_invalid_type(self, structure):
-        """Verify invalid type raises ValueError.
+    def test_custom_type_without_flags(self):
+        """Verify a custom type without flags has no active DoF."""
+        structure = Structure('custom')
+        assert structure.number_active_degrees_freedom() == 0
 
-        Setting an invalid type should raise ValueError on set_degrees_freedom().
-        """
-        structure.type = 'invalid'
-        with pytest.raises(ValueError):
-            structure.set_degrees_freedom()
+    def test_flags_ignored_for_known_type(self):
+        """Verify the flags do not override a type in _DOF_MAP."""
+        structure = Structure('beam', ux=True)
+        np.testing.assert_array_equal(
+            structure.get_degrees_freedom(),
+            np.array([False, True, False, False, False, True]))
 
 
 class TestDegreesOfFreedom:
     """Tests for degrees of freedom configuration.
 
-    Degrees of freedom (DOFs) define which displacements/rotations
+    Degrees of freedom (DoF) define which displacements/rotations
     are considered in the analysis. They depend on the structure type.
     """
 
-    def test_degrees_freedom_3d(self, structure):
-        """Verify 3D has all 6 DOFs active.
+    @pytest.mark.parametrize('type, expected', [
+        ('bar',         [True, False, False, False, False, False]),
+        ('axle',        [False, False, False, True, False, False]),
+        ('beam',        [False, True, False, False, False, True]),
+        ('plane_truss', [True, True, False, False, False, False]),
+        ('plane_frame', [True, True, False, False, False, True]),
+        ('grid',        [False, True, True, True, False, False]),
+        ('space_truss', [True, True, True, False, False, False]),
+        ('space_frame', [True, True, True, True, True, True]),
+    ])
+    def test_degrees_freedom(self, type, expected):
+        """Verify the active DoF of every predefined structure type."""
+        structure = Structure(type)
+        np.testing.assert_array_equal(
+            structure.get_degrees_freedom(), np.array(expected))
 
-        3D structure: ux, uy, uz, rx, ry, rz all True.
-        """
-        structure.set_degrees_freedom()
-        expected = np.array([True, True, True, True, True, True])
-        np.testing.assert_array_equal(structure.get_degrees_freedom(), expected)
-
-    def test_degrees_freedom_3d_truss(self, structure):
-        """Verify 3D truss has only translational DOFs.
-
-        3D truss: ux, uy, uz True; rx, ry, rz False
-        """
-        structure.type = '3D truss'
-        structure.set_degrees_freedom()
-        dof = structure.get_degrees_freedom()
-        np.testing.assert_array_equal(dof[0:4], np.array([True, True, True, False]))
-
-    def test_degrees_freedom_beam(self, structure):
-        """Verify beam type has only y-translation and z-rotation.
-
-        Beam: uy, rz True; all others False
-        """
-        structure.type = 'beam'
-        structure.set_degrees_freedom()
-        dof = structure.get_degrees_freedom()
-        np.testing.assert_array_equal(dof, np.array([False, True, False, False, False, True]))
-
-    def test_number_active_dof_3d(self, structure):
-        """Verify 3D has 6 active DOFs.
+    def test_number_active_dof_space_frame(self, structure):
+        """Verify a space frame has 6 active DoF.
 
         number_active_degrees_freedom() returns count of True values.
         """
-        structure.set_degrees_freedom()
         assert structure.number_active_degrees_freedom() == 6
 
-    def test_number_active_dof_3d_truss(self, structure):
-        """Verify 3D truss has 3 active DOFs."""
-        structure.type = '3D truss'
-        structure.set_degrees_freedom()
+    def test_number_active_dof_space_truss(self):
+        """Verify a space truss has 3 active DoF."""
+        structure = Structure('space_truss')
         assert structure.number_active_degrees_freedom() == 3
 
-    def test_number_active_dof_beam(self, structure):
-        """Verify beam has 2 active DOFs."""
-        structure.type = 'beam'
-        structure.set_degrees_freedom()
+    def test_number_active_dof_beam(self):
+        """Verify a beam has 2 active DoF."""
+        structure = Structure('beam')
         assert structure.number_active_degrees_freedom() == 2
 
 
@@ -139,7 +135,6 @@ class TestJointIndices:
 
         Creates indices for N1 and N2.
         """
-        simple_frame_structure.set_degrees_freedom()
         simple_frame_structure.set_joint_indices()
         indices = simple_frame_structure.get_joint_indices()
         assert 'N1' in indices
@@ -148,9 +143,8 @@ class TestJointIndices:
     def test_joint_indices_shape(self, simple_frame_structure):
         """Verify indices array has correct shape.
 
-        Each joint gets n_dof indices (6 for 3D).
+        Each joint gets n_dof indices (6 for a space frame).
         """
-        simple_frame_structure.set_degrees_freedom()
         simple_frame_structure.set_joint_indices()
         indices = simple_frame_structure.get_joint_indices()
         assert indices['N1'].shape == (6,)
@@ -167,9 +161,8 @@ class TestStiffnessMatrix:
         """Verify stiffness matrix can be assembled.
 
         Matrix size = n_joints * n_dof per joint.
-        For 2 joints in 3D: 2 * 6 = 12
+        For 2 joints in a space frame: 2 * 6 = 12
         """
-        simple_frame_structure.set_degrees_freedom()
         simple_frame_structure.set_joint_indices()
         simple_frame_structure.set_stiffness_matrix()
         k = simple_frame_structure.get_stiffness_matrix()
@@ -186,11 +179,8 @@ class TestAnalysis:
         - end_actions: Forces at element ends
         - internal_forces: Forces along elements
         - internal_displacements: Displacements along elements
-
-    Note: Some tests are skipped due to known issues with specific fixtures.
     """
 
-    @pytest.mark.skip(reason="Truss elements don't have get_internal_forces method")
     def test_run_analysis_simple(self, simple_frame_structure):
         """Verify simple analysis can run.
 
@@ -201,7 +191,6 @@ class TestAnalysis:
         simple_frame_structure.run_analysis()
         assert 'dead' in simple_frame_structure.displacements
 
-    @pytest.mark.skip(reason="structure_with_loads fixture has singular matrix issue")
     def test_displacements_results(self, structure_with_loads):
         """Verify displacements are computed for all joints."""
         structure_with_loads.run_analysis()
@@ -209,7 +198,6 @@ class TestAnalysis:
         for joint in ['N1', 'N2', 'N3']:
             assert joint in displacements
 
-    @pytest.mark.skip(reason="structure_with_loads fixture has singular matrix issue")
     def test_reactions_results(self, structure_with_loads):
         """Verify reactions are computed at supported joints."""
         structure_with_loads.run_analysis()
@@ -222,7 +210,7 @@ class TestExport:
     """Tests for JSON export functionality.
 
     Export saves the structure model and analysis results to JSON format.
-    Includes: materials, sections, joints, elements, supports, loads, results.
+    Includes: materials, sections, joints, frames, supports, loads, results.
     """
 
     def test_export_json(self, simple_frame_structure, tmp_path):
@@ -230,7 +218,6 @@ class TestExport:
 
         Export creates a valid JSON file with structure data.
         """
-        simple_frame_structure.set_degrees_freedom()
         simple_frame_structure.set_joint_indices()
         filename = tmp_path / "test_export.json"
         simple_frame_structure.export(str(filename))

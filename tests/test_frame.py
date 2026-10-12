@@ -1,31 +1,29 @@
 """
 Tests for the Frame class.
 
-A Frame is a 2-node element with axial, shear, and bending stiffness
-(rigid connections). It has 6 degrees of freedom per joint in 3D.
+A Frame is a 2-node element whose stiffness terms are switched on by its
+flags (rigid connections). It has 6 degrees of freedom per joint in 3D:
+    - axial: axial deformation (local x)
+    - torsional: torsion (about local x)
+    - bending_y, bending_z: bending (about local y, z)
 
-The Frame class extends Truss with bending stiffness:
-    - Axial deformation (local x)
-    - Shear deformation (local y, z)
-    - Bending (about local y, z)
-
-Key methods (inherited from Truss):
+Key methods:
     - length(), direction_cosines_vector()
     - rotation_matrix(), rotation_transformation_matrix()
     - local_stiffness_matrix(), global_stiffness_matrix()
 
-Frame-specific methods:
+Other methods:
     - get_internal_forces(load_pattern): Axial, shear, moments along element
     - get_internal_displacements(load_pattern): Displacements along element
 
 Typical usage:
-    structure = Structure()
-    structure.add_material('steel', modulus_elasticity=200e9)
+    structure = Structure('space_frame')
+    structure.add_material('steel', E=200e9)
     structure.add_rectangular_section('rect', 0.3, 0.5)
     structure.add_joint('N1', x=0)
     structure.add_joint('N2', x=6)
-    structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect')
-    frame = structure.elements['F1']
+    structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect', bending_z=True)
+    frame = structure.frames['F1']
     k_local = frame.local_stiffness_matrix()
 """
 
@@ -56,7 +54,7 @@ class TestFrame:
 
         Between N1(0,0,0) and N2(5,0,0): length = 5.0
         """
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         assert frame.length() == pytest.approx(5.0, rel=1e-10)
 
     def test_frame_direction_cosines(self, simple_frame_structure):
@@ -64,8 +62,7 @@ class TestFrame:
 
         For frame along x-axis: direction = [1, 0, 0]
         """
-        simple_frame_structure.set_degrees_freedom()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         expected = np.array([1, 0, 0])
         np.testing.assert_array_almost_equal(frame.direction_cosines_vector(), expected)
 
@@ -80,8 +77,7 @@ class TestFrame:
         - Bending and shear stiffness in the x-y plane (degrees of freedom 1, 5, 7, 11, about local z-axis)
         - Bending and shear stiffness in the x-z plane (degrees of freedom 2, 4, 8, 10, about local y-axis)
         """
-        simple_frame_structure.set_degrees_freedom()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         k_local = frame.local_stiffness_matrix()
 
         material = simple_frame_structure.materials[frame.material]
@@ -157,8 +153,7 @@ class TestFrame:
 
         Axial terms are at (0,0), (0,6), (6,0), (6,6).
         """
-        simple_frame_structure.set_degrees_freedom()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         k_local = frame.local_stiffness_matrix()
         # Axial stiffness positive
         assert k_local[0, 0] > 0
@@ -172,9 +167,8 @@ class TestFrame:
 
         Transforms local stiffness to global coordinate system.
         """
-        simple_frame_structure.set_degrees_freedom()
         simple_frame_structure.set_joint_indices()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         k_global = frame.global_stiffness_matrix()
         assert k_global.shape == (12, 12)
 
@@ -183,8 +177,7 @@ class TestFrame:
 
         Transforms 3D vectors between local and global coords.
         """
-        simple_frame_structure.set_degrees_freedom()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         rotation = frame.rotation_matrix()
         assert rotation.shape == (3, 3)
         np.testing.assert_array_almost_equal(rotation, np.eye(3))
@@ -194,7 +187,6 @@ class TestFrame:
 
         Transforms 12-DOF displacement/force vectors.
         """
-        simple_frame_structure.set_degrees_freedom()
-        frame = simple_frame_structure.elements['F1']
+        frame = simple_frame_structure.frames['F1']
         t = frame.rotation_transformation_matrix()
         assert t.shape == (12, 12)

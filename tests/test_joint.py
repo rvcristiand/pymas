@@ -6,9 +6,9 @@ Joints define the endpoints of structural elements (trusses, frames) and can hav
 supports and loads applied to them.
 
 Typical usage:
-    structure = Structure()
+    structure = Structure('space_frame')
     joint = structure.add_joint('N1', x=0, y=0, z=0)
-    coordinates = joint.coordinate_vector()  # array([0, 0, 0])
+    coordinates = joint.position()  # array([0, 0, 0])
 """
 
 import pytest
@@ -45,17 +45,17 @@ class TestJoint:
         assert joint.y is None
         assert joint.z is None
 
-    def test_coordinate_vector(self, structure):
+    def test_position(self, structure):
         """Verify that coordinate vector is returned correctly.
 
-        coordinate_vector() returns numpy array [x, y, z].
+        position() returns numpy array [x, y, z].
         """
         structure.add_joint('N1', x=1, y=2, z=3)
         joint = structure.joints['N1']
         expected = np.array([1, 2, 3])
-        np.testing.assert_array_almost_equal(joint.coordinate_vector(), expected)
+        np.testing.assert_array_almost_equal(joint.position(), expected)
 
-    def test_coordinate_vector_with_none(self, structure):
+    def test_position_with_none(self, structure):
         """Verify that None coordinates default to 0 in coordinate vector.
 
         When coordinate is None, it should default to 0 in the vector.
@@ -63,9 +63,9 @@ class TestJoint:
         structure.add_joint('N1')
         joint = structure.joints['N1']
         expected = np.array([0, 0, 0])
-        np.testing.assert_array_almost_equal(joint.coordinate_vector(), expected)
+        np.testing.assert_array_almost_equal(joint.position(), expected)
 
-    def test_coordinate_vector_partial_coordinates(self, structure):
+    def test_position_partial_coordinates(self, structure):
         """Verify that partial coordinates work correctly.
 
         Only specified coordinates should have their values;
@@ -74,4 +74,4 @@ class TestJoint:
         structure.add_joint('N1', x=1, z=3)
         joint = structure.joints['N1']
         expected = np.array([1, 0, 3])
-        np.testing.assert_array_almost_equal(joint.coordinate_vector(), expected)
+        np.testing.assert_array_almost_equal(joint.position(), expected)
