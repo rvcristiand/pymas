@@ -10,8 +10,8 @@ The RectangularSection class automatically calculates these properties
 from base and height dimensions using standard formulas.
 
 Typical usage:
-    structure = Structure()
-    section = structure.add_section('rect', area=0.01, inertia_y=0.0001)
+    structure = Structure('space_frame')
+    section = structure.add_section('rect', A=0.01, Iy=0.0001)
     rect = structure.add_rectangular_section('beam', 0.3, 0.5)
 """
 
@@ -29,8 +29,8 @@ class TestSection:
 
         Creates a section with area, torsion constant, and moments of inertia.
         """
-        section = structure.add_section('rect', area=0.01, torsion_constant=0.0001,
-                                        inertia_y=0.0001, inertia_z=0.0001)
+        section = structure.add_section('rect', A=0.01, J=0.0001,
+                                        Iy=0.0001, Iz=0.0001)
         assert section.name == 'rect'
         assert section.A == 0.01
         assert section.J == 0.0001

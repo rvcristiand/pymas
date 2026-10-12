@@ -1,8 +1,9 @@
 """
-Tests for the Truss class.
+Tests for truss members.
 
-A Truss is a linear element that transmits axial force only (hinged connections at both ends).
-It has 3 degrees of freedom per joint in 3D: ux, uy, uz.
+A truss member is a Frame with only the `axial` flag set: it transmits axial
+force only (hinged connections at both ends). In a 'space_truss' structure it
+has 3 degrees of freedom per joint: ux, uy, uz.
 
 Key methods:
     - length(): Element length between joints
@@ -13,13 +14,13 @@ Key methods:
     - global_stiffness_matrix(): Stiffness in global coords
 
 Typical usage:
-    structure = Structure()
-    structure.add_material('steel', modulus_elasticity=200e9)
-    structure.add_section('circle', area=0.01)
+    structure = Structure('space_truss')
+    structure.add_material('steel', E=200e9)
+    structure.add_section('circle', A=0.01)
     structure.add_joint('N1', x=0)
     structure.add_joint('N2', x=5)
-    structure.add_truss('T1', 'N1', 'N2', 'steel', 'circle')
-    truss = structure.elements['T1']
+    structure.add_frame('T1', 'N1', 'N2', 'steel', 'circle', axial=True)
+    truss = structure.frames['T1']
     length = truss.length()
 """
 
@@ -28,9 +29,9 @@ import numpy as np
 
 
 class TestTruss:
-    """Tests for Truss class functionality.
+    """Tests for truss members (axial-only frames).
 
-    A Truss connects two joints with axial stiffness only.
+    A truss member connects two joints with axial stiffness only.
     """
 
     def test_add_truss(self, simple_truss_structure):
@@ -50,7 +51,7 @@ class TestTruss:
 
         Length = distance between joints N1(0,0,0) and N2(5,0,0) = 5.0
         """
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         assert truss.length() == pytest.approx(5.0, rel=1e-10)
 
     def test_truss_direction_cosines(self, simple_truss_structure):
@@ -58,9 +59,7 @@ class TestTruss:
 
         For truss along x-axis from (0,0,0) to (5,0,0), direction is [1,0,0].
         """
-        simple_truss_structure.type = '3D'
-        simple_truss_structure.set_degrees_freedom()
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         expected = np.array([1, 0, 0])
         np.testing.assert_array_almost_equal(truss.direction_cosines_vector(), expected)
 
@@ -69,9 +68,7 @@ class TestTruss:
 
         For horizontal truss, rotation matrix equals identity ( aligned with x-axis).
         """
-        simple_truss_structure.type = '3D'
-        simple_truss_structure.set_degrees_freedom()
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         rotation = truss.rotation_matrix()
         assert rotation.shape == (3, 3)
         np.testing.assert_array_almost_equal(rotation, np.eye(3))
@@ -81,21 +78,20 @@ class TestTruss:
 
         Local stiffness matrix is 12x12 for a 2-node truss element.
         """
-        simple_truss_structure.set_degrees_freedom()
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         k_local = truss.local_stiffness_matrix()
         assert k_local.shape == (12, 12)
 
     def test_truss_global_stiffness_matrix(self, simple_truss_structure):
         """Verify global stiffness matrix can be computed.
 
-        Uses degrees of freedom to filter the stiffness matrix.
+        The 12x12 matrix is filtered by the active degrees of freedom: a
+        space truss has 3 per joint, so the result is 6x6.
         """
-        simple_truss_structure.set_degrees_freedom()
         simple_truss_structure.set_joint_indices()
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         k_global = truss.global_stiffness_matrix()
-        assert k_global.shape == (12, 12)
+        assert k_global.shape == (6, 6)
 
     def test_truss_rotation_transformation_matrix(self, simple_truss_structure):
         """Verify rotation transformation matrix for 12 DOF.
@@ -103,7 +99,6 @@ class TestTruss:
         This matrix transforms displacement/force vectors between
         local and global coordinate systems.
         """
-        simple_truss_structure.set_degrees_freedom()
-        truss = simple_truss_structure.elements['T1']
+        truss = simple_truss_structure.frames['T1']
         t = truss.rotation_transformation_matrix()
         assert t.shape == (12, 12)

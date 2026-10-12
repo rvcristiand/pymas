@@ -6,8 +6,8 @@ and shear modulus (G) properties. It is used to define the material properties
 of structural elements like trusses and frames.
 
 Typical usage:
-    structure = Structure()
-    material = structure.add_material('steel', modulus_elasticity=200e9)
+    structure = Structure('space_frame')
+    material = structure.add_material('steel', E=200e9)
     print(material.E)  # 200000000000.0
 """
 
@@ -31,7 +31,7 @@ class TestMaterial:
         - The elastic modulus is stored
         - The material is added to the structure's materials dictionary
         """
-        material = structure.add_material('steel', modulus_elasticity=200e9)
+        material = structure.add_material('steel', E=200e9)
         assert material.name == 'steel'
         assert material.E == 200e9
         assert 'steel' in structure.materials
@@ -42,7 +42,7 @@ class TestMaterial:
         Creates a material with both E and G to ensure both properties
         are properly stored.
         """
-        material = structure.add_material('steel', modulus_elasticity=200e9, modulus_elasticity_shear=77e9)
+        material = structure.add_material('steel', E=200e9, G=77e9)
         assert material.G == 77e9
 
     def test_material_default_values(self, structure):
