@@ -3,3 +3,9 @@
 
 # build output of `python -m build`: the wheel and sdist uploaded to releases
 dist/
+
+# output of the Eiffel Tower example: the JSON is too large to keep (about
+# 17 MB) and the figure is regenerated; the expected results are listed in the
+# docstring of its script
+examples/05_eiffel_tower/*.json
+examples/05_eiffel_tower/*.png
