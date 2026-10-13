@@ -24,10 +24,15 @@ license-files = ["LICEN[CS]E*"]
 keywords = ["structural analysis", "framed structures", "direct stiffness method"]
 
 [project.optional-dependencies]
+plot = [
+  "matplotlib",
+]
 dev = [
+  "matplotlib",
   "pytest",
 ]
 test = [
+  "matplotlib",
   "pytest",
 ]
 
