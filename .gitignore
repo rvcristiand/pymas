@@ -1,2 +1,5 @@
 # python
 **/__pycache__
+
+# build output of `python -m build`: the wheel and sdist uploaded to releases
+dist/
