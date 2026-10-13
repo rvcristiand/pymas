@@ -1,6 +1,7 @@
 import json
 import numpy as np
 from scipy.sparse import coo_matrix
+from pymas import plotting
 from pymas.primitives import Material, Section, CircularSection, \
     RectangularSection, Joint, Frame, Support, LoadPattern, Displacement, \
     EndActions, Reaction, InternalForces, InternalDisplacements
@@ -727,6 +728,82 @@ class Structure:
         # solve the structure due to each load pattern
         for load_pattern in self.load_patterns:
             self.analyse_load_pattern(load_pattern)
+
+    def plot_deformed(self, load_pattern, scale=None, ax=None):
+        """Plot the deformed shape of the structure.
+
+        The frames are drawn curved, following their internal displacements,
+        over the undeformed structure. Requires matplotlib.
+
+        Args:
+            load_pattern (str): Name of the load pattern.
+            scale (float, optional): Factor applied to the displacements. By
+                default, the largest displacement is drawn as 10% of the size
+                of the structure.
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_deformed(self, load_pattern, scale, ax)
+
+    def plot_internal_forces(self, load_pattern, frame):
+        """Plot the internal forces of a frame along its length.
+
+        Only the forces that the frame models are plotted, e.g. fy and mz for
+        a frame with bending_z. Requires matplotlib.
+
+        Args:
+            load_pattern (str): Name of the load pattern.
+            frame (str): Name of the frame.
+
+        Returns:
+            Figure: Matplotlib figure, with one axes per internal force.
+        """
+        return plotting.plot_internal_forces(self, load_pattern, frame)
+
+    def plot_internal_displacements(self, load_pattern, frame):
+        """Plot the internal displacements of a frame along its length.
+
+        Only the displacements that the frame models are plotted, e.g. uy and
+        rz for a frame with bending_z. They are given in the local axes of
+        the frame. Requires matplotlib.
+
+        Args:
+            load_pattern (str): Name of the load pattern.
+            frame (str): Name of the frame.
+
+        Returns:
+            Figure: Matplotlib figure, with one axes per internal
+                displacement.
+        """
+        return plotting.plot_internal_displacements(self, load_pattern, frame)
+
+    def plot_diagram(self, load_pattern, force, scale=None, ax=None):
+        """Plot the diagram of an internal force on the whole structure.
+
+        The values are drawn perpendicular to each frame: bending moments on
+        the tension side, and forces and torque along the positive local
+        y-axis (z for fz). Positive values are red and negative values blue.
+        Requires matplotlib.
+
+        Args:
+            load_pattern (str): Name of the load pattern.
+            force (str): Internal force: 'fx', 'fy', 'fz', 'mx', 'my' or
+                'mz'.
+            scale (float, optional): Length per unit of force. By default,
+                the largest value is drawn as 15% of the size of the
+                structure.
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_diagram(self, load_pattern, force, scale, ax)
 
     def export(self, filename):
         """Save the structure data to a file in JSON format.
