@@ -35,6 +35,12 @@ You can install pymas using [pip](https://pip.pypa.io/en/stable/):
 pip install git+https://github.com/rvcristiand/pymas.git
 ```
 
+To plot the results, install it with the optional [matplotlib](https://matplotlib.org/) dependency:
+
+```
+pip install "pymas[plot] @ git+https://github.com/rvcristiand/pymas.git"
+```
+
 <details>
 	<summary><b>Manual Installation</b></summary>
 	<p>You can obtain a copy of pymas from <a href="https://github.com/rvcristiand/pymas">its repository</a> by downloading a ZIP archive, or by cloning it using <a href="https://git-scm.com/">Git</a>:</p>
@@ -46,6 +52,16 @@ pip install git+https://github.com/rvcristiand/pymas.git
 
 ## Usage 
 You can model and analyze linear elastic framed structures using the [Structure](https://github.com/rvcristiand/pymas/blob/74305d1df22b4b534f352d23f9316267b7b17998/src/pymas/core.py#L8) class.
+
+### Plotting
+After `run_analysis()`, these methods plot the results of a load pattern and return the matplotlib axes or figure:
+
+```python
+model.plot_deformed('self weight')            # deformed shape of the whole structure
+model.plot_diagram('self weight', 'mz')       # an internal force drawn on the whole structure
+model.plot_internal_forces('self weight', 'beam')  # internal forces of one frame along its length
+model.plot_internal_displacements('self weight', 'beam')
+```
 
 ### Examples
 
