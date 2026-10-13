@@ -78,9 +78,17 @@ def is_planar(structure):
     return in_plane and not out_of_plane_dof
 
 
+def _format(value):
+    """Format a value for a label: thousands without exponent."""
+    if abs(value) >= 1000:
+        return f'{value:,.0f}'
+
+    return f'{value:.4g}'
+
+
 def _style(ax, planar):
-    """Give an axes a recessive look."""
-    ax.set_facecolor(SURFACE)
+    """Give an axes a recessive look, over the figure background."""
+    ax.set_facecolor((1, 1, 1, 0))
     ax.tick_params(colors=MUTED, labelsize=8)
     if planar:
         for spine in ax.spines.values():
@@ -93,15 +101,13 @@ def _style(ax, planar):
 
 
 def _axes(structure, ax):
-    """Return the axes to draw a structure on, creating it if needed."""
-    if ax is not None:
-        return ax
-
-    plt = _pyplot()
-    planar = is_planar(structure)
-    fig = plt.figure(facecolor=SURFACE)
-    ax = fig.add_subplot(projection=None if planar else '3d')
-    _style(ax, planar)
+    """Return the styled axes to draw a structure on, creating it if needed."""
+    if ax is None:
+        plt = _pyplot()
+        fig = plt.figure(facecolor=SURFACE)
+        ax = fig.add_subplot(projection=None if is_planar(structure)
+                             else '3d')
+    _style(ax, ax.name != '3d')
 
     return ax
 
@@ -129,9 +135,12 @@ def _set_limits(ax, points):
         ax.set_zlim(center[2] - span[2], center[2] + span[2])
         ax.set_box_aspect(2 * span)
     else:
-        ax.set_aspect('equal', adjustable='box')
-        ax.set_xlim(center[0] - size, center[0] + size)
-        ax.set_ylim(center[1] - size, center[1] + size)
+        # fit the bounding box with a margin; equal scales are kept by
+        # widening the data limits, so a long beam fills a wide axes
+        margin = 0.05 * size
+        ax.update_datalim([low[:2] - margin, high[:2] + margin])
+        ax.set_aspect('equal', adjustable='datalim')
+        ax.autoscale_view()
 
 
 def _size(structure):
@@ -282,7 +291,7 @@ def _plot_frame_series(structure, load_pattern, frame_name, results, flags,
         # label the largest absolute value only
         i = int(np.argmax(np.abs(values)))
         if values[i] != 0:
-            ax.annotate(f'{values[i]:.4g}', (x[i], values[i]),
+            ax.annotate(_format(values[i]), (x[i], values[i]),
                         textcoords='offset points', xytext=(4, 4),
                         color=INK, fontsize=8)
 
@@ -447,7 +456,7 @@ def plot_diagram(structure, load_pattern, force, scale=None, ax=None):
 
         base, tip, values = diagram_positions(structure, load_pattern, frame,
                                               force, scale)
-        _line(ax, tip, color=MUTED, linewidth=0.8)
+        _line(ax, tip, color=MUTED, linewidth=0.5)
         points.extend(tip)
         for polygon, sign in _same_sign_polygons(base, tip, values):
             polygons.append(polygon)
@@ -473,9 +482,9 @@ def plot_diagram(structure, load_pattern, force, scale=None, ax=None):
         if at is None:
             continue
         if ax.name == '3d':
-            ax.text(*at, f'{value:.4g}', color=INK, fontsize=8)
+            ax.text(*at, _format(value), color=INK, fontsize=8)
         else:
-            ax.annotate(f'{value:.4g}', at[:2], textcoords='offset points',
+            ax.annotate(_format(value), at[:2], textcoords='offset points',
                         xytext=(4, 4), color=INK, fontsize=8)
 
     _set_limits(ax, points)
