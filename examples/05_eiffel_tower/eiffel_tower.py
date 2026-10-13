@@ -28,9 +28,9 @@ Model units:
     Length:       meters (m)
     Stress:       kN/m²
 
-If matplotlib is installed, the script also plots the axial forces of both
-load patterns and the deformed shape under wind, and saves the figure as
-eiffel_tower.png.
+If matplotlib is installed (pip install pymas[plot]), the script also plots
+the axial forces of both load patterns and the deformed shape under wind,
+and saves the figure as eiffel_tower.png.
 
 Expected results (the exported JSON, about 17 MB, is not kept in the
 repository):
@@ -217,103 +217,25 @@ for load_pattern in model.load_patterns:
 
 print(f'\nwind force: {kN(total_wind)}')
 
-# 10. Plot the results, if matplotlib is available
+# 10. Plot the results, if matplotlib is available (pip install pymas[plot])
 try:
     import matplotlib.pyplot as plt
-    from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
-    from matplotlib.ticker import StrMethodFormatter
-    from mpl_toolkits.mplot3d.art3d import Line3DCollection
 except ImportError:
     print('\ninstall matplotlib to plot the results')
     raise SystemExit
 
-# colors: diverging blue (compression) - gray (zero) - red (tension)
-surface, ink, muted, gray = '#fcfcfb', '#0b0b0b', '#52514e', '#c3c2b7'
-blue, red = '#2a78d6', '#e34948'
-diverging = LinearSegmentedColormap.from_list('axial', [blue, gray, red])
+fig = plt.figure(figsize=(14, 7))
+fig.suptitle('Eiffel Tower (simplified space truss)')
 
-
-def segments(scale=0, load_pattern=None):
-    """Return the end points of every frame, optionally displaced.
-
-    Args:
-        scale (float, optional): Factor applied to the joint displacements.
-        load_pattern (str, optional): Load pattern of the displacements.
-
-    Returns:
-        ndarray: Array of shape (number of frames, 2, 3).
-    """
-    def position(name):
-        p = model.joints[name].position()
-        if scale:
-            d = model.displacements[load_pattern][name]
-            p = p + scale * np.array([d.ux, d.uy, d.uz])
-        return p
-
-    return np.array([[position(f.joint_j), position(f.joint_k)]
-                     for f in model.frames.values()])
-
-
-def setup(ax, title):
-    """Set the title, limits and a recessive look of a 3D axes."""
-    ax.set_title(title, color=ink, fontsize=11)
-    ax.set_xlim(-65, 65)
-    ax.set_ylim(-65, 65)
-    ax.set_zlim(0, 300)
-    ax.set_box_aspect((130, 130, 300))
-    ax.view_init(elev=12, azim=-60)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([0, 57.6, 115.7, 276.1])
-    ax.set_zticklabels(['0 m', '1st floor', '2nd floor', '3rd floor'],
-                       color=muted, fontsize=8)
-    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-        axis.set_pane_color((1, 1, 1, 0))
-        axis.line.set_color(gray)
-    ax.grid(False)
-
-
-fig = plt.figure(figsize=(12, 7), facecolor=surface)
-fig.suptitle('Eiffel Tower (simplified space truss)', color=ink, fontsize=13)
-# three panels of the same size, with a color bar below the first two
-grid = fig.add_gridspec(2, 3, height_ratios=(1, 0.025), left=0.03,
-                        right=0.97, bottom=0.08, top=0.9, hspace=0,
-                        wspace=0.1)
-
-# axial forces, one panel per load pattern
-for i, load_pattern in enumerate(model.load_patterns):
-    ax = fig.add_subplot(grid[0, i], projection='3d', facecolor=surface)
-    forces = np.array([model.internal_forces[load_pattern][name].fx[0]
-                       for name in model.frames])
-    limit = np.abs(forces).max()
-    norm = TwoSlopeNorm(vmin=-limit, vcenter=0, vmax=limit)
-    lines = Line3DCollection(segments(), cmap=diverging, norm=norm,
-                             linewidths=1.2)
-    lines.set_array(forces)
-    ax.add_collection(lines)
-    setup(ax, f'Axial force: {load_pattern}')
-    cax = fig.add_subplot(grid[1, i])
-    box = cax.get_position()
-    cax.set_position([box.x0 + 0.15 * box.width, box.y0, 0.7 * box.width,
-                      box.height])
-    bar = fig.colorbar(lines, cax=cax, orientation='horizontal')
-    # ticks at zero and at the largest force rounded down to a thousand
-    tick = np.floor(limit / 1000) * 1000
-    bar.set_ticks([-tick, 0, tick])
-    bar.ax.xaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
-    bar.set_label('kN (compression -, tension +)', color=muted, fontsize=8)
-    bar.ax.tick_params(colors=muted, labelsize=8)
-    bar.outline.set_visible(False)
+# axial forces drawn on the structure: tension red, compression blue
+model.plot_diagram('self weight', 'fx',
+                   ax=fig.add_subplot(1, 3, 1, projection='3d'))
+model.plot_diagram('wind', 'fx', ax=fig.add_subplot(1, 3, 2, projection='3d'))
 
 # deformed shape under wind, exaggerated
-scale = 500
-ax = fig.add_subplot(grid[0, 2], projection='3d', facecolor=surface)
-ax.add_collection(Line3DCollection(segments(), colors=gray, linewidths=0.8))
-ax.add_collection(Line3DCollection(segments(scale, 'wind'), colors=blue,
-                                   linewidths=1.2))
-sway = model.displacements['wind'][joint(top, 'a')].ux
-setup(ax, f'Deformed shape: wind (×{scale})\n'
-          f'top sway {sway * 100:.1f} cm, gray: undeformed')
+model.plot_deformed('wind', scale=500,
+                    ax=fig.add_subplot(1, 3, 3, projection='3d'))
 
-fig.savefig('eiffel_tower.png', dpi=150, facecolor=surface)
+fig.tight_layout()
+fig.savefig('eiffel_tower.png', dpi=150)
 plt.show()

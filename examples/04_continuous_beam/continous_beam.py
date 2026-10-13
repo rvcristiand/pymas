@@ -1,5 +1,3 @@
-import numpy as np
-
 from pymas import Structure
 
 """"Solution to problem 7.6 from 'Microcomputadores en Ingeniería Estructural'"""
@@ -57,16 +55,17 @@ model.run_analysis()
 # export
 model.export('continuous_beam.json')
 
-mz = []
-for load_pattern in model.internal_forces.values():
-    for element in load_pattern.values():
-        mz+=element.mz
-
-# plot the bending moment diagram if matplotlib is available
+# plot the bending moment diagram and the deformed shape, if matplotlib is
+# available (pip install pymas[plot])
 try:
     import matplotlib.pyplot as plt
 except ImportError:
+    mz = [m for forces in model.internal_forces['distributed loads'].values()
+          for m in forces.mz]
     print(f'Mmax: {max(mz):.4f}, Mmin: {min(mz):.4f}')
 else:
-    plt.plot(list(range(len(mz))), -np.array(mz))
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(8, 6))
+    model.plot_diagram('distributed loads', 'mz', ax=top)
+    model.plot_deformed('distributed loads', ax=bottom)
+    fig.tight_layout()
     plt.show()
