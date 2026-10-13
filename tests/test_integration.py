@@ -481,3 +481,46 @@ class TestIntegrationFramePointLoad:
         local = np.concatenate((r.T @ d_b[:3], r.T @ d_b[3:]))
         for value, c in zip(local, ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')):
             assert getattr(d_whole, c)[-1] == pytest.approx(value, abs=1e-12)
+
+
+class TestIntegrationDistributedTorsion:
+    """Integration test for a uniformly distributed torque.
+
+    Problem setup:
+        - Type: torsional bar (1 DOF: rx), fixed at both ends
+        - Length L = 2, GJ = 8000, distributed torque mx = 3
+
+    Analytical solutions:
+        - Reactions: -mx*L/2 at each end
+        - Internal torque: linear from mx*L/2 to -mx*L/2, zero at midspan
+        - Maximum twist: mx*L^2/(8*G*J) at midspan
+    """
+
+    def test_distributed_torque(self):
+        """Verify reactions, internal torque and twist (issue #29)."""
+        model = Structure('torsional_bar')
+
+        G, J, L, mx = 80e6, 1e-4, 2, 3
+
+        model.add_material('steel', E=200e6, G=G)
+        model.add_section('section', J=J)
+        model.add_joint('a', x=0)
+        model.add_joint('b', x=L)
+        model.add_frame('bar', 'a', 'b', 'steel', 'section', torsional=True)
+        model.add_support('a', r_rx=True)
+        model.add_support('b', r_rx=True)
+        model.add_load_pattern('torque')
+        model.add_distributed_load('torque', 'bar', mx=mx)
+        model.run_analysis()
+
+        assert model.reactions['torque']['a'].mx == pytest.approx(-mx * L / 2)
+        assert model.reactions['torque']['b'].mx == pytest.approx(-mx * L / 2)
+
+        torque = model.internal_forces['torque']['bar'].mx
+        assert torque[0] == pytest.approx(mx * L / 2)
+        assert torque[50] == pytest.approx(0, abs=1e-9)
+        assert torque[-1] == pytest.approx(-mx * L / 2)
+
+        twist = model.internal_displacements['torque']['bar'].rx
+        assert twist[50] == pytest.approx(mx * L**2 / (8 * G * J))
+        assert twist[-1] == pytest.approx(0, abs=1e-12)

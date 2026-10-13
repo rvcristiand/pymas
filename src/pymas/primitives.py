@@ -544,11 +544,15 @@ class Frame(AttrDisplay):
                     distributed_load.fy is not None and self.bending_z) else 0
                 fz = distributed_load.fz if (
                     distributed_load.fz is not None and self.bending_y) else 0
+                mx = distributed_load.mx if (
+                    distributed_load.mx is not None and self.torsional) else 0
 
                 for i in range(no_div+1):
                     x = (i / no_div) * length
                     if self.axial:
                         internal_forces['fx'][i] -= fx * x
+                    if self.torsional:
+                        internal_forces['mx'][i] -= mx * x
                     if self.bending_z:
                         internal_forces['fy'][i] += fy * x
                         internal_forces['mz'][i] += fy * x ** 2 / 2
@@ -686,12 +690,17 @@ class Frame(AttrDisplay):
                     distributed_load.fy is not None and self.bending_z) else 0
                 fz = distributed_load.fz if (
                     distributed_load.fz is not None and self.bending_y) else 0
+                mx = distributed_load.mx if (
+                    distributed_load.mx is not None and self.torsional) else 0
 
                 for i in range(no_div+1):
                     x = (i / no_div) * length
                     if self.axial and E * A != 0:
                         internal_displacements['ux'][i] -= fx * \
                             x ** 2 / (2 * E * A)
+                    if self.torsional and G * J != 0:
+                        internal_displacements['rx'][i] -= mx * \
+                            x ** 2 / (2 * G * J)
                     if self.bending_z and E * Iz != 0:
                         internal_displacements['uy'][i] += fy * \
                             x ** 4 / (24 * E * Iz)
