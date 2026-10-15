@@ -9,6 +9,7 @@ Test cases:
     - Simple beam with point load at midspan
     - Plane truss analysis
     - Multi-span beam
+    - Grid
 
 Each test creates a complete model, runs analysis, and verifies results
 against known analytical solutions.
@@ -524,3 +525,54 @@ class TestIntegrationDistributedTorsion:
         twist = model.internal_displacements['torque']['bar'].rx
         assert twist[50] == pytest.approx(mx * L**2 / (8 * G * J))
         assert twist[-1] == pytest.approx(0, abs=1e-12)
+
+
+class TestIntegrationGrid:
+    """Integration test for an L-shaped grid in the xy plane.
+
+    Problem setup:
+        - Type: grid (3 DOF: uz, rx, ry)
+        - Two legs of length L, a-b along x and b-c along y, both fixed at
+          the far end, with bending stiffness EI and torsional stiffness GJ
+        - Point load P along -z at the corner b
+
+    Analytical solutions, with k = 12EI/L^3, c = 6EI/L^2, r = 4EI/L and
+    t = GJ/L (the bending of each leg is restrained by the torsion of the
+    other one):
+        - Deflection at b: w = -P / (2 * (k - c^2 / (r + t)))
+        - Rotations at b: rx = ry = -c * w / (r + t)
+        - Reactions: P/2 along z at each support
+    """
+
+    def test_corner_load(self):
+        """Verify the displacements and reactions at the corner (issue #30)."""
+        model = Structure('grid')
+
+        E, G, I, J, L, P = 200e6, 80e6, 2e-5, 1e-5, 3, 10
+
+        model.add_material('steel', E=E, G=G)
+        model.add_section('section', A=0.01, J=J, Iy=I, Iz=I)
+        model.add_joint('a', x=0, y=0)
+        model.add_joint('b', x=L, y=0)
+        model.add_joint('c', x=L, y=L)
+        for name, j, k in (('a-b', 'a', 'b'), ('b-c', 'b', 'c')):
+            model.add_frame(name, j, k, 'steel', 'section',
+                            torsional=True, bending_y=True)
+        model.add_support('a', r_uz=True, r_rx=True, r_ry=True)
+        model.add_support('c', r_uz=True, r_rx=True, r_ry=True)
+        model.add_load_pattern('point load')
+        model.add_joint_point_load('point load', 'b', fz=-P)
+        model.run_analysis()
+
+        k, c, r, t = 12*E*I/L**3, 6*E*I/L**2, 4*E*I/L, G*J/L
+        w = -P / (2 * (k - c**2 / (r + t)))
+        rotation = -c * w / (r + t)
+
+        displacement = model.displacements['point load']['b']
+        assert displacement.uz == pytest.approx(w)
+        assert displacement.rx == pytest.approx(rotation)
+        assert displacement.ry == pytest.approx(rotation)
+
+        for support in ('a', 'c'):
+            reaction = model.reactions['point load'][support]
+            assert reaction.fz == pytest.approx(P / 2)

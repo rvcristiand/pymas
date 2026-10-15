@@ -108,7 +108,7 @@ class TestDegreesOfFreedom:
         ('beam',           [False, True, False, False, False, True]),
         ('plane_truss',    [True, True, False, False, False, False]),
         ('plane_frame',    [True, True, False, False, False, True]),
-        ('grid',           [False, True, True, True, False, False]),
+        ('grid',           [False, False, True, True, True, False]),
         ('space_truss',    [True, True, True, False, False, False]),
         ('space_frame',    [True, True, True, True, True, True]),
     ])

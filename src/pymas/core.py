@@ -34,7 +34,8 @@ class Structure:
     - 'beam': Beam, with 2 degrees of freedom (uy, rz).
     - 'plane_truss': Plane truss, with 2 degrees of freedom (ux, uy).
     - 'plane_frame': Plane frame, with 3 degrees of freedom (ux, uy, rz).
-    - 'grid': Grid structure, with 3 degrees of freedom (uy, uz, rx).
+    - 'grid': Grid in the xy plane, loaded along z, with 3 degrees of freedom
+      (uz, rx, ry).
     - 'space_truss': Space truss, with 3 degrees of freedom (ux, uy, uz).
     - 'space_frame': Space frame, with 6 degrees of freedom (ux, uy, uz, rx,
        ry, rz).
@@ -66,7 +67,7 @@ class Structure:
         'plane_truss':   {'ux': True, 'uy': True},
         'plane_frame':   {'ux': True, 'uy': True, 'rz': True},
         'space_truss':   {'ux': True, 'uy': True, 'uz': True},
-        'grid':          {'uy': True, 'uz': True, 'rx': True},
+        'grid':          {'uz': True, 'rx': True, 'ry': True},
         'space_frame':   {'ux': True, 'uy': True, 'uz': True,
                           'rx': True, 'ry': True, 'rz': True},
     }
