@@ -1,8 +1,8 @@
 import numpy as np
-
-from scipy.spatial.transform import Rotation
 from scipy.sparse import bsr_matrix, coo_matrix
-from pymas.classtools import AttrDisplay
+from scipy.spatial.transform import Rotation
+
+from .classtools import AttrDisplay
 
 
 class Material(AttrDisplay):

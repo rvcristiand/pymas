@@ -1,10 +1,14 @@
 import json
+
 import numpy as np
 from scipy.sparse import coo_matrix
-from pymas import plotting
-from pymas.primitives import Material, Section, CircularSection, \
-    RectangularSection, Joint, Frame, Support, LoadPattern, Displacement, \
-    EndActions, Reaction, InternalForces, InternalDisplacements
+
+from . import plotting
+from .primitives import (
+    CircularSection, Displacement, EndActions, Frame, InternalDisplacements,
+    InternalForces, Joint, LoadPattern, Material, RectangularSection, Reaction,
+    Section, Support,
+)
 
 
 class Structure:
