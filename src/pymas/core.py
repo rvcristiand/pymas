@@ -4,27 +4,24 @@ import numpy as np
 from scipy.sparse import coo_matrix
 
 from . import plotting
-from .primitives import (
-    CircularSection, Displacement, EndActions, Frame, InternalDisplacements,
-    InternalForces, Joint, LoadPattern, Material, RectangularSection, Reaction,
-    Section, Support,
-)
+from .primitives import CircularSection, Displacement, EndActions, Frame, \
+    InternalDisplacements, InternalForces, Joint, LoadPattern, Material, \
+    RectangularSection, Reaction, Section, Support
 
 
 class Structure:
     """Analyzes linear elastic framed structures subjected to static loads.
 
-    This class provides functionality to define, analyze, and export bars,
-    torsional bars, beams, plane trusses, plane frames, space trusses, grids
-    and space frames. Users can add materials, cross sections, joints, frames,
-    supports, and load patterns to build a complete structural model.
+    This class provides functionality to define, analyze, and export different
+    types of framed structures. Users can add materials, cross sections,
+    joints, frames, supports, and load patterns to build a complete structural
+    model.
 
     The type of structure and its global degrees of freedom (DoF) are defined
     during instantiation. The class utilizes an internal `_DOF_MAP` to
-    preconfigure DoF for common structure types. These DoF represent the
-    possible independent movements (translations and rotations) a node can
-    undergo and are fundamental in dictating the analysis type and expected
-    structural behavior.
+    preconfigure DoF for common structure types. These DoF are the independent
+    movements (translations and rotations) of each joint; every frame is
+    computed in 3D and then reduced to the active DoF.
 
     The preconfigured structure types and their respective degrees of freedom
     are:
@@ -38,11 +35,12 @@ class Structure:
       (uz, rx, ry).
     - 'space_truss': Space truss, with 3 degrees of freedom (ux, uy, uz).
     - 'space_frame': Space frame, with 6 degrees of freedom (ux, uy, uz, rx,
-       ry, rz).
+      ry, rz).
 
     Alternatively, users can explicitly define the active translations (ux, uy,
     uz) and rotations (rx, ry, rz) for a custom structural model if none of the
-    predefined types fit their specific needs.
+    predefined types fit their specific needs. These flags are ignored for a
+    predefined type.
 
     Attributes:
         type (str): Type of structure.
@@ -72,8 +70,8 @@ class Structure:
                           'rx': True, 'ry': True, 'rz': True},
     }
 
-    def __init__(self, type, *, ux=None, uy=None, uz=None, rx=None, ry=None,
-                 rz=None):
+    def __init__(self, type, *, ux=False, uy=False, uz=False, rx=False,
+                 ry=False, rz=False):
         """Instantiates a Structure object.
 
         Initializes a new structural model and sets up internal variables and
@@ -81,9 +79,10 @@ class Structure:
         results.
 
         Args:
-            type (str): Type of the structure (e.g., 'plane frame',
-                'space truss'). This determines the active degrees of freedom
-                if present in `_DOF_MAP`.
+            type (str): Type of the structure (e.g., 'plane_frame',
+                'space_truss'). This determines the active degrees of freedom
+                if present in `_DOF_MAP`; otherwise they are taken from the
+                flags below, which are ignored for a predefined type.
             ux (bool, optional): Defines if translation in the x-direction is
                 an active degree of freedom.
             uy (bool, optional): Defines if translation in the y-direction is
@@ -104,25 +103,17 @@ class Structure:
         # type of structure and degrees of freedom
         self.type = type
 
-        if type in self._DOF_MAP:
-            dofs = self._DOF_MAP[type]
+        # flags as given by the user
+        self._ux, self._uy, self._uz = ux, uy, uz
+        self._rx, self._ry, self._rz = rx, ry, rz
 
-            ux = self._ux = dofs.get('ux', False)
-            uy = self._uy = dofs.get('uy', False)
-            uz = self._uz = dofs.get('uz', False)
-            rx = self._rx = dofs.get('rx', False)
-            ry = self._ry = dofs.get('ry', False)
-            rz = self._rz = dofs.get('rz', False)
-        else:
-            ux = self._ux = ux if ux is not None else False
-            uy = self._uy = uy if uy is not None else False
-            uz = self._uz = uz if uz is not None else False
-            rx = self._rx = rx if rx is not None else False
-            ry = self._ry = ry if ry is not None else False
-            rz = self._rz = rz if rz is not None else False
+        # the degrees of freedom come from _DOF_MAP, or from the flags for a
+        # custom type; a degree of freedom missing from the map is inactive
+        flags = {'ux': ux, 'uy': uy, 'uz': uz, 'rx': rx, 'ry': ry, 'rz': rz}
+        dofs = self._DOF_MAP.get(type, flags)
 
         # set the degrees of freedom of the model
-        self._dof = np.array([ux, uy, uz, rx, ry, rz])
+        self._dof = np.array([dofs.get(dof, False) for dof in flags])
 
         # a structure without degrees of freedom cannot be analysed
         if not self._dof.any():
