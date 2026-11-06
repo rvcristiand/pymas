@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse import bsr_matrix, coo_matrix
 from scipy.spatial.transform import Rotation
 
+from . import plotting
 from .classtools import AttrDisplay
 
 
@@ -503,7 +504,8 @@ class Frame(AttrDisplay):
             dict: Internal forces of the element.
         """
         loadPattern = self._parent.load_patterns[load_pattern]
-        endActions = self._parent.end_actions[load_pattern][self.name]
+        endActions = \
+            self._parent.results[load_pattern].frames[self.name].end_actions
 
         length = self.length()
 
@@ -616,9 +618,7 @@ class Frame(AttrDisplay):
         material = self._parent.materials[self.material]
         section = self._parent.sections[self.section]
         loadPattern = self._parent.load_patterns[load_pattern]
-        end_actions = self._parent.end_actions[load_pattern][self.name]
-        j_joint_displ = \
-            self._parent.displacements[load_pattern][self.joint_j]
+        results = self._parent.results[load_pattern]
 
         length = self.length()
         E = material.E if material.E is not None else 0
@@ -628,7 +628,7 @@ class Frame(AttrDisplay):
         Iy = section.Iy if section.Iy is not None else 0
         Iz = section.Iz if section.Iz is not None else 0
 
-        end_actions = self._parent.end_actions[load_pattern][self.name]
+        end_actions = results.frames[self.name].end_actions
         fx_j, fy_j, fz_j, mx_j, my_j, mz_j = end_actions.get_end_actions()[:6]
 
         # Aplicar filtros a las fuerzas del extremo inicial
@@ -640,7 +640,7 @@ class Frame(AttrDisplay):
         mz_j = mz_j if self.bending_z else 0
 
         j_joint_displ = \
-            self._parent.displacements[load_pattern][self.joint_j].displacement_vector()
+            results.displacements[self.joint_j].displacement_vector()
         j_joint_displ = np.dot(np.transpose(
             self.rotation_transformation_matrix())[:6, :6], j_joint_displ)
         ux_j, uy_j, uz_j, rx_j, ry_j, rz_j = j_joint_displ
@@ -823,14 +823,10 @@ class Support(AttrDisplay):
         # degrees of freedom
         dof = self._parent.get_degrees_freedom()
 
-        r_ux = self.r_ux if self.r_ux is not None else False
-        r_uy = self.r_uy if self.r_uy is not None else False
-        r_uz = self.r_uz if self.r_uz is not None else False
-        r_rx = self.r_rx if self.r_rx is not None else False
-        r_ry = self.r_ry if self.r_ry is not None else False
-        r_rz = self.r_rz if self.r_rz is not None else False
+        restrained = [bool(getattr(self, f'r_{name}'))
+                      for name in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')]
 
-        return np.array([r_ux, r_uy, r_uz, r_rx, r_ry, r_rz])[dof]
+        return np.array(restrained)[dof]
 
 
 class LoadPattern(AttrDisplay):
@@ -926,13 +922,38 @@ class LoadPattern(AttrDisplay):
 
         return pointLoad
 
-    def add_frame_distributed_load(self, frame, fx=None, fy=None, fz=None,
-                                   mx=None, my=None, mz=None):
-        """Add an element uniformly distributed load to the dictionary of
-        element uniformly distributed loads.
+    def plot_loads(self, ax=None, dimensions=False, support_names=False,
+                   frame_names=False):
+        """Plot the loads of the load pattern on the structure.
+
+        The loads can be plotted before the analysis; the reactions are
+        plotted with the results, by `Results.plot_loads()`.
 
         Args:
-            element (str): Name of the element.
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+            dimensions (bool, optional): Whether to dimension a plane
+                structure: the distances between its joints along x below
+                it, and along y on its left. False by default.
+            support_names (bool, optional): Whether to write the name of
+                the joint of each support beside it. False by default.
+            frame_names (bool, optional): Whether to write the name of each
+                frame, in a circle, beside its middle. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_loads(self._parent, self.name, ax, False,
+                                   dimensions, support_names, frame_names)
+
+    def add_distributed_load(self, frame, fx=None, fy=None, fz=None,
+                             mx=None, my=None, mz=None):
+        """Add a frame uniformly distributed load to the dictionary of frame
+        uniformly distributed loads.
+
+        Args:
+            frame (str): Name of the frame.
             fx (float, optional): Intensity of the uniformly distributed load
                 along the local x-axis.
             fy (float, optional): Intensity of the uniformly distributed load
@@ -1634,3 +1655,205 @@ class InternalDisplacements(AttrDisplay):
         self.rx = rx
         self.ry = ry
         self.rz = rz
+
+
+class Results(AttrDisplay):
+    """Results of the analysis of a structure under a load pattern.
+
+    Attributes:
+        name (str): Name of the load pattern.
+        displacements (dict): Joint displacements, by joint name.
+        reactions (dict): Support reactions, by joint name.
+        frames (dict): Frame results, by frame name.
+    """
+
+    def __init__(self, parent, name):
+        """Instantiate a Results object.
+
+        Args:
+            parent (Structure): Structure.
+            name (str): Name of the load pattern.
+        """
+        self._parent = parent
+        self.name = name
+        self.displacements = {}
+        self.reactions = {}
+        self.frames = {}
+
+    def plot_loads(self, ax=None, reactions=True, dimensions=False,
+                   support_names=False, frame_names=False):
+        """Plot the loads of the load pattern on the structure, and its
+        reactions.
+
+        The loads are drawn in black and the reactions in red, as arrows of a
+        fixed length labelled with their values: forces point at the joint or
+        the point where they act, and moments are arcs around it (arrows
+        along their axis in 3D). Distributed loads are drawn as a row of
+        arrows along their frame; distributed moments are not drawn.
+       
+
+        Args:
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+            reactions (bool, optional): Whether to draw the reactions.
+            dimensions (bool, optional): Whether to dimension a plane
+                structure: the distances between its joints along x below
+                it, and along y on its left. False by default.
+            support_names (bool, optional): Whether to write the name of
+                the joint of each support beside it. False by default.
+            frame_names (bool, optional): Whether to write the name of each
+                frame, in a circle, beside its middle. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_loads(self._parent, self.name, ax, reactions,
+                                   dimensions, support_names, frame_names)
+
+    def plot_deformed(self, ax=None, scale=None, labels=False,
+                      dimensions=False):
+        """Plot the deformed shape of the structure.
+
+        The frames are drawn curved, following their internal displacements,
+        over the undeformed structure. The displacements are magnified, so
+        the plot has no axes. Optionally, the largest deflection of each
+        frame that bends is labelled with its real, signed value: the local
+        uy with bending_z, and the local uz with bending_y; and, in a plane
+        structure, its position is dimensioned from the ends of its frame
+        (horizontal and vertical frames only).
+
+        Args:
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+            scale (float, optional): Factor applied to the displacements. By
+                default, the largest displacement is drawn as 10% of the size
+                of the structure (the diagonal of its bounding box).
+            labels (bool, optional): Whether to label the largest deflection
+                of each frame. False by default.
+            dimensions (bool, optional): Whether to dimension the position
+                of the largest deflection of each frame. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_deformed(self._parent, self.name, ax, scale,
+                                      labels, dimensions)
+
+    def plot_diagram(self, force, ax=None, scale=None, labels=False,
+                     dimensions=False):
+        """Plot the diagram of an internal force on the whole structure.
+
+        The values are drawn perpendicular to each frame: bending moments on
+        the tension side, and forces and torque along the positive local
+        y-axis (z for fz). Positive values are blue and negative values red.
+        The values are scaled, so the plot has no axes. Optionally, the
+        largest positive and negative values of each frame, and those at its
+        ends, are labelled.
+
+        Args:
+            force (str): Internal force: 'fx', 'fy', 'fz', 'mx', 'my' or
+                'mz'.
+            ax (Axes, optional): Matplotlib axes to draw on (3D if the
+                structure is not planar). By default, a new figure is
+                created.
+            scale (float, optional): Length per unit of force. By default,
+                the largest value is drawn as 15% of the size of the
+                structure.
+            labels (bool, optional): Whether to label the largest positive
+                and negative values of each frame, and those at its ends.
+                False by default.
+            dimensions (bool, optional): Whether to dimension where the
+                diagrams of the horizontal and vertical frames of a plane
+                structure cross zero. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return plotting.plot_diagram(self._parent, self.name, force, ax,
+                                     scale, labels, dimensions)
+
+
+class FrameResults(AttrDisplay):
+    """Results of a frame under a load pattern.
+
+    Attributes:
+        load_pattern (str): Name of the load pattern.
+        frame (str): Name of the frame.
+        end_actions (EndActions): Frame end actions.
+        internal_forces (InternalForces): Internal forces along the frame.
+        internal_displacements (InternalDisplacements): Internal
+            displacements along the frame.
+    """
+
+    def __init__(self, parent, load_pattern, frame, end_actions=None,
+                 internal_forces=None, internal_displacements=None):
+        """Instantiate a FrameResults object.
+
+        Args:
+            parent (Structure): Structure.
+            load_pattern (str): Name of the load pattern.
+            frame (str): Name of the frame.
+            end_actions (EndActions, optional): Frame end actions.
+            internal_forces (InternalForces, optional): Internal forces.
+            internal_displacements (InternalDisplacements, optional):
+                Internal displacements.
+        """
+        self._parent = parent
+        self.load_pattern = load_pattern
+        self.frame = frame
+        self.end_actions = end_actions
+        self.internal_forces = internal_forces
+        self.internal_displacements = internal_displacements
+
+    def plot_internal_forces(self, axes=None, labels=False):
+        """Plot the internal forces of the frame along its length.
+
+        Only the forces that the frame models are plotted, e.g. fy and mz for
+        a frame with bending_z. The bending moments are positive downwards,
+        on the tension side. Optionally, the largest positive and most
+        negative values are marked with their coordinates, and so are the
+        points where they cross zero.
+
+        Args:
+            axes (list, optional): Matplotlib axes to draw on, one per
+                internal force that the frame models, in the order fx, fy,
+                fz, mx, my, mz. By default, a new figure is created.
+            labels (bool, optional): Whether to label the largest values
+                and the zero crossings. False by default.
+
+        Returns:
+            Figure: Matplotlib figure, with one axes per internal force.
+        """
+        return plotting.plot_internal_forces(self._parent, self.load_pattern,
+                                             self.frame, axes, labels)
+
+    def plot_internal_displacements(self, axes=None, labels=False,
+                                    components=None):
+        """Plot the internal displacements of the frame along its length.
+
+        Only the displacements that the frame models can be plotted, e.g. uy
+        and rz for a frame with bending_z. By default, its translations are
+        plotted, or its rotations if it models none. They are given in the
+        local axes of the frame. Optionally, the largest positive and most
+        negative values are marked with their coordinates, and so are the
+        points where they cross zero.
+
+        Args:
+            axes (list, optional): Matplotlib axes to draw on, one per
+                plotted displacement, in the order ux, uy, uz, rx, ry, rz.
+                By default, a new figure is created.
+            labels (bool, optional): Whether to label the largest values
+                and the zero crossings. False by default.
+            components (list, optional): Displacements to plot, among
+                those that the frame models, e.g. ('uy', 'rz'). By default,
+                its translations.
+
+        Returns:
+            Figure: Matplotlib figure, with one axes per plotted
+                displacement.
+        """
+        return plotting.plot_internal_displacements(
+            self._parent, self.load_pattern, self.frame, axes, labels,
+            components)

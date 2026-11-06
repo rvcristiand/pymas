@@ -25,7 +25,7 @@ from pymas import Structure
 class TestIntegrationSimpleBeam:
     """Integration test for simple beam with uniformly distributed load.
 
-    Problem setup (from examples/01_simple_beam/):
+    Problem setup (from examples/beams/simple_beam/):
         - Type: beam (2 DOF: uy, rz)
         - Length: L = 10 m
         - Material: E = 4700*sqrt(28)*1000 ≈ 24.87e6 kN/m²
@@ -61,12 +61,12 @@ class TestIntegrationSimpleBeam:
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
-        model.add_distributed_load('self weight', 'beam', fy=-w)
+        model.load_patterns['self weight'].add_distributed_load('beam', fy=-w)
 
         model.run_analysis()
 
-        disp_a = model.displacements['self weight']['a']
-        disp_b = model.displacements['self weight']['b']
+        disp_a = model.results['self weight'].displacements['a']
+        disp_b = model.results['self weight'].displacements['b']
 
         assert disp_a.rz == pytest.approx(-disp_b.rz, rel=1e-10)
         assert disp_a.rz is not None
@@ -94,10 +94,10 @@ class TestIntegrationSimpleBeam:
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
-        model.add_distributed_load('self weight', 'beam', fy=-w)
+        model.load_patterns['self weight'].add_distributed_load('beam', fy=-w)
         model.run_analysis()
 
-        reactions = model.reactions['self weight']
+        reactions = model.results['self weight'].reactions
         Ra = reactions['a'].fy
         Rb = reactions['b'].fy
 
@@ -126,10 +126,10 @@ class TestIntegrationSimpleBeam:
         model.add_support('a', r_ux=True, r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('self weight')
-        model.add_distributed_load('self weight', 'beam', fy=-w)
+        model.load_patterns['self weight'].add_distributed_load('beam', fy=-w)
         model.run_analysis()
 
-        internal = model.internal_forces['self weight']['beam']
+        internal = model.results['self weight'].frames['beam'].internal_forces
         mz_values = internal.mz
 
         mz_max = max(mz_values)
@@ -171,10 +171,10 @@ class TestIntegrationCantilever:
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
         model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
-        model.add_joint_point_load('tip load', 'tip', fy=-P)
+        model.load_patterns['tip load'].add_joint_point_load('tip', fy=-P)
         model.run_analysis()
 
-        reactions = model.reactions['tip load']
+        reactions = model.results['tip load'].reactions
         R_fixed = reactions['fixed'].fy
 
         assert R_fixed == pytest.approx(P, rel=0.01)
@@ -199,10 +199,10 @@ class TestIntegrationCantilever:
         model.add_frame('beam', 'fixed', 'tip', 'steel', 'section', bending_z=True)
         model.add_support('fixed', r_ux=True, r_uy=True, r_rz=True)
         model.add_load_pattern('tip load')
-        model.add_joint_point_load('tip load', 'tip', fy=-P)
+        model.load_patterns['tip load'].add_joint_point_load('tip', fy=-P)
         model.run_analysis()
 
-        internal = model.internal_forces['tip load']['beam']
+        internal = model.results['tip load'].frames['beam'].internal_forces
         mz_values = internal.mz
 
         moment_at_fixed = mz_values[0]
@@ -255,21 +255,21 @@ class TestIntegrationPlaneTruss:
         model.add_support('b', r_uy=True, r_uz=True)
         model.add_support('c', r_uz=True)
         model.add_load_pattern('gravity')
-        model.add_joint_point_load('gravity', 'c', fy=-100)
+        model.load_patterns['gravity'].add_joint_point_load('c', fy=-100)
         model.run_analysis()
 
         # Verify analysis completed
-        assert 'gravity' in model.displacements
-        assert 'gravity' in model.reactions
+        assert 'gravity' in model.results
+        assert model.results['gravity'].reactions
 
         # Verify all joints have displacements
-        displacements = model.displacements['gravity']
+        displacements = model.results['gravity'].displacements
         assert 'a' in displacements
         assert 'b' in displacements
         assert 'c' in displacements
 
         # Verify reactions computed at supported joints
-        reactions = model.reactions['gravity']
+        reactions = model.results['gravity'].reactions
         assert 'a' in reactions
         assert 'b' in reactions
 
@@ -313,11 +313,11 @@ class TestIntegrationMultiSpan:
         model.add_support('b', r_uy=True)
         model.add_support('c', r_uy=True)
         model.add_load_pattern('uniform')
-        model.add_distributed_load('uniform', 'ab', fy=-w)
-        model.add_distributed_load('uniform', 'bc', fy=-w)
+        model.load_patterns['uniform'].add_distributed_load('ab', fy=-w)
+        model.load_patterns['uniform'].add_distributed_load('bc', fy=-w)
         model.run_analysis()
 
-        reactions = model.reactions['uniform']
+        reactions = model.results['uniform'].reactions
 
         total_reaction = reactions['a'].fy + reactions['b'].fy + reactions['c'].fy
         total_load = w * (L1 + L2)
@@ -358,19 +358,19 @@ class TestIntegrationFramePointLoad:
         model.add_support('a', r_uy=True)
         model.add_support('b', r_uy=True)
         model.add_load_pattern('point')
-        model.add_frame_point_load('point', 'beam', L / 2, fy=-P)
+        model.load_patterns['point'].add_frame_point_load('beam', L / 2, fy=-P)
         model.run_analysis()
 
-        reactions = model.reactions['point']
+        reactions = model.results['point'].reactions
         assert reactions['a'].fy == pytest.approx(P / 2)
         assert reactions['b'].fy == pytest.approx(P / 2)
 
-        mz = model.internal_forces['point']['beam'].mz
+        mz = model.results['point'].frames['beam'].internal_forces.mz
         assert max(mz) == pytest.approx(P * L / 4)
         assert mz[0] == pytest.approx(0, abs=1e-9)
         assert mz[-1] == pytest.approx(0, abs=1e-9)
 
-        uy = model.internal_displacements['point']['beam'].uy
+        uy = model.results['point'].frames['beam'].internal_displacements.uy
         assert min(uy) == pytest.approx(-P * L**3 / (48 * E * I))
         assert uy[-1] == pytest.approx(0, abs=1e-12)
 
@@ -408,7 +408,8 @@ class TestIntegrationFramePointLoad:
 
         if not split:
             model.add_frame('ab', 'a', 'b', 'steel', 'section', **flags)
-            model.add_frame_point_load('point', 'ab', dist, **load)
+            model.load_patterns['point'].add_frame_point_load('ab', dist,
+                                                              **load)
         else:
             model.add_joint('m', *(dist * u))
             model.add_frame('am', 'a', 'm', 'steel', 'section', **flags)
@@ -418,7 +419,7 @@ class TestIntegrationFramePointLoad:
             r = model.frames['am'].rotation_matrix()
             f = r @ [load.get(k, 0) for k in ('fx', 'fy', 'fz')]
             m = r @ [load.get(k, 0) for k in ('mx', 'my', 'mz')]
-            model.add_joint_point_load('point', 'm', *f, *m)
+            model.load_patterns['point'].add_joint_point_load('m', *f, *m)
 
         model.run_analysis()
 
@@ -443,20 +444,22 @@ class TestIntegrationFramePointLoad:
         split = self._cantilever(True, direction, dist, load)
 
         components = ('fx', 'fy', 'fz', 'mx', 'my', 'mz')
+        whole_results, split_results = whole.results['point'], \
+            split.results['point']
         for c in components:
-            assert getattr(whole.reactions['point']['a'], c) == \
-                pytest.approx(getattr(split.reactions['point']['a'], c),
+            assert getattr(whole_results.reactions['a'], c) == \
+                pytest.approx(getattr(split_results.reactions['a'], c),
                               abs=1e-9)
 
         for c in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz'):
-            assert getattr(whole.displacements['point']['b'], c) == \
-                pytest.approx(getattr(split.displacements['point']['b'], c),
+            assert getattr(whole_results.displacements['b'], c) == \
+                pytest.approx(getattr(split_results.displacements['b'], c),
                               abs=1e-12)
 
         # index 30 is the section at the load, on the side of the fixed end
-        f_whole = whole.internal_forces['point']['ab']
-        f_am = split.internal_forces['point']['am']
-        f_mb = split.internal_forces['point']['mb']
+        f_whole = whole.results['point'].frames['ab'].internal_forces
+        f_am = split.results['point'].frames['am'].internal_forces
+        f_mb = split.results['point'].frames['mb'].internal_forces
         for c in components:
             values = getattr(f_whole, c)
             assert values[0] == pytest.approx(getattr(f_am, c)[0], abs=1e-9)
@@ -465,9 +468,9 @@ class TestIntegrationFramePointLoad:
             assert values[-1] == pytest.approx(getattr(f_mb, c)[-1],
                                                abs=1e-9)
 
-        d_whole = whole.internal_displacements['point']['ab']
-        d_am = split.internal_displacements['point']['am']
-        d_mb = split.internal_displacements['point']['mb']
+        d_whole = whole.results['point'].frames['ab'].internal_displacements
+        d_am = split.results['point'].frames['am'].internal_displacements
+        d_mb = split.results['point'].frames['mb'].internal_displacements
         for c in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz'):
             values = getattr(d_whole, c)
             assert values[30] == pytest.approx(getattr(d_am, c)[-1],
@@ -478,7 +481,7 @@ class TestIntegrationFramePointLoad:
         # internal displacements at the free end match the joint, in local
         # axes
         r = whole.frames['ab'].rotation_matrix()
-        d_b = whole.displacements['point']['b'].displacement_vector()
+        d_b = whole.results['point'].displacements['b'].displacement_vector()
         local = np.concatenate((r.T @ d_b[:3], r.T @ d_b[3:]))
         for value, c in zip(local, ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')):
             assert getattr(d_whole, c)[-1] == pytest.approx(value, abs=1e-12)
@@ -511,18 +514,19 @@ class TestIntegrationDistributedTorsion:
         model.add_support('a', r_rx=True)
         model.add_support('b', r_rx=True)
         model.add_load_pattern('torque')
-        model.add_distributed_load('torque', 'bar', mx=mx)
+        model.load_patterns['torque'].add_distributed_load('bar', mx=mx)
         model.run_analysis()
 
-        assert model.reactions['torque']['a'].mx == pytest.approx(-mx * L / 2)
-        assert model.reactions['torque']['b'].mx == pytest.approx(-mx * L / 2)
+        reactions = model.results['torque'].reactions
+        assert reactions['a'].mx == pytest.approx(-mx * L / 2)
+        assert reactions['b'].mx == pytest.approx(-mx * L / 2)
 
-        torque = model.internal_forces['torque']['bar'].mx
+        torque = model.results['torque'].frames['bar'].internal_forces.mx
         assert torque[0] == pytest.approx(mx * L / 2)
         assert torque[50] == pytest.approx(0, abs=1e-9)
         assert torque[-1] == pytest.approx(-mx * L / 2)
 
-        twist = model.internal_displacements['torque']['bar'].rx
+        twist = model.results['torque'].frames['bar'].internal_displacements.rx
         assert twist[50] == pytest.approx(mx * L**2 / (8 * G * J))
         assert twist[-1] == pytest.approx(0, abs=1e-12)
 
@@ -561,18 +565,18 @@ class TestIntegrationGrid:
         model.add_support('a', r_uz=True, r_rx=True, r_ry=True)
         model.add_support('c', r_uz=True, r_rx=True, r_ry=True)
         model.add_load_pattern('point load')
-        model.add_joint_point_load('point load', 'b', fz=-P)
+        model.load_patterns['point load'].add_joint_point_load('b', fz=-P)
         model.run_analysis()
 
         k, c, r, t = 12*E*I/L**3, 6*E*I/L**2, 4*E*I/L, G*J/L
         w = -P / (2 * (k - c**2 / (r + t)))
         rotation = -c * w / (r + t)
 
-        displacement = model.displacements['point load']['b']
+        displacement = model.results['point load'].displacements['b']
         assert displacement.uz == pytest.approx(w)
         assert displacement.rx == pytest.approx(rotation)
         assert displacement.ry == pytest.approx(rotation)
 
         for support in ('a', 'c'):
-            reaction = model.reactions['point load'][support]
+            reaction = model.results['point load'].reactions[support]
             assert reaction.fz == pytest.approx(P / 2)

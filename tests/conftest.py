@@ -19,7 +19,7 @@ Typical usage:
         # frames and supports
         simple_frame_structure.add_load_pattern('dead')
         simple_frame_structure.run_analysis()
-        assert 'dead' in simple_frame_structure.displacements
+        assert 'dead' in simple_frame_structure.results
 """
 
 import pytest
@@ -179,8 +179,8 @@ def structure_with_loads():
     s.add_support("N2", r_uy=True)
     s.add_support("N3", r_uy=True)
     s.add_load_pattern("dead")
-    s.add_distributed_load("dead", "F1", fy=-5e3)
-    s.add_distributed_load("dead", "F2", fy=-5e3)
+    s.load_patterns["dead"].add_distributed_load("F1", fy=-5e3)
+    s.load_patterns["dead"].add_distributed_load("F2", fy=-5e3)
 
     return s
 
