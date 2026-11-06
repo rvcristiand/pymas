@@ -33,17 +33,20 @@ model.add_frame('1-2', '1', '2', 'material1', 'section1', **deformations)
 model.add_frame('4-1', '4', '1', 'material1', 'section2', **deformations)
 model.add_frame('3-1', '3', '1', 'material1', 'section1', **deformations)
 
-# add supports
-model.add_support('2', *6 * (True,))
-model.add_support('3', *6 * (True,))
-model.add_support('4', *6 * (True,))
+# add supports (fixed)
+fixed = {'r_ux': True, 'r_uy': True, 'r_uz': True,
+         'r_rx': True, 'r_ry': True, 'r_rz': True}
+
+model.add_support('2', **fixed)
+model.add_support('3', **fixed)
+model.add_support('4', **fixed)
 
 # add load pattern
-model.add_load_pattern("distributed loads")
+distributed_loads = model.add_load_pattern("distributed loads")
 
 # add distributed loads
-model.add_distributed_load('distributed loads', '1-2', fy=-2.4)
-model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
+distributed_loads.add_distributed_load('1-2', fy=-2.4)
+distributed_loads.add_distributed_load('4-1', fy=-3.5)
 
 # solve
 model.run_analysis()
@@ -51,4 +54,4 @@ model.run_analysis()
 # export
 model.export('space_frame.json')
 
-print(model.displacements['distributed loads']['1'])
+print(model.results['distributed loads'].displacements['1'])

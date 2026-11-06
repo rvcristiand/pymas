@@ -38,17 +38,17 @@ model.add_frame('4-6', '4', '6', "2100 t/cm2", '10 cm2', axial=True)
 model.add_frame('5-6', '5', '6', "2100 t/cm2", '10 cm2', axial=True)
 
 # add supports
-model.add_support('4', True, True, True)
-model.add_support('5', True, True, True)
-model.add_support('6', True, True, True)
+model.add_support('4', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('5', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('6', r_ux=True, r_uy=True, r_uz=True)
 
 # add load pattern
-model.add_load_pattern("point loads")
+point_loads = model.add_load_pattern("point loads")
 
 # add point loads
-model.add_joint_point_load("point loads", '1', 10, 15, -12)
-model.add_joint_point_load("point loads", '2',  5, -3, -10)
-model.add_joint_point_load("point loads", '3', -4, -2,  -6)
+point_loads.add_joint_point_load('1', 10, 15, -12)
+point_loads.add_joint_point_load('2',  5, -3, -10)
+point_loads.add_joint_point_load('3', -4, -2,  -6)
 
 # analyze the model
 model.run_analysis()
@@ -56,6 +56,7 @@ model.export('space_truss.json')
 
 for joint in ['1', '2', '3']:
     print(f'joint: {joint}')
-    print(f'\tux: {model.displacements["point loads"][joint].ux:.3e} m')
-    print(f'\tux: {model.displacements["point loads"][joint].uy:.3e} m')
-    print(f'\tux: {model.displacements["point loads"][joint].uz:.3e} m')
+    displacement = model.results["point loads"].displacements[joint]
+    print(f'\tux: {displacement.ux:.3e} m')
+    print(f'\tux: {displacement.uy:.3e} m')
+    print(f'\tux: {displacement.uz:.3e} m')

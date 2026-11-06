@@ -28,9 +28,8 @@ Model units:
     Length:       meters (m)
     Stress:       kN/m²
 
-If matplotlib is installed (pip install pymas[plot]), the script also plots
-the axial forces of both load patterns and the deformed shape under wind,
-and saves the figure as eiffel_tower.png.
+The script also plots the axial forces of both load patterns and the
+deformed shape under wind, and saves the figure as eiffel_tower.png.
 
 Expected results (the exported JSON, about 17 MB, is not kept in the
 repository):
@@ -42,6 +41,7 @@ repository):
       the windward side.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from pymas import Structure
@@ -145,7 +145,7 @@ for corner in names:
 
 # 7. Add loads
 # self weight of each bar, half at each end joint
-model.add_load_pattern('self weight')
+self_weight = model.add_load_pattern('self weight')
 
 total_weight = 0
 for frame in model.frames.values():
@@ -153,10 +153,10 @@ for frame in model.frames.values():
     weight = unit_weight * area * frame.length()
     total_weight += weight
     for end in (frame.joint_j, frame.joint_k):
-        model.add_joint_point_load('self weight', end, fz=-weight / 2)
+        self_weight.add_joint_point_load(end, fz=-weight / 2)
 
 # wind along +x, on the tributary height of each level
-model.add_load_pattern('wind')
+wind = model.add_load_pattern('wind')
 
 solidity = 0.25
 total_wind = 0
@@ -170,8 +170,7 @@ for level, z in enumerate(heights):
     force = pressure * solidity * width(z) * tributary
     total_wind += force
     for corner in names:
-        model.add_joint_point_load('wind', joint(level, corner),
-                                   fx=force / 4)
+        wind.add_joint_point_load(joint(level, corner), fx=force / 4)
 
 # 8. Analyze the model
 model.run_analysis()
@@ -186,8 +185,8 @@ def axial_forces(load_pattern, prefix):
 
     Tension is positive.
     """
-    return {name: forces.fx[0] for name, forces in
-            model.internal_forces[load_pattern].items()
+    return {name: results.internal_forces.fx[0] for name, results in
+            model.results[load_pattern].frames.items()
             if name.startswith(prefix)}
 
 
@@ -201,12 +200,12 @@ print(f'weight of iron: {kN(total_weight)} '
       f'({total_weight / 9.81:,.0f} t, real tower: about 7,300 t)')
 
 for load_pattern in model.load_patterns:
-    reactions = model.reactions[load_pattern].values()
+    reactions = model.results[load_pattern].reactions.values()
     print(f'\n{load_pattern}')
     print(f'\tsum of reactions: fx = {kN(sum(r.fx for r in reactions))}, '
           f'fz = {kN(sum(r.fz for r in reactions))}')
 
-    top_a = model.displacements[load_pattern][joint(top, 'a')]
+    top_a = model.results[load_pattern].displacements[joint(top, 'a')]
     print(f'\ttop displacement: ux = {top_a.ux * 100:+.1f} cm, '
           f'uz = {top_a.uz * 100:+.1f} cm')
 
@@ -217,24 +216,19 @@ for load_pattern in model.load_patterns:
 
 print(f'\nwind force: {kN(total_wind)}')
 
-# 10. Plot the results, if matplotlib is available (pip install pymas[plot])
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    print('\ninstall matplotlib to plot the results')
-    raise SystemExit
-
+# 10. Plot the results
 fig = plt.figure(figsize=(14, 7))
 fig.suptitle('Eiffel Tower (simplified space truss)')
 
 # axial forces drawn on the structure: tension red, compression blue
-model.plot_diagram('self weight', 'fx',
-                   ax=fig.add_subplot(1, 3, 1, projection='3d'))
-model.plot_diagram('wind', 'fx', ax=fig.add_subplot(1, 3, 2, projection='3d'))
+model.results['self weight'].plot_diagram(
+    'fx', ax=fig.add_subplot(1, 3, 1, projection='3d'))
+model.results['wind'].plot_diagram(
+    'fx', ax=fig.add_subplot(1, 3, 2, projection='3d'))
 
 # deformed shape under wind, exaggerated
-model.plot_deformed('wind', scale=500,
-                    ax=fig.add_subplot(1, 3, 3, projection='3d'))
+model.results['wind'].plot_deformed(
+    scale=500, ax=fig.add_subplot(1, 3, 3, projection='3d'))
 
 fig.tight_layout()
 fig.savefig('eiffel_tower.png', dpi=150)

@@ -36,13 +36,13 @@ for name, (j, k) in members.items():
     model.add_frame(name, j, k, 'Rigid', 'TrussSection', axial=True)
 
 # Apoyos (restringen ux, uy, uz)
-model.add_support('C', True, True, True)
-model.add_support('D', True, True, True)
-model.add_support('E', True, True, True)
+model.add_support('C', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('D', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('E', r_ux=True, r_uy=True, r_uz=True)
 
 # Patrón de carga y cargas nodales
-model.add_load_pattern('Case 1')
-model.add_joint_point_load('Case 1', 'A', 10, 60, 20)  # fx, fy, fz
+case_1 = model.add_load_pattern('Case 1')
+case_1.add_joint_point_load('A', 10, 60, 20)  # fx, fy, fz
 
 # Análisis
 model.run_analysis()
@@ -51,7 +51,7 @@ model.export('space_truss_nodal_load.json')
 # Resultados
 def axial(frame):
     # fuerza axial constante a lo largo del elemento
-    return model.internal_forces['Case 1'][frame].fx[0]
+    return model.results['Case 1'].frames[frame].internal_forces.fx[0]
 
 print(f'Member BC calculated axial force: {axial("BC"):.1f}')
 print('Member BC expected axial force: 32.7 Tension')
