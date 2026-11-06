@@ -79,7 +79,7 @@ class TestJointPointLoad:
         """
         structure.add_joint('N1', x=0, y=0, z=0)
         structure.add_load_pattern('load1')
-        structure.add_joint_point_load('load1', 'N1', fy=-10e3)
+        structure.load_patterns['load1'].add_joint_point_load('N1', fy=-10e3)
         load_pattern = structure.load_patterns['load1']
         joint = 'N1'
         point_load = load_pattern.joint_point_loads[joint][0]
@@ -102,7 +102,7 @@ class TestDistributedLoad:
         Adds fy=-5kN/m to frame F1.
         """
         load_pattern = structure_with_loads.load_patterns['dead']
-        distributed_load = load_pattern.add_frame_distributed_load('F1', fy=-5e3)
+        distributed_load = load_pattern.add_distributed_load('F1', fy=-5e3)
         assert distributed_load.frame == 'F1'
         assert distributed_load.fy == -5e3
 

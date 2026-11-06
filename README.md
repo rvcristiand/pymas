@@ -35,33 +35,19 @@ You can install pymas using [pip](https://pip.pypa.io/en/stable/):
 pip install git+https://github.com/rvcristiand/pymas.git
 ```
 
-To plot the results, install it with the optional [matplotlib](https://matplotlib.org/) dependency:
-
-```
-pip install "pymas[plot] @ git+https://github.com/rvcristiand/pymas.git"
-```
-
 <details>
 	<summary><b>Manual Installation</b></summary>
-	<p>You can obtain a copy of pymas from <a href="https://github.com/rvcristiand/pymas">its repository</a> by downloading a ZIP archive, or by cloning it using <a href="https://git-scm.com/">Git</a>:</p>
+	<p>1. Get a copy of pymas, either by cloning <a href="https://github.com/rvcristiand/pymas">its repository</a> with <a href="https://git-scm.com/">Git</a>:</p>
 	<pre><code class="language-bash">git clone https://github.com/rvcristiand/pymas.git</code></pre>
-	<p>To install pymas, navigate to the project directory in your terminal and run:</p>
+	<p>or by downloading it as a ZIP archive (<i>Code → Download ZIP</i> on GitHub) and extracting it.</p>
+	<p>2. Open a terminal and move into that folder:</p>
+	<pre><code class="language-bash">cd pymas  # or cd pymas-main, if you downloaded the ZIP</code></pre>
+	<p>3. Install pymas and its dependencies:</p>
 	<pre><code class="language-bash">pip install .</code></pre>
-	<p>This will install pymas and any required dependencies.</p>
 </details>
 
 ## Usage 
 You can model and analyze linear elastic framed structures using the [Structure](https://github.com/rvcristiand/pymas/blob/74305d1df22b4b534f352d23f9316267b7b17998/src/pymas/core.py#L8) class.
-
-### Plotting
-After `run_analysis()`, these methods plot the results of a load pattern and return the matplotlib axes or figure:
-
-```python
-model.plot_deformed('self weight')            # deformed shape of the whole structure
-model.plot_diagram('self weight', 'mz')       # an internal force drawn on the whole structure
-model.plot_internal_forces('self weight', 'beam')  # internal forces of one frame along its length
-model.plot_internal_displacements('self weight', 'beam')
-```
 
 ### Examples
 
@@ -108,22 +94,19 @@ model.add_frame('beam', 'a', 'b', 'concrete 28 MPa', '0.5x1.0', bending_z=True)
 model.add_support('a', r_uy=True)
 model.add_support('b', r_uy=True)
 
-# add load patterns
-model.add_load_pattern('self weight')
-
-# add distributed loads
-model.add_distributed_load('self weight', 'beam', fy=-w)
+# add distributed loads (without a load pattern, they go to 'default')
+model.add_distributed_load('beam', fy=-w)
 
 # analyze the model
 model.run_analysis()
 model.export('simple_beam.json')
 
-print(f'Θa: {model.displacements['self weight']['a'].rz:+.3e} rad')
-print(f'Θb: {model.displacements['self weight']['b'].rz:+.3e} rad')
-print(f'Ra: {model.reactions['self weight']['a'].fy:+.1f} kN')
-print(f'Rb: {model.reactions['self weight']['b'].fy:+.1f} kN')
-print(f'Mmax: {max(model.internal_forces['self weight']['beam'].mz):.1f} kN m')
-print(f'νmax: {min(model.internal_displacements['self weight']['beam'].uy):.3e} m')
+print(f'Θa: {model.displacements['a'].rz:+.3e} rad')
+print(f'Θb: {model.displacements['b'].rz:+.3e} rad')
+print(f'Ra: {model.reactions['a'].fy:+.1f} kN')
+print(f'Rb: {model.reactions['b'].fy:+.1f} kN')
+print(f'Mmax: {max(model.internal_forces['beam'].mz):.1f} kN m')
+print(f'νmax: {min(model.internal_displacements['beam'].uy):.3e} m')
 ```
 
 <b>Output</b>
@@ -183,17 +166,17 @@ model.add_frame('4-6', '4', '6', "2100 t/cm2", '10 cm2', axial=True)
 model.add_frame('5-6', '5', '6', "2100 t/cm2", '10 cm2', axial=True)
 
 # add supports
-model.add_support('4', True, True, True)
-model.add_support('5', True, True, True)
-model.add_support('6', True, True, True)
+model.add_support('4', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('5', r_ux=True, r_uy=True, r_uz=True)
+model.add_support('6', r_ux=True, r_uy=True, r_uz=True)
 
 # add load pattern
-model.add_load_pattern("point loads")
+point_loads = model.add_load_pattern("point loads")
 
 # add point loads
-model.add_joint_point_load("point loads", '1', 10, 15, -12)
-model.add_joint_point_load("point loads", '2',  5, -3, -10)
-model.add_joint_point_load("point loads", '3', -4, -2,  -6)
+point_loads.add_joint_point_load('1', 10, 15, -12)
+point_loads.add_joint_point_load('2',  5, -3, -10)
+point_loads.add_joint_point_load('3', -4, -2,  -6)
 
 # analyze the model
 model.run_analysis()
@@ -201,9 +184,10 @@ model.export('space_truss.json')
 
 for joint in ['1', '2', '3']:
     print(f'joint: {joint}')
-    print(f'\tux: {model.displacements["point loads"][joint].ux:.3e} m')
-    print(f'\tux: {model.displacements["point loads"][joint].uy:.3e} m')
-    print(f'\tux: {model.displacements["point loads"][joint].uz:.3e} m')
+    displacement = model.results["point loads"].displacements[joint]
+    print(f'\tux: {displacement.ux:.3e} m')
+    print(f'\tux: {displacement.uy:.3e} m')
+    print(f'\tux: {displacement.uz:.3e} m')
 ```
 
 <b>Output</b>
@@ -263,17 +247,20 @@ model.add_frame('1-2', '1', '2', 'material1', 'section1', **deformations)
 model.add_frame('4-1', '4', '1', 'material1', 'section2', **deformations)
 model.add_frame('3-1', '3', '1', 'material1', 'section1', **deformations)
 
-# add supports
-model.add_support('2', *6 * (True,))
-model.add_support('3', *6 * (True,))
-model.add_support('4', *6 * (True,))
+# add supports (fixed)
+fixed = {'r_ux': True, 'r_uy': True, 'r_uz': True,
+         'r_rx': True, 'r_ry': True, 'r_rz': True}
+
+model.add_support('2', **fixed)
+model.add_support('3', **fixed)
+model.add_support('4', **fixed)
 
 # add load pattern
-model.add_load_pattern("distributed loads")
+distributed_loads = model.add_load_pattern("distributed loads")
 
 # add distributed loads
-model.add_distributed_load('distributed loads', '1-2', fy=-2.4)
-model.add_distributed_load('distributed loads', '4-1', fy=-3.5)
+distributed_loads.add_distributed_load('1-2', fy=-2.4)
+distributed_loads.add_distributed_load('4-1', fy=-3.5)
 
 # solve
 model.run_analysis()
@@ -281,7 +268,7 @@ model.run_analysis()
 # export
 model.export('space_frame.json')
 
-print(model.displacements['distributed loads']['1'])
+print(model.results['distributed loads'].displacements['1'])
 ```
 
 <b>Output</b>

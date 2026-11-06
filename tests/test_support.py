@@ -40,6 +40,15 @@ class TestSupport:
         assert support.r_uy is True
         assert support.r_uz is True
 
+    def test_restraints_are_keyword_only(self, simple_frame_structure):
+        """Verify the restraints cannot be given as positional arguments.
+
+        add_support('N1', True, True) would not say what each True
+        restrains.
+        """
+        with pytest.raises(TypeError):
+            simple_frame_structure.add_support('N1', True, True)
+
     def test_restrains_3d(self, simple_frame_structure):
         """Verify restrain vector for 3D structure.
 

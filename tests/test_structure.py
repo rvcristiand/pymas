@@ -33,9 +33,9 @@ Typical usage:
     structure.add_frame('F1', 'N1', 'N2', 'steel', 'rect', bending_z=True)
     structure.add_support('N1', r_ux=True, r_uy=True, r_rz=True)
     structure.add_load_pattern('dead')
-    structure.add_joint_point_load('dead', 'N2', fy=-10e3)
+    structure.add_joint_point_load('N2', fy=-10e3, load_pattern='dead')
     structure.run_analysis()
-    displacements = structure.displacements['dead']
+    displacements = structure.results['dead'].displacements
 """
 
 import pytest
@@ -186,12 +186,11 @@ class TestAnalysis:
     """Tests for structural analysis.
 
     run_analysis() solves the structure for all load patterns.
-    It computes:
+    It stores one Results object per load pattern in results, with:
         - displacements: Joint displacements
         - reactions: Support reactions
-        - end_actions: Forces at element ends
-        - internal_forces: Forces along elements
-        - internal_displacements: Displacements along elements
+        - frames: per frame, end actions, internal forces and internal
+          displacements
     """
 
     def test_run_analysis_simple(self, simple_frame_structure):
@@ -199,24 +198,176 @@ class TestAnalysis:
 
         Run analysis and check displacements are computed.
         """
-        simple_frame_structure.add_load_pattern('dead')
-        simple_frame_structure.add_joint_point_load('dead', 'N2', fy=-10e3)
+        dead = simple_frame_structure.add_load_pattern('dead')
+        dead.add_joint_point_load('N2', fy=-10e3)
         simple_frame_structure.run_analysis()
-        assert 'dead' in simple_frame_structure.displacements
+        assert 'dead' in simple_frame_structure.results
 
     def test_displacements_results(self, structure_with_loads):
         """Verify displacements are computed for all joints."""
         structure_with_loads.run_analysis()
-        displacements = structure_with_loads.displacements['dead']
+        displacements = structure_with_loads.results['dead'].displacements
         for joint in ['N1', 'N2', 'N3']:
             assert joint in displacements
 
     def test_reactions_results(self, structure_with_loads):
         """Verify reactions are computed at supported joints."""
         structure_with_loads.run_analysis()
-        reactions = structure_with_loads.reactions['dead']
+        reactions = structure_with_loads.results['dead'].reactions
         assert 'N1' in reactions
         assert 'N3' in reactions
+
+
+class TestDefaultLoadPattern:
+    """Tests for loads added without a load pattern.
+
+    They go to the 'default' load pattern, which is created the first time
+    it is used.
+    """
+
+    @pytest.fixture
+    def cantilever(self):
+        """Create a cantilever beam without load patterns."""
+        s = Structure('beam')
+        s.add_material('m', E=200e6)
+        s.add_section('s', Iz=1e-4)
+        s.add_joint('a', x=0)
+        s.add_joint('b', x=2)
+        s.add_frame('ab', 'a', 'b', 'm', 's', bending_z=True)
+        s.add_support('a', r_uy=True, r_rz=True)
+        return s
+
+    def test_loads_go_to_default(self, cantilever):
+        """Verify the three kinds of load go to the 'default' pattern."""
+        cantilever.add_joint_point_load('b', fy=-1)
+        cantilever.add_frame_point_load('ab', 1, fy=-2)
+        cantilever.add_distributed_load('ab', fy=-3)
+
+        assert list(cantilever.load_patterns) == ['default']
+        default = cantilever.load_patterns['default']
+        assert 'b' in default.joint_point_loads
+        assert 'ab' in default.frame_point_loads
+        assert 'ab' in default.frame_distributed_loads
+
+        cantilever.run_analysis()
+        reaction = cantilever.results['default'].reactions['a']
+        assert reaction.fy == pytest.approx(1 + 2 + 3 * 2)
+
+    def test_other_load_patterns_take_their_own_loads(self, cantilever):
+        """Verify the loads of an added pattern go through its methods.
+
+        Then no 'default' load pattern is created.
+        """
+        live = cantilever.add_load_pattern('live')
+        live.add_joint_point_load('b', fy=-1)
+        live.add_frame_point_load('ab', 1, fy=-2)
+        live.add_distributed_load('ab', fy=-3)
+
+        assert list(cantilever.load_patterns) == ['live']
+        cantilever.run_analysis()
+        reaction = cantilever.results['live'].reactions['a']
+        assert reaction.fy == pytest.approx(1 + 2 + 3 * 2)
+
+
+class TestDefaultShortcuts:
+    """Tests for the shortcuts to the results of the 'default' pattern."""
+
+    @pytest.fixture
+    def cantilever(self):
+        """Create and analyse a cantilever loaded through the structure."""
+        s = Structure('beam')
+        s.add_material('m', E=200e6)
+        s.add_section('s', Iz=1e-4)
+        s.add_joint('a', x=0)
+        s.add_joint('b', x=2)
+        s.add_frame('ab', 'a', 'b', 'm', 's', bending_z=True)
+        s.add_support('a', r_uy=True, r_rz=True)
+        s.add_joint_point_load('b', fy=-1)
+        s.run_analysis()
+        return s
+
+    def test_values(self, cantilever):
+        """Verify the value shortcuts are the 'default' results."""
+        default = cantilever.results['default']
+        assert cantilever.displacements is default.displacements
+        assert cantilever.reactions is default.reactions
+        frame = default.frames['ab']
+        assert cantilever.end_actions['ab'] is frame.end_actions
+        assert cantilever.internal_forces['ab'] is frame.internal_forces
+        assert cantilever.internal_displacements['ab'] is \
+            frame.internal_displacements
+
+    def test_plots(self, cantilever):
+        """Verify the plot shortcuts draw the 'default' results.
+
+        Their titles do not name the 'default' load pattern.
+        """
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
+        assert cantilever.plot_loads().get_title() == 'Loads and reactions'
+        assert cantilever.plot_deformed(scale=2).get_title() == \
+            'Deformed shape (displacements ×2)'
+        assert cantilever.plot_diagram('mz').get_title() == \
+            'Bending moment mz'
+        fig = cantilever.plot_internal_forces('ab')
+        assert len(fig.axes) == 2
+        assert [ax.get_title() for ax in fig.axes] == [
+            "Shear force fy of frame 'ab'", "Bending moment mz of frame 'ab'"]
+        fig = cantilever.plot_internal_displacements('ab')
+        assert len(fig.axes) == 1
+        plt.close('all')
+
+    @pytest.mark.parametrize('use', [
+        lambda s: s.displacements, lambda s: s.internal_forces,
+        lambda s: s.plot_deformed()])
+    def test_without_default_results_raises(self, use):
+        """Verify the shortcuts explain how to reach other results.
+
+        Here the only load pattern is 'live', so there is no 'default'.
+        """
+        s = Structure('beam')
+        s.add_material('m', E=200e6)
+        s.add_section('s', Iz=1e-4)
+        s.add_joint('a', x=0)
+        s.add_joint('b', x=2)
+        s.add_frame('ab', 'a', 'b', 'm', 's', bending_z=True)
+        s.add_support('a', r_uy=True, r_rz=True)
+        s.add_load_pattern('live').add_joint_point_load('b', fy=-1)
+        s.run_analysis()
+        with pytest.raises(ValueError, match=r'model\.results\[name\]'):
+            use(s)
+
+
+class TestResults:
+    """Tests for the results of the analysis, grouped by load pattern."""
+
+    def test_results_per_load_pattern(self, structure_with_loads):
+        """Verify each load pattern has its own Results object."""
+        structure_with_loads.run_analysis()
+        results = structure_with_loads.results['dead']
+        assert results.name == 'dead'
+        assert set(results.displacements) == {'N1', 'N2', 'N3'}
+        assert set(results.reactions) == {'N1', 'N2', 'N3'}
+
+        frame = results.frames['F1']
+        assert frame.load_pattern == 'dead'
+        assert frame.frame == 'F1'
+        assert frame.end_actions.element == 'F1'
+        assert len(frame.internal_forces.mz) == 101
+        assert len(frame.internal_displacements.uy) == 101
+
+    def test_run_analysis_drops_old_results(self, structure_with_loads):
+        """Verify a new analysis drops the results of removed patterns."""
+        structure_with_loads.run_analysis()
+        structure_with_loads.add_load_pattern('live')
+        structure_with_loads.run_analysis()
+        assert set(structure_with_loads.results) == {'dead', 'live'}
+
+        del structure_with_loads.load_patterns['live']
+        structure_with_loads.run_analysis()
+        assert set(structure_with_loads.results) == {'dead'}
 
 
 class TestExport:
@@ -243,9 +394,9 @@ class TestExport:
         """
         import json
 
-        structure_and_load.add_load_pattern('live')
-        structure_and_load.add_frame_point_load('live', 'F1', 2, fy=-10e3)
-        structure_and_load.add_distributed_load('live', 'F1', fy=-5e3)
+        live = structure_and_load.add_load_pattern('live')
+        live.add_frame_point_load('F1', 2, fy=-10e3)
+        live.add_distributed_load('F1', fy=-5e3)
         filename = tmp_path / "test_export.json"
         structure_and_load.export(str(filename))
 
@@ -256,3 +407,40 @@ class TestExport:
             ['FramePointLoad', 'DistributedLoad']
         assert loads[0]['dist'] == 2
         assert loads[0]['fy'] == -10e3
+
+    def test_export_results_by_load_pattern(self, structure_with_loads,
+                                            tmp_path):
+        """Verify the results are exported grouped by load pattern."""
+        import json
+
+        structure_with_loads.run_analysis()
+        filename = tmp_path / "test_export.json"
+        structure_with_loads.export(str(filename))
+        with open(filename) as f:
+            data = json.load(f)
+
+        results = data['results']['dead']
+        assert set(results) == {'displacements', 'reactions', 'frames'}
+        # end reaction of a two-span beam: 3/8 w L
+        assert results['reactions']['N1']['fy'] == \
+            pytest.approx(3 / 8 * 5e3 * 6)
+        assert set(results['frames']['F1']) == \
+            {'end_actions', 'internal_forces', 'internal_displacements'}
+        assert len(results['frames']['F1']['internal_forces']['mz']) == 101
+
+    @pytest.mark.parametrize('type, flags, expected', [
+        ('beam', {}, ['uy', 'rz']),
+        ('custom', {'ux': True, 'rz': True}, ['ux', 'rz']),
+    ])
+    def test_export_degrees_freedom(self, type, flags, expected, tmp_path):
+        """Verify the type and the active DoF are exported."""
+        import json
+
+        filename = tmp_path / "test_export.json"
+        Structure(type, **flags).export(str(filename))
+
+        with open(filename) as f:
+            data = json.load(f)
+
+        assert data['type'] == type
+        assert data['degrees_of_freedom'] == expected

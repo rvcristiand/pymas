@@ -3,10 +3,9 @@ import json
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from . import plotting
 from .primitives import CircularSection, Displacement, EndActions, Frame, \
-    InternalDisplacements, InternalForces, Joint, LoadPattern, Material, \
-    RectangularSection, Reaction, Section, Support
+    FrameResults, InternalDisplacements, InternalForces, Joint, LoadPattern, \
+    Material, RectangularSection, Reaction, Results, Section, Support
 
 
 class Structure:
@@ -23,24 +22,27 @@ class Structure:
     movements (translations and rotations) of each joint; every frame is
     computed in 3D and then reduced to the active DoF.
 
-    The preconfigured structure types and their respective degrees of freedom
+    The preconfigured structure types and their active degrees of freedom
     are:
 
-    - 'bar': Axial bar, with 1 degree of freedom (ux).
-    - 'torsional_bar': Torsional bar, with 1 degree of freedom (rx).
-    - 'beam': Beam, with 2 degrees of freedom (uy, rz).
-    - 'plane_truss': Plane truss, with 2 degrees of freedom (ux, uy).
-    - 'plane_frame': Plane frame, with 3 degrees of freedom (ux, uy, rz).
-    - 'grid': Grid in the xy plane, loaded along z, with 3 degrees of freedom
-      (uz, rx, ry).
-    - 'space_truss': Space truss, with 3 degrees of freedom (ux, uy, uz).
-    - 'space_frame': Space frame, with 6 degrees of freedom (ux, uy, uz, rx,
-      ry, rz).
+    - 'bar': Axial bar (ux).
+    - 'torsional_bar': Torsional bar (rx).
+    - 'beam': Beam (uy, rz).
+    - 'plane_truss': Plane truss (ux, uy).
+    - 'plane_frame': Plane frame (ux, uy, rz).
+    - 'grid': Grid in the xy plane, loaded along z (uz, rx, ry).
+    - 'space_truss': Space truss (ux, uy, uz).
+    - 'space_frame': Space frame (ux, uy, uz, rx, ry, rz).
 
     Alternatively, users can explicitly define the active translations (ux, uy,
     uz) and rotations (rx, ry, rz) for a custom structural model if none of the
     predefined types fit their specific needs. These flags are ignored for a
     predefined type.
+
+    `run_analysis()` stores the results of each load pattern in `results`. The
+    results of the 'default' load pattern can also be reached through
+    shortcuts: `displacements`, `reactions`, `end_actions`, `internal_forces`,
+    `internal_displacements` and the `plot_*` methods.
 
     Attributes:
         type (str): Type of structure.
@@ -50,12 +52,7 @@ class Structure:
         frames (dict): Frames of the model.
         supports (dict): Joint supports of the model.
         load_patterns (dict): Load patterns of the model.
-        displacements (dict): Joint displacements of the model.
-        end_actions (dict): Frame end actions of the model.
-        reactions (dict): Joint support reactions of the model.
-        internal_forces (dict): Internal frame forces of the model.
-        internal_displacements (dict): Internal frame displacements of the
-            model.
+        results (dict): Results of the analysis.
     """
 
     _DOF_MAP = {
@@ -142,14 +139,8 @@ class Structure:
         self.supports = {}
         self.load_patterns = {}
 
-        # joint displacements, frame end actions and support reactions dicts
-        self.displacements = {}
-        self.end_actions = {}
-        self.reactions = {}
-
-        # internal frame forces and displacements dictionaries
-        self.internal_forces = {}
-        self.internal_displacements = {}
+        # results of the analysis, by load pattern
+        self.results = {}
 
     def add_material(self, name, E=None, G=None):
         """Add a material to the model.
@@ -296,13 +287,14 @@ class Structure:
 
         return frame
 
-    def add_support(self, joint, r_ux=None, r_uy=None, r_uz=None, r_rx=None,
-                    r_ry=None, r_rz=None):
+    def add_support(self, joint, *, r_ux=None, r_uy=None, r_uz=None,
+                    r_rx=None, r_ry=None, r_rz=None):
         """Add a joint support to the model.
 
         Creates and adds a new joint support object to the model's support
         dictionary for a specified joint, defining which displacements are
-        restrained.
+        restrained. The restraints are keyword-only, e.g.
+        `add_support('a', r_ux=True, r_uy=True)`.
 
         Args:
             joint (str): Name of the joint.
@@ -347,14 +339,22 @@ class Structure:
 
         return loadPattern
 
-    def add_joint_point_load(self, load_pattern, joint, fx=None, fy=None,
-                             fz=None, mx=None, my=None, mz=None):
-        """Add a joint point load to the model.
+    def _default_load_pattern(self):
+        """Return the 'default' load pattern, creating it the first time."""
+        if 'default' not in self.load_patterns:
+            self.add_load_pattern('default')
 
-        Adds a point load to a specific joint as part of a given load pattern.
+        return self.load_patterns['default']
+
+    def add_joint_point_load(self, joint, fx=None, fy=None, fz=None, mx=None,
+                             my=None, mz=None):
+        """Add a joint point load to the 'default' load pattern.
+
+        The 'default' load pattern is created the first time it is used.
+        To add it to another load pattern, use the methods of the load pattern
+        returned by `add_load_pattern()`.
 
         Args:
-            load_pattern (str): Name of the load pattern.
             joint (str): Name of the joint.
             fx (float, optional): Intensity of the point load along the global
                 x-axis.
@@ -373,21 +373,22 @@ class Structure:
             PointLoad: Point load.
         """
         # get the load pattern object from the dictionary of load patterns
-        lP = self.load_patterns[load_pattern]
+        lP = self._default_load_pattern()
         # add the point load to the load pattern
         pointLoad = lP.add_joint_point_load(joint, fx, fy, fz, mx, my, mz)
 
         return pointLoad
 
-    def add_frame_point_load(self, load_pattern, frame, dist, fx=None,
-                             fy=None, fz=None, mx=None, my=None, mz=None):
-        """Add a frame point load to the model.
+    def add_frame_point_load(self, frame, dist, fx=None, fy=None, fz=None,
+                             mx=None, my=None, mz=None):
+        """Add a frame point load to the 'default' load pattern.
 
-        Adds a point load to a specific frame at a given distance
-        from its near joint, as part of a given load pattern.
+        The load acts at a given distance from the near joint of the frame.
+        The 'default' load pattern is created the first time it is used.
+        To add it to another load pattern, use the methods of the load pattern
+        returned by `add_load_pattern()`.
 
         Args:
-            load_pattern (str): Name of the load pattern.
             frame (str): Name of the frame.
             dist (float): Distance of the point load from the near joint.
             fx (float, optional): Intensity of the point load along the local
@@ -407,21 +408,22 @@ class Structure:
             FramePointLoad: Frame point load.
         """
         # get the load pattern object from the dictionary of load patterns
-        lP = self.load_patterns[load_pattern]
+        lP = self._default_load_pattern()
         # add the point load to the load pattern
         pL = lP.add_frame_point_load(frame, dist, fx, fy, fz, mx, my, mz)
 
         return pL
 
-    def add_distributed_load(self, load_pattern, frame, fx=None, fy=None,
-                             fz=None, mx=None, my=None, mz=None):
-        """Add a frame uniformly distributed load to the model.
+    def add_distributed_load(self, frame, fx=None, fy=None, fz=None, mx=None,
+                             my=None, mz=None):
+        """Add a frame uniformly distributed load to the 'default' load
+        pattern.
 
-        Adds a uniformly distributed load to a specific frame as part of a
-        given load pattern.
+        The 'default' load pattern is created the first time it is used.
+        To add it to another load pattern, use the methods of the load pattern
+        returned by `add_load_pattern()`.
 
         Args:
-            load_pattern (str): Name of the load pattern.
             frame (str): Name of the frame.
             fx (float, optional): Intensity of the distributed load along the
                 local x-axis.
@@ -440,9 +442,9 @@ class Structure:
             DistributedLoad: Uniformly distributed load.
         """
         # get the load pattern object from the dictionary of load patterns
-        lP = self.load_patterns[load_pattern]
+        lP = self._default_load_pattern()
         # add the uniformly distributed load to the load pattern
-        dL = lP.add_frame_distributed_load(frame, fx, fy, fz, mx, my, mz)
+        dL = lP.add_distributed_load(frame, fx, fy, fz, mx, my, mz)
 
         return dL
 
@@ -622,7 +624,10 @@ class Structure:
 
             l_p_d[j] = Displacement(self, load_pattern, j, *displacement)
 
-        self.displacements[load_pattern] = l_p_d
+        # the results of the load pattern; the frames read the displacements
+        # and end actions from them to get their internal results
+        results = self.results[load_pattern] = Results(self, load_pattern)
+        results.displacements = l_p_d
 
         # store frame end actions
         rows = []
@@ -656,6 +661,8 @@ class Structure:
                 np.ravel(np.dot(k_e, u_e) + f_fixed)[dof_f]
 
             l_p_e_a[key] = EndActions(self, load_pattern, key, *f_end_actions)
+            results.frames[key] = FrameResults(self, load_pattern, key,
+                                               end_actions=l_p_e_a[key])
 
             # reactions
             if frame.joint_j in self.supports or \
@@ -665,8 +672,6 @@ class Structure:
                 data.extend(np.dot(
                     t_e, l_p_e_a[key].get_end_actions()
                 ).flatten()[dof_f].tolist())
-
-        self.end_actions[load_pattern] = l_p_e_a
 
         # store reactions
         load_vector += loadPattern.fixed_load_vector()
@@ -684,28 +689,17 @@ class Structure:
             load_pattern_reactions[j] = Reaction(
                 self, load_pattern, j, *reactions)
 
-        self.reactions[load_pattern] = load_pattern_reactions
+        results.reactions = load_pattern_reactions
 
-        # store internal forces
-        load_pattern_internal_forces = {}
-
+        # store internal forces and displacements
         for key, frame in self.frames.items():
-            load_pattern_internal_forces[key] = InternalForces(
+            frame_results = results.frames[key]
+            frame_results.internal_forces = InternalForces(
                 self, load_pattern, key,
                 **frame.get_internal_forces(load_pattern))
-
-        self.internal_forces[load_pattern] = load_pattern_internal_forces
-
-        # store internal displacements
-        load_pattern_internal_displacements = {}
-
-        for key, frame in self.frames.items():
-            load_pattern_internal_displacements[key] = InternalDisplacements(
+            frame_results.internal_displacements = InternalDisplacements(
                 self, load_pattern, key,
                 **frame.get_internal_displacements(load_pattern))
-
-        self.internal_displacements[load_pattern] = \
-            load_pattern_internal_displacements
 
     def run_analysis(self):
         """Analyse the structure subjected to all load patterns.
@@ -721,90 +715,204 @@ class Structure:
         # set the stiffness matrix of the structure
         self.set_stiffness_matrix()
 
-        # solve the structure due to each load pattern
+        # solve the structure due to each load pattern, dropping the results
+        # of a previous analysis
+        self.results = {}
         for load_pattern in self.load_patterns:
             self.analyse_load_pattern(load_pattern)
 
-    def plot_deformed(self, load_pattern, scale=None, ax=None):
-        """Plot the deformed shape of the structure.
+    # shortcuts to the results of the 'default' load pattern, which takes the
+    # loads added through the methods of the structure
 
-        The frames are drawn curved, following their internal displacements,
-        over the undeformed structure. Requires matplotlib.
+    def _default_results(self):
+        """Return the results of the 'default' load pattern.
+
+        Raises:
+            ValueError: If the 'default' load pattern has no results.
+        """
+        if 'default' not in self.results:
+            raise ValueError("there are no results of the 'default' load "
+                             "pattern; add loads through the structure and "
+                             "call run_analysis(), or use "
+                             "model.results[name] for other load patterns")
+
+        return self.results['default']
+
+    def _default_frame_results(self, attribute):
+        """Return a result of every frame for the 'default' load pattern."""
+        return {name: getattr(frame_results, attribute) for name,
+                frame_results in self._default_results().frames.items()}
+
+    @property
+    def displacements(self):
+        """dict: Joint displacements of the 'default' load pattern, by joint.
+
+        A shortcut to `results['default'].displacements`.
+        """
+        return self._default_results().displacements
+
+    @property
+    def reactions(self):
+        """dict: Support reactions of the 'default' load pattern, by joint.
+
+        A shortcut to `results['default'].reactions`.
+        """
+        return self._default_results().reactions
+
+    @property
+    def end_actions(self):
+        """dict: Frame end actions of the 'default' load pattern, by frame.
+
+        A shortcut to the `end_actions` of `results['default'].frames`.
+        """
+        return self._default_frame_results('end_actions')
+
+    @property
+    def internal_forces(self):
+        """dict: Internal forces of the 'default' load pattern, by frame.
+
+        A shortcut to the `internal_forces` of `results['default'].frames`.
+        """
+        return self._default_frame_results('internal_forces')
+
+    @property
+    def internal_displacements(self):
+        """dict: Internal displacements of the 'default' load pattern, by
+        frame.
+
+        A shortcut to the `internal_displacements` of
+        `results['default'].frames`.
+        """
+        return self._default_frame_results('internal_displacements')
+
+    def plot_loads(self, ax=None, reactions=True, dimensions=False,
+                   support_names=False, frame_names=False):
+        """Plot the loads and reactions of the 'default' load pattern.
+
+        A shortcut to `results['default'].plot_loads()`, which describes the
+        plot.
 
         Args:
-            load_pattern (str): Name of the load pattern.
-            scale (float, optional): Factor applied to the displacements. By
-                default, the largest displacement is drawn as 10% of the size
-                of the structure.
-            ax (Axes, optional): Matplotlib axes to draw on (3D if the
-                structure is not planar). By default, a new figure is
-                created.
+            ax (Axes, optional): Matplotlib axes to draw on. By default, a
+                new figure is created.
+            reactions (bool, optional): Whether to draw the reactions.
+            dimensions (bool, optional): Whether to dimension the
+                structure. False by default.
+            support_names (bool, optional): Whether to write the name of
+                the joint of each support beside it. False by default.
+            frame_names (bool, optional): Whether to write the name of each
+                frame, in a circle, beside its middle. False by default.
 
         Returns:
             Axes: Matplotlib axes of the plot.
         """
-        return plotting.plot_deformed(self, load_pattern, scale, ax)
+        return self._default_results().plot_loads(ax, reactions,
+                                                  dimensions, support_names,
+                                                  frame_names)
 
-    def plot_internal_forces(self, load_pattern, frame):
-        """Plot the internal forces of a frame along its length.
+    def plot_deformed(self, ax=None, scale=None, labels=False,
+                      dimensions=False):
+        """Plot the deformed shape under the 'default' load pattern.
 
-        Only the forces that the frame models are plotted, e.g. fy and mz for
-        a frame with bending_z. Requires matplotlib.
+        A shortcut to `results['default'].plot_deformed()`, which describes
+        the plot.
 
         Args:
-            load_pattern (str): Name of the load pattern.
+            ax (Axes, optional): Matplotlib axes to draw on. By default, a
+                new figure is created.
+            scale (float, optional): Factor applied to the displacements. By
+                default, the largest displacement is drawn as 10% of the size
+                of the structure.
+            labels (bool, optional): Whether to label the largest deflection
+                of each frame. False by default.
+            dimensions (bool, optional): Whether to dimension the position
+                of the largest deflection of each frame. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return self._default_results().plot_deformed(ax, scale, labels,
+                                                     dimensions)
+
+    def plot_diagram(self, force, ax=None, scale=None, labels=False,
+                     dimensions=False):
+        """Plot the diagram of an internal force under the 'default' load
+        pattern.
+
+        A shortcut to `results['default'].plot_diagram()`, which describes
+        the plot.
+
+        Args:
+            force (str): Internal force: 'fx', 'fy', 'fz', 'mx', 'my' or
+                'mz'.
+            ax (Axes, optional): Matplotlib axes to draw on. By default, a
+                new figure is created.
+            scale (float, optional): Length per unit of force. By default,
+                the largest value is drawn as 15% of the size of the
+                structure.
+            labels (bool, optional): Whether to label the largest positive
+                and negative values of each frame, and those at its ends.
+                False by default.
+            dimensions (bool, optional): Whether to dimension the zero
+                crossings. False by default.
+
+        Returns:
+            Axes: Matplotlib axes of the plot.
+        """
+        return self._default_results().plot_diagram(force, ax, scale,
+                                                    labels, dimensions)
+
+    def plot_internal_forces(self, frame, axes=None, labels=False):
+        """Plot the internal forces of a frame under the 'default' load
+        pattern.
+
+        A shortcut to `results['default'].frames[frame]
+        .plot_internal_forces()`, which describes the plot.
+
+        Args:
             frame (str): Name of the frame.
+            axes (list, optional): Matplotlib axes to draw on, one per
+                internal force that the frame models. By default, a new
+                figure is created.
+            labels (bool, optional): Whether to label the largest values
+                and the zero crossings. False by default.
 
         Returns:
             Figure: Matplotlib figure, with one axes per internal force.
         """
-        return plotting.plot_internal_forces(self, load_pattern, frame)
+        return self._default_results().frames[frame].plot_internal_forces(
+            axes, labels)
 
-    def plot_internal_displacements(self, load_pattern, frame):
-        """Plot the internal displacements of a frame along its length.
+    def plot_internal_displacements(self, frame, axes=None, labels=False,
+                                    components=None):
+        """Plot the internal displacements of a frame under the 'default'
+        load pattern.
 
-        Only the displacements that the frame models are plotted, e.g. uy and
-        rz for a frame with bending_z. They are given in the local axes of
-        the frame. Requires matplotlib.
+        A shortcut to `results['default'].frames[frame]
+        .plot_internal_displacements()`, which describes the plot.
 
         Args:
-            load_pattern (str): Name of the load pattern.
             frame (str): Name of the frame.
+            axes (list, optional): Matplotlib axes to draw on, one per
+                plotted displacement. By default, a new figure is created.
+            labels (bool, optional): Whether to label the largest values
+                and the zero crossings. False by default.
+            components (list, optional): Displacements to plot, among
+                those that the frame models, e.g. ('uy', 'rz'). By default,
+                its translations.
 
         Returns:
-            Figure: Matplotlib figure, with one axes per internal
+            Figure: Matplotlib figure, with one axes per plotted
                 displacement.
         """
-        return plotting.plot_internal_displacements(self, load_pattern, frame)
-
-    def plot_diagram(self, load_pattern, force, scale=None, ax=None):
-        """Plot the diagram of an internal force on the whole structure.
-
-        The values are drawn perpendicular to each frame: bending moments on
-        the tension side, and forces and torque along the positive local
-        y-axis (z for fz). Positive values are red and negative values blue.
-        Requires matplotlib.
-
-        Args:
-            load_pattern (str): Name of the load pattern.
-            force (str): Internal force: 'fx', 'fy', 'fz', 'mx', 'my' or
-                'mz'.
-            scale (float, optional): Length per unit of force. By default,
-                the largest value is drawn as 15% of the size of the
-                structure.
-            ax (Axes, optional): Matplotlib axes to draw on (3D if the
-                structure is not planar). By default, a new figure is
-                created.
-
-        Returns:
-            Axes: Matplotlib axes of the plot.
-        """
-        return plotting.plot_diagram(self, load_pattern, force, scale, ax)
+        return self._default_results().frames[frame]\
+            .plot_internal_displacements(axes, labels, components)
 
     def export(self, filename):
         """Save the structure data to a file in JSON format.
 
-        This method serializes the model's materials, sections, joints, frames,
+        This method serializes the type of structure and its active degrees of
+        freedom, and the model's materials, sections, joints, frames,
         supports, load patterns (including their applied loads), and analysis
         results (displacements, reactions, end actions, internal forces, and
         internal displacements) into a JSON format.
@@ -813,6 +921,12 @@ class Structure:
             filename (str): Filename.
         """
         data = {}
+
+        # save the type of structure and its active degrees of freedom
+        data['type'] = self.type
+        data['degrees_of_freedom'] = [
+            dof for dof, active in
+            zip(('ux', 'uy', 'uz', 'rx', 'ry', 'rz'), self._dof) if active]
 
         # save the materials
         if self.materials:
@@ -899,62 +1013,30 @@ class Structure:
                             data['load_patterns'][key]['frames'][_frame].\
                                 append(_data)
 
-        # save displacements
-        if self.displacements:
-            data['displacements'] = {}
-            for key, displacements in self.displacements.items():
-                data['displacements'][key] = {}
-                for joint, displacement in displacements.items():
-                    data['displacements'][key][joint] = \
-                        {attr: value for attr, value in displacement.__dict__.
-                         items() if not attr.startswith('_') and value is not
-                         None}
-
-        # save reactions
-        if self.reactions:
-            data['reactions'] = {}
-            for key, reactions in self.reactions.items():
-                data['reactions'][key] = {}
-                for joint, reaction in reactions.items():
-                    data['reactions'][key][joint] = \
-                        {attr: value for attr, value in reaction.__dict__
-                         .items() if not attr.startswith('_') and value is not
-                         None}
-
-        # save end actions
-        if self.end_actions:
-            data['end_actions'] = {}
-            for key, end_actions in self.end_actions.items():
-                data['end_actions'][key] = {}
-                for frame, end_action in end_actions.items():
-                    data['end_actions'][key][frame] = \
-                        {attr: value for attr, value in end_action.__dict__
-                         .items() if not attr.startswith('_') and value is not
-                         None}
-
-        # save internal forces
-        if self.internal_forces:
-            data['internal_forces'] = {}
-            for key, internal_forces in self.internal_forces.items():
-                data['internal_forces'][key] = {}
-                for frame, internal_force in internal_forces.items():
-                    data['internal_forces'][key][frame] = \
-                        {attr: value for attr, value in internal_force.__dict__
-                         .items() if not attr.startswith('_') and value is not
-                         None}
-
-        # save internal displacements
-        if self.internal_displacements:
-            data['internal_displacements'] = {}
-            for key, internal_displacements in self.internal_displacements\
-                                                   .items():
-                data['internal_displacements'][key] = {}
-                for frame, internal_displacement in internal_displacements\
-                        .items():
-                    data['internal_displacements'][key][frame] = \
-                        {attr: value for attr, value in internal_displacement
-                         .__dict__.items() if not attr.startswith('_') and
-                         value is not None}
+        # save the results, by load pattern
+        if self.results:
+            data['results'] = {}
+            for key, results in self.results.items():
+                data['results'][key] = {
+                    'displacements': {joint: _public(displacement) for
+                                      joint, displacement in
+                                      results.displacements.items()},
+                    'reactions': {joint: _public(reaction) for joint, reaction
+                                  in results.reactions.items()},
+                    'frames': {frame: {
+                        'end_actions': _public(frame_results.end_actions),
+                        'internal_forces':
+                            _public(frame_results.internal_forces),
+                        'internal_displacements':
+                            _public(frame_results.internal_displacements),
+                    } for frame, frame_results in results.frames.items()},
+                }
 
         with open(filename, 'w') as outfile:
             json.dump(data, outfile, indent=4)
+
+
+def _public(obj):
+    """Return the public attributes of an object that are not None."""
+    return {attr: value for attr, value in obj.__dict__.items()
+            if not attr.startswith('_') and value is not None}
