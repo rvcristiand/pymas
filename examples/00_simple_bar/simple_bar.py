@@ -45,8 +45,8 @@ model.add_support('a', r_ux=True)
 
 # 7. Define load pattern and apply point load
 # Tensile force Pu = 42 kN applied at joint 'b' along +x
-model.add_load_pattern('point loads')
-model.add_joint_point_load('point loads', 'b', fx=42)
+point_loads = model.add_load_pattern('point loads')
+point_loads.add_joint_point_load('b', fx=42)
 
 # 8. Run analysis and export model data
 model.run_analysis()
@@ -54,7 +54,7 @@ model.export('simple_bar.json')
 
 # 9. Query and display joint displacements
 # Elongation corresponds to the longitudinal displacement ux at free joint 'b'
-elongation_m = model.displacements['point loads']['b'].ux
+elongation_m = model.results['point loads'].displacements['b'].ux
 elongation_mm = elongation_m * 1000
 
 print(f"Bar elongation (ux_b): {elongation_mm:.2f} mm ({elongation_m:.3e} m)")
