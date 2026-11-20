@@ -296,10 +296,12 @@ class Frame(AttrDisplay):
         v_from = np.array([1, 0, 0])
         v_to = self.direction_cosines_vector()
 
-        if np.all(v_from == v_to):
+        # near the global x-axis the axis of the minimal rotation depends on
+        # the round-off of the joint coordinates, so use the exact rotations
+        if np.allclose(v_to, v_from, rtol=0, atol=1e-9):
             quaternion = [0, 0, 0, 1]
 
-        elif np.all(v_from == -v_to):
+        elif np.allclose(v_to, -v_from, rtol=0, atol=1e-9):
             quaternion = [0, 0, 1, 0]
 
         else:

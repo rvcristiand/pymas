@@ -266,6 +266,15 @@ class TestFrameRoll:
         np.testing.assert_allclose(r[:, 1], y, atol=1e-15)
         np.testing.assert_allclose(r[:, 2], z, atol=1e-15)
 
+    @pytest.mark.parametrize('direction', [(1, 0, 0), (-1, 0, 0)])
+    @pytest.mark.parametrize('offset', [(0, 1e-12, 0), (0, 0, 1e-12),
+                                        (0, -1e-12, 1e-12)])
+    def test_round_off_along_x(self, direction, offset):
+        """Verify round-off off the global x-axis keeps the local axes."""
+        far = 10 * np.array(direction) + offset
+        np.testing.assert_allclose(_frame(far).rotation_matrix(),
+                                   self.REFERENCE[direction], atol=1e-12)
+
     @pytest.mark.parametrize('direction', DIRECTIONS)
     @pytest.mark.parametrize('roll', [0.3, np.pi / 2, -2.0, np.pi])
     def test_rotation_matrix_is_proper(self, direction, roll):
